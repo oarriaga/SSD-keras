@@ -99,12 +99,33 @@ class MultiboxLoss(object):
                                                     reduction_indices=1)
 
         # get negative loss, we penalize only confidence here
-        negative_loss_1 = self.negative_positive_ratio * num_positives
-        negative_loss_2 = num_boxes - num_positives
-        num_negatives = tf.minimum(negative_loss_1, negative_loss_2)
-        positive_num_negatives_mask = tf.greater(num_negatives, 0)
-        has_min = tf.to_float(tf.reduce_any(positive_num_negatives_mask))
-        num_negatives = tf.concat(0, [num_negatives,])
+        num_negatives_1 = self.negative_positive_ratio * num_positives
+        num_negatives_2 = num_boxes - num_positives
+        num_negatives = tf.minimum(num_negatives_1, num_negatives_2)
+        positives_num_negatives_mask = tf.greater(num_negatives, 0)
+        # ?
+        has_minimum = tf.to_float(tf.reduce_any(positives_num_negatives_mask))
+        # ?
+        num_negatives = tf.concat(0, [num_negatives, [(1 - has_minimum) * self.negatives_for_hard]])
+        # ?
+        num_neg_batch = tf.reduce_min(tf.boolean_mask(num_negatives, tf.greater(num_negatives, 0)))
+        num_neg_batch = tf.to_int32(num_neg_batch)
+        confidence_start = 4 + self.background_label_id + 1 #6
+        confidence_end = confidence_start + self.num_classes - 1 #6 + num_classes - 1
+        max_confidence = tf.reduce_max(y_predicted[:, :, confidence_start:confidence_end],
+                                                                    reduction_indices=2)
+        # "_" correponds to values
+        _, indices = tf.nn.top_k(max_confidence * (1 - y_true[:, :, -8]), k=num_neg_batch)
+        batch_indices = tf.expand_dims(tf.range(0, batch_size), 1)
+        batch_indices = tf.tile(batch_indices, (1, num_neg_batch))
+        full_indices = (tf.reshape(batch_indices, [-1]) * tf.to_int32(num_boxes) +
+                                                        tf.reshape(indices, [-1]))
+        
+
+
+
+
+
 
 
 
