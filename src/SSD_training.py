@@ -104,8 +104,8 @@ model.compile(optimizer=optimizer,
 nb_epoch = 30
 history = model.fit_generator(image_generator.flow(True), num_train,
                               nb_epoch, verbose=1,
+                              callbacks=callbacks,
+                              validation_data=image_generator.flow(False),
+                              nb_val_samples=num_val,
                               nb_worker=1)
-                              #validation_data=image_generator.flow(False),
-                              #nb_val_samples=num_val,
-                              #nb_worker=1)
 

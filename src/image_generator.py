@@ -95,7 +95,7 @@ class ImageGenerator(object):
             box_corners[:, [1, 3]] = 1 - box_corners[:, [3, 1]]
         return image_array, box_corners
 
-    def tansform(self, image_array, box_corners):
+    def transform(self, image_array, box_corners):
         shuffle(self.color_jitter)
         for jitter in self.color_jitter:
             image_array = jitter(image_array)
