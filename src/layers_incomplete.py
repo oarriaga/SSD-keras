@@ -1,53 +1,55 @@
-"""Some special pupropse layers for SSD."""
-
-import keras.backend as K
-from keras.engine.topology import InputSpec
 from keras.engine.topology import Layer
 import numpy as np
 import tensorflow as tf
+import keras.backend as K
 
+"""
+[1]
+[2] ParseNet: Looking wider to see better (v2 19 Nov 2015)
+https://arxiv.org/pdf/1506.04579.pdf
+"""
 
 class Normalize(Layer):
-    """Normalization layer as described in ParseNet paper.
-
-    # Arguments
-        scale: Default feature scale.
-
-    # Input shape
-        4D tensor with shape:
-        `(samples, channels, rows, cols)` if dim_ordering='th'
-        or 4D tensor with shape:
-        `(samples, rows, cols, channels)` if dim_ordering='tf'.
-
-    # Output shape
-        Same as input
-
-    # References
-        http://cs.unc.edu/~wliu/papers/parsenet.pdf
-
-    #TODO
-        Add possibility to have one scale for all features.
+    """Normalization layer as described in [2]
     """
     def __init__(self, scale, **kwargs):
-        if K.image_dim_ordering() == 'tf':
-            self.axis = 3
-        else:
-            self.axis = 1
-        self.scale = scale
+        self.channel_dim = 3
+        self.scale = np.asarray(scale, dtype='float32')
         super(Normalize, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.input_spec = [InputSpec(shape=input_shape)]
-        shape = (input_shape[self.axis],)
-        init_gamma = self.scale * np.ones(shape)
-        self.gamma = K.variable(init_gamma, name='{}_gamma'.format(self.name))
+        num_channels = input_shape[3]
+        initial_gamma = self.scale * np.ones(num_channels,dtype='float32')
+        self.gamma = tf.Variable(initial_gamma, dtype='float32')
         self.trainable_weights = [self.gamma]
+        super(Normalize, self).build(input_shape)
 
-    def call(self, x, mask=None):
-        output = K.l2_normalize(x, self.axis)
-        output *= self.gamma
+    def call(self, X, mask=None):
+        output = tf.nn.l2_normalize(X, dim=self.channel_dim)
+        output = self.gamma * output
         return output
 
+    def get_output_shape_for(self, input_shape):
+        return input_shape
+
+"""
+class PriorBox(Layer):
+    # Generate prior boxes of the designated sizes and aspect rations.
+    def __init__(self, image_size, min_size, max_size=None, aspect_ratios=None,
+                    flip=True, variances=[0.1], clip=True, **kwargs):
+        self.image_size = image_size
+        if min_size <= 0:
+            raise Exception('min_size must be positive')
+        self.min_size = min_size
+        if max_size != None:
+            if max_size < min_size:
+                raise Exception('max_size must be greater than min_size')
+            self.max_size = max_size
+            self.aspect_ratios.append()
+
+
+        self.aspect_ratios = [1.0]
+"""
 
 class PriorBox(Layer):
     """Generate the prior boxes of designated sizes and aspect ratios.
@@ -179,3 +181,11 @@ class PriorBox(Layer):
             #TODO
             pass
         return prior_boxes_tensor
+
+def test_basic_normalize():
+    from keras.layers import Convolution2D
+    from keras.models import Sequential
+    model = Sequential()
+    model.add(Convolution2D(32,3,3,input_shape=(300,300,3)))
+    model.add(Normalize(1))
+

@@ -1,5 +1,5 @@
-import matplotlib.pyplot as plt
 import numpy as np
+from keras.applications.vgg16 import preprocess_input
 from random import shuffle
 from scipy.misc import imread, imresize
 
@@ -83,48 +83,41 @@ class ImageGenerator(object):
         image_array = image_array + noise
         return np.clip(image_array, 0 ,255)
 
-    def horizontal_flip(self, image_array, box_corners=None):
+    def horizontal_flip(self, image_array, box_corners):
         if np.random.random() < self.horizontal_flip_probability:
             image_array = image_array[:, ::-1]
-            if box_corners != None:
-                box_corners[:, [0, 2]] = 1 - box_corners[:, [2, 0]]
-                return image_array, box_corners
-        return image_array
+            box_corners[:, [0, 2]] = 1 - box_corners[:, [2, 0]]
+        return image_array, box_corners
 
-    def vertical_flip(self, image_array, box_corners=None):
+    def vertical_flip(self, image_array, box_corners):
         if (np.random.random() < self.vertical_flip_probability):
             image_array = image_array[::-1]
-            if box_corners != None:
-                box_corners[:, [1, 3]] = 1 - box_corners[:, [3, 1]]
-                return image_array, box_corners
-        return image_array
+            box_corners[:, [1, 3]] = 1 - box_corners[:, [3, 1]]
+        return image_array, box_corners
 
-    def apply_transformations(self, image_array, box_corners=None):
+    def tansform(self, image_array, box_corners):
         shuffle(self.color_jitter)
         for jitter in self.color_jitter:
             image_array = jitter(image_array)
+
         if self.lighting_std:
             image_array = self.lighting(image_array)
-        if box_corners != None:
-            if self.horizontal_flip_probability > 0:
-                image_array, box_corners = self.horizontal_flip(
-                                                            image_array,
-                                                            box_corners)
-            if self.vertical_flip_probability > 0:
-                image_array, box_corners = self.vertical_flip(image_array,
-                                                            box_corners)
-        else:
-            if self.horizontal_flip_probability > 0:
-                image_array = self.horizontal_flip(image_array)
-            if self.vertical_flip_probability > 0:
-                image_array = self.vertical_flip(image_array)
 
-    def preprocess_images(image_array):
-        return image_array
+        if self.horizontal_flip_probability > 0:
+            image_array, box_corners = self.horizontal_flip(image_array,
+                                                            box_corners)
+
+        if self.vertical_flip_probability > 0:
+            image_array, box_corners = self.vertical_flip(image_array,
+                                                            box_corners)
+
+        return image_array, box_corners
+
+    def preprocess_images(self, image_array):
+        return preprocess_input(image_array)
 
     def flow(self, train=True):
-            for i in range(1):
-
+            while True:
                 if train:
                     shuffle(self.train_keys)
                     keys = self.train_keys
@@ -141,82 +134,21 @@ class ImageGenerator(object):
                     image_array = image_array.astype('float32')
                     box_corners = self.ground_truths[key].copy()
                     if train:
-                        image_array, box_corners = self.apply_transformations(
-                                                                image_array,
+                        image_array, box_corners = self.transform(image_array,
                                                                 box_corners)
-                        box_corners = self.bounding_box_utils.assign_boxes(
+                    box_corners = self.bounding_box_utils.assign_boxes(
                                                                 box_corners)
-                        inputs.append(image_array)
-                        targets.append(box_corners)
-
-                        if len(targets) == self.batch_size:
-                            inputs = np.asarray(inputs)
-                            targets = np.asarray(targets)
-                            yield self.preprocess_images(inputs), targets
-                            inputs = []
-                            targets = []
+                    inputs.append(image_array)
+                    targets.append(box_corners)
+                    if len(targets) == self.batch_size:
+                        inputs = np.asarray(inputs)
+                        targets = np.asarray(targets)
+                        yield self.preprocess_images(inputs), targets
+                        inputs = []
+                        targets = []
 
     def _imread(self, image_name):
         return imread(image_name)
 
     def _imresize(self, image_array, size):
         return imresize(image_array, size)
-
-def test_saturation():
-    image_name = 'image.jpg'
-    generator = ImageGenerator()
-    image_array = generator._imread(image_name)
-    transformed_image_array = generator.saturation(image_array)
-    transformed_image_array = transformed_image_array.astype('uint8')
-    plt.imshow(transformed_image_array)
-    plt.show()
-
-def test_brightness(brightness_var=.5):
-    image_name = 'image.jpg'
-    generator = ImageGenerator(brightness_var=brightness_var)
-    image_array = generator._imread(image_name)
-    transformed_image_array = generator.brightness(image_array)
-    transformed_image_array = transformed_image_array.astype('uint8')
-    plt.imshow(transformed_image_array)
-    plt.show()
-
-def test_contrast():
-    image_name = 'image.jpg'
-    generator = ImageGenerator()
-    image_array = generator._imread(image_name)
-    transformed_image_array = generator.contrast(image_array)
-    transformed_image_array = transformed_image_array.astype('uint8')
-    plt.imshow(transformed_image_array)
-    plt.show()
-
-def test_lighting(lighting_std=.5):
-    image_name = 'image.jpg'
-    generator = ImageGenerator(lighting_std=lighting_std)
-    image_array = generator._imread(image_name)
-    transformed_image_array = generator.contrast(image_array)
-    transformed_image_array = transformed_image_array.astype('uint8')
-    plt.imshow(transformed_image_array)
-    plt.show()
-
-def test_horizontal_flip():
-    image_name = 'image.jpg'
-    generator = ImageGenerator()
-    image_array = generator._imread(image_name)
-    transformed_image_array = generator.horizontal_flip(image_array)
-    transformed_image_array = transformed_image_array.astype('uint8')
-    plt.imshow(transformed_image_array)
-    plt.show()
-
-def test_vertical_flip():
-    image_name = 'image.jpg'
-    generator = ImageGenerator()
-    image_array = generator._imread(image_name)
-    transformed_image_array = generator.vertical_flip(image_array)
-    transformed_image_array = transformed_image_array.astype('uint8')
-    plt.imshow(transformed_image_array)
-    plt.show()
-
-
-
-
-
