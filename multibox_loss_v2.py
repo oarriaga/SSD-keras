@@ -104,7 +104,7 @@ class MultiboxLoss(object):
         num_negatives_2 = num_boxes - num_positives
         num_negatives = tf.minimum(num_negatives_1, num_negatives_2)
         positive_num_negatives_bool = tf.greater(num_negatives, 0)
-        reduce_any_flag = tf.float(tf.reduce_any(positive_num_negatives_bool))
+        reduce_any_flag = tf.to_float(tf.reduce_any(positive_num_negatives_bool))
         weird = (1 - reduce_any_flag) * self.negatives_for_hard
         num_negatives = tf.concat(0, [num_negatives, weird])
         positive_num_negatives = tf.boolean_mask(num_negatives,
