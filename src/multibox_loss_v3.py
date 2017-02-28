@@ -78,10 +78,6 @@ class MultiboxLoss(object):
             A: 4 is for box coordinates, but +8 is full of zeros in the y_true
             It is probably related to the box coordinates and the... ?
         """
-
-        batch_size = tf.shape(y_true)[0]
-        num_boxes = tf.to_float(tf.shape(y_true)[1])
-
         # loss for all prior boxes
         confidence_loss = self._softmax_loss(y_true[:,:,4:-8],
                                             y_predicted[:,:,4:-8])
@@ -113,24 +109,12 @@ class MultiboxLoss(object):
 
         # this filters all the positives 
         negatives_mask = 1 - y_true[:, :, -8]
-        indices = tf.nn.top_k((max_confidences * negatives_mask),
-                                k=num_negatives_batch)[1]
+        negative_confidence_loss = tf.nn.top_k((max_confidences *
+                                                negatives_mask),
+                                                k=num_negatives_batch)[0]
 
-        batch_indices = tf.expand_dims(tf.range(0, batch_size), 1)
-        batch_indices = tf.tile(batch_indices, (1, num_negatives_batch))
+        negative_confidence_loss = tf.reduce_sum(negative_confidence_loss)
 
-        # remember the broadcasting from the + (possibly)
-        full_indices = (tf.reshape(batch_indices, [-1]) * tf.to_int32(num_boxes) +
-                                                        tf.reshape(indices, [-1]))
-
-        negative_confidence_loss = tf.gather(tf.reshape(confidence_loss, [-1]),
-                                                full_indices)
-        negative_confidence_loss = tf.reshape(negative_confidence_loss,
-                                                [batch_size, num_negatives_batch])
-        negative_confidence_loss = tf.reduce_sum(negative_confidence_loss,
-                                            reduction_indices=1)
-
-        # loss is sum of positives and negatives
         total_loss = positive_confidence_loss + negative_confidence_loss
         total_loss /= (num_positives + tf.to_float(num_negatives_batch))
         num_positives = tf.select(tf.not_equal(num_positives, 0), num_positives,
