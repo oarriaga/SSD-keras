@@ -116,7 +116,8 @@ class MultiboxLoss(object):
         negative_confidence_loss = tf.reduce_sum(negative_confidence_loss)
 
         total_loss = positive_confidence_loss + negative_confidence_loss
-        total_loss /= (num_positives + tf.to_float(num_negatives_batch))
+        tf.Print(negative_confidence_loss.get_shape, negative_confidence_loss)
+        total_loss /= tf.to_float(num_positives + num_negatives_batch)
         num_positives = tf.select(tf.not_equal(num_positives, 0), num_positives,
                             tf.ones_like(num_positives))
         total_loss += (self.alpha * positive_localization_loss) / num_positives

@@ -4,7 +4,7 @@ from image_generator import ImageGenerator
 from utils import create_prior_box
 from XML_preprocessor import XML_preprocessor
 from models import SSD300
-from multibox_loss import MultiboxLoss
+from multibox_loss_v2 import MultiboxLoss
 from bounding_boxes_utility import BoundingBoxUtility
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras.optimizers import Adam

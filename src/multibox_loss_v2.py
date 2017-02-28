@@ -100,8 +100,23 @@ class MultiboxLoss(object):
                                                     reduction_indices=1)
 
         # get negative loss, we penalize only confidence here
-        num_negatives_batch = self.negative_positive_ratio * num_positives
-        num_negatives_batch = tf.to_int32(num_negatives_batch)
+        num_negatives_1 = self.negative_positive_ratio * num_positives
+        num_negatives_2 = num_boxes - num_positives
+        num_negatives = tf.minimum(num_negatives_1, num_negatives_2)
+        positive_num_negatives_bool = tf.greater(num_negatives, 0)
+        reduce_any_flag = tf.float(tf.reduce_any(positive_num_negatives_bool))
+        weird = (1 - reduce_any_flag) * self.negatives_for_hard
+        num_negatives = tf.concat(0, [num_negatives, weird])
+        positive_num_negatives = tf.boolean_mask(num_negatives,
+                                    positive_num_negatives_bool)
+        num_negatives_batch = tf.reduce_min(positive_num_negatives)
+
+        # why is this not working?
+        #num_negatives_batch = self.negative_positive_ratio * num_positives
+        #num_negatives_batch = tf.to_int32(num_negatives_batch)
+        #num_negatives_batch = tf.concat(0, [num_negatives_batch, 0.0])
+        #--------------------------------------------------------------------------
+
         confidence_start = 4 + self.background_label_id + 1 #5 this is correct
         confidence_end = confidence_start + self.num_classes - 1
 
