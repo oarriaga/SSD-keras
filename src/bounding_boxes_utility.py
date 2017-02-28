@@ -148,6 +148,7 @@ class BoundingBoxUtility(object):
         """
         assignment = np.zeros(shape=(self.num_priors,  4 + self.num_classes + 8))
         # this might be a flag to count the number of negative examples
+        # 4 means index 5 which could probably be the background class
         assignment[:, 4] = 1.0 # is this the background class ? 
 
         if len(boxes) == 0:
@@ -165,10 +166,11 @@ class BoundingBoxUtility(object):
         assignment[:, :4][best_iou_mask] = encoded_boxes[best_iou_indices,
                                                 np.arange(num_assigned_boxes),
                                                 :4]
-        # this is a flag in order to uncount the number of positive examples
+        # this probably unsets the best boxes with the background class
         assignment[:, 4][best_iou_mask] = 0
         # this are the classes
         assignment[:, 5:-8][best_iou_mask] = boxes[best_iou_indices, 4:]
-        # this is a mistery of the universe maybe is the background class probability.
+        # this is a mystery of the universe maybe is the background class probability.
+        # it is probably the count of positive examples.
         assignment[:, -8][best_iou_mask] = 1
         return assignment

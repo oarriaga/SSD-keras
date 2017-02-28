@@ -91,47 +91,50 @@ class MultiboxLoss(object):
         # get positive loss
         num_positives = tf.reduce_sum(y_true[:, :, -8], reduction_indices=-1)
 
+        positives_mask = y_true[:, :, -8]
         positive_localization_loss = tf.reduce_sum(localization_loss *
-                                                    y_true[:, :, -8],
+                                                    positives_mask,
                                                     reduction_indices=1)
         positive_confidence_loss = tf.reduce_sum(confidence_loss *
-                                                    y_true[:, :, -8],
+                                                    positives_mask,
                                                     reduction_indices=1)
 
         # get negative loss, we penalize only confidence here
-        num_negatives_1 = self.negative_positive_ratio * num_positives
-        num_negatives_2 = num_boxes - num_positives
-        num_negatives = tf.minimum(num_negatives_1, num_negatives_2)
-        positives_num_negatives_mask = tf.greater(num_negatives, 0)
-        # ?
-        #has_minimum = tf.to_float(tf.reduce_any(positives_num_negatives_mask))
-        # ?
-        #num_negatives = tf.concat(0, [num_negatives, [(1 - has_minimum)*self.negatives_for_hard]])
-        # ?
-        num_neg_batch = tf.reduce_min(tf.boolean_mask(num_negatives, tf.greater(num_negatives, 0)))
-        num_neg_batch = tf.to_int32(num_neg_batch)
-        confidence_start = 4 + self.background_label_id + 1 #5 this is correct!
+        num_negatives_batch = self.negative_positive_ratio * num_positives
+        num_negatives_batch = tf.to_int32(num_negatives_batch)
+        confidence_start = 4 + self.background_label_id + 1 #5 this is correct
         confidence_end = confidence_start + self.num_classes - 1
-        max_confidence = tf.reduce_max(y_predicted[:, :, confidence_start:confidence_end],
-                                                                    reduction_indices=2)
-        # "_" correponds to values
-        _, indices = tf.nn.top_k(max_confidence * (1 - y_true[:, :, -8]), k=num_neg_batch)
+
+        # does this contain all positives and negatives? yes
+        # this takes best the confidences for every batch for every num_boxes
+        max_confidences = tf.reduce_max(y_predicted[:, :,
+                                        confidence_start:confidence_end],
+                                        reduction_indices=2)
+
+        # this filters all the positives 
+        negatives_mask = 1 - y_true[:, :, -8]
+        indices = tf.nn.top_k((max_confidences * negatives_mask),
+                                k=num_negatives_batch)[1]
+
         batch_indices = tf.expand_dims(tf.range(0, batch_size), 1)
-        batch_indices = tf.tile(batch_indices, (1, num_neg_batch))
+        batch_indices = tf.tile(batch_indices, (1, num_negatives_batch))
+
+        # remember the broadcasting from the + (possibly)
         full_indices = (tf.reshape(batch_indices, [-1]) * tf.to_int32(num_boxes) +
                                                         tf.reshape(indices, [-1]))
 
+        negative_confidence_loss = tf.gather(tf.reshape(confidence_loss, [-1]),
+                                                full_indices)
+        negative_confidence_loss = tf.reshape(negative_confidence_loss,
+                                                [batch_size, num_negatives_batch])
+        negative_confidence_loss = tf.reduce_sum(negative_confidence_loss,
+                                            reduction_indices=1)
 
-
-
-
-
-
-
-
-
-
-
-
-
+        # loss is sum of positives and negatives
+        total_loss = positive_confidence_loss + negative_confidence_loss
+        total_loss /= (num_positives + tf.to_float(num_negatives_batch))
+        num_positives = tf.select(tf.not_equal(num_positives, 0), num_positives,
+                            tf.ones_like(num_positives))
+        total_loss += (self.alpha * positive_localization_loss) / num_positives
+        return total_loss
 
