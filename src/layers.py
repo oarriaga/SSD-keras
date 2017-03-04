@@ -1,11 +1,8 @@
 """Some special pupropse layers for SSD."""
-
 import keras.backend as K
 from keras.engine.topology import InputSpec
 from keras.engine.topology import Layer
 import numpy as np
-import tensorflow as tf
-
 
 class Normalize(Layer):
     """Normalization layer as described in ParseNet paper.
@@ -108,6 +105,9 @@ class PriorBox(Layer):
         self.clip = True
         super(PriorBox, self).__init__(**kwargs)
 
+    def build(self, input_shape):
+        super(PriorBox, self).build(input_shape)
+
     def get_output_shape_for(self, input_shape):
         num_priors_ = len(self.aspect_ratios)
         layer_width = input_shape[self.waxis]
@@ -172,10 +172,6 @@ class PriorBox(Layer):
             raise Exception('Must provide one or four variances.')
         prior_boxes = np.concatenate((prior_boxes, variances), axis=1)
         prior_boxes_tensor = K.expand_dims(K.variable(prior_boxes), 0)
-        if K.backend() == 'tensorflow':
-            pattern = [tf.shape(x)[0], 1, 1]
-            prior_boxes_tensor = tf.tile(prior_boxes_tensor, pattern)
-        elif K.backend() == 'theano':
-            #TODO
-            pass
+        pattern = [K.shape(x)[0], 1, 1]
+        prior_boxes_tensor = K.tile(prior_boxes_tensor, pattern)
         return prior_boxes_tensor

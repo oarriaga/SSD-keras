@@ -1,6 +1,6 @@
 import numpy as np
 
-class BoundingBoxUtility(object):
+class BoundingBoxManager(object):
     """Bounding box utility class for managing prior boxes"""
     def __init__(self, num_classes, priors=None, overlap_threshold=0.5,
                 non_max_supression_threshold=0.45, top_k=400):

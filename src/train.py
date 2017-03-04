@@ -2,10 +2,10 @@
 
 from image_generator import ImageGenerator
 from utils import create_prior_box
-from XML_preprocessor import XML_preprocessor
+from XML_parser import XMLParser
 from models import SSD300
-from multibox_loss_v2 import MultiboxLoss
-from bounding_boxes_utility import BoundingBoxUtility
+from multibox_loss import MultiboxLoss
+from bounding_boxes_manager import BoundingBoxManager
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras.optimizers import Adam
 #import numpy as np
@@ -16,7 +16,7 @@ from keras.optimizers import Adam
 # constants
 image_shape = (300, 300, 3)
 num_classes = 21
-batch_size = 16
+batch_size = 5
 variances = [0.1, 0.1, 0.2, 0.2]
 training_data_ratio = .8
 data_path = '../datasets/VOCdevkit/VOC2007/'
@@ -40,8 +40,8 @@ box_configs = [
 # In[7]:
 
 priors = create_prior_box(image_shape[0:2], box_configs, variances)
-bounding_box_utils = BoundingBoxUtility(num_classes, priors)
-ground_truth_data = XML_preprocessor(data_path+'Annotations/').data
+bounding_box_manager = BoundingBoxManager(num_classes, priors)
+ground_truth_data = XMLParser(data_path+'Annotations/').data
 
 
 # In[11]:
@@ -55,7 +55,7 @@ num_val = len(validation_keys)
 
 # In[12]:
 
-image_generator = ImageGenerator(ground_truth_data, bounding_box_utils, batch_size,
+image_generator = ImageGenerator(ground_truth_data, bounding_box_manager, batch_size,
                     data_path+'JPEGImages/',train_keys, validation_keys, image_shape[:2])
 
 

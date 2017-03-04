@@ -2,7 +2,7 @@ import numpy as np
 import os
 from xml.etree import ElementTree
 
-class XML_preprocessor(object):
+class XMLParser(object):
     """ Preprocess the VOC2007 xml annotations data.
 
     # Arguments

@@ -90,7 +90,6 @@ class MultiboxLoss(object):
                                         y_pred[:, :, :4])
 
         # get positives loss
-        # num positives is for all batches for all boxes there will be a number
         num_pos = tf.reduce_sum(y_true[:, :, -8], reduction_indices=-1)
         pos_loc_loss = tf.reduce_sum(loc_loss * y_true[:, :, -8],
                                      reduction_indices=1)
@@ -98,7 +97,6 @@ class MultiboxLoss(object):
                                       reduction_indices=1)
 
         # get negatives loss, we penalize only confidence here
-        # minimum element wise
         num_neg = tf.minimum(self.neg_pos_ratio * num_pos,
                              num_boxes - num_pos)
         pos_num_neg_mask = tf.greater(num_neg, 0)

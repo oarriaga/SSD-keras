@@ -32,20 +32,19 @@ def create_prior_box(image_shape, box_configs, variances):
     for layer_config in box_configs:
         layer_width = layer_config["layer_width"]
         layer_height = layer_config["layer_height"]
-        # RENAME: to num_aspect_ratios
-        num_priors = layer_config["num_prior"]
+        num_priors = layer_config["num_prior"] #this should be num_aspect_ratios
         aspect_ratios = layer_config["aspect_ratios"]
         min_size = layer_config["min_size"]
         max_size = layer_config["max_size"]
 
-        # .5 is to locate every step in the center of the bounding box
+        # the .5 here in the step is to step in the center of the bounding box
         step_x = 0.5 * (float(image_width) / float(layer_width))
         step_y = 0.5 * (float(image_height) / float(layer_height))
 
-        linspace_x = np.linspace(step_x, image_width - step_x, layer_width)
-        linspace_y = np.linspace(step_y, image_height - step_y, layer_height)
+        linx = np.linspace(step_x, image_width - step_x, layer_width)
+        liny = np.linspace(step_y, image_height - step_y, layer_height)
 
-        centers_x, centers_y = np.meshgrid(linspace_x, linspace_y)
+        centers_x, centers_y = np.meshgrid(linx, liny)
         centers_x = centers_x.reshape(-1, 1)
         centers_y = centers_y.reshape(-1, 1)
 
@@ -65,7 +64,8 @@ def create_prior_box(image_shape, box_configs, variances):
             elif aspect_ratio != 1:
                 box_widths.append(min_size * np.sqrt(aspect_ratio))
                 box_heights.append(min_size / np.sqrt(aspect_ratio))
-        # we take half of the widths and heights since we are at the center
+        # this .5 are probably because of equations in page 6 from [1]
+        # but are still not entirely explained.
         box_widths = 0.5 * np.array(box_widths)
         box_heights = 0.5 * np.array(box_heights)
 
