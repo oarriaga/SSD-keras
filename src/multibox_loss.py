@@ -1,4 +1,5 @@
 import tensorflow as tf
+import keras.backend as K
 
 class MultiboxLoss(object):
     """Multibox loss with some helper functions.
@@ -42,10 +43,13 @@ class MultiboxLoss(object):
         # References
             https://arxiv.org/abs/1504.08083
         """
-        abs_loss = tf.abs(y_true - y_pred)
-        sq_loss = 0.5 * (y_true - y_pred)**2
-        l1_loss = tf.select(tf.less(abs_loss, 1.0), sq_loss, abs_loss - 0.5)
-        return tf.reduce_sum(l1_loss, -1)
+        absolute_value_loss = K.abs(y_true - y_pred) - 0.5
+        square_loss = 0.5 * (y_true - y_pred)**2
+        absolute_value_condition = K.lesser(absolute_value_loss, 1.0)
+        l1_smooth_loss = tf.select(absolute_value_condition,
+                                        square_loss,
+                                        absolute_value_loss)
+        return K.sum(l1_smooth_loss, axis=-1)
 
     def _softmax_loss(self, y_true, y_pred):
         """Compute softmax loss.
@@ -59,9 +63,8 @@ class MultiboxLoss(object):
         # Returns
             softmax_loss: Softmax loss, tensor of shape (?, num_boxes).
         """
-        y_pred = tf.maximum(tf.minimum(y_pred, 1 - 1e-15), 1e-15)
-        softmax_loss = -tf.reduce_sum(y_true * tf.log(y_pred),
-                                      reduction_indices=-1)
+        y_pred = K.maximum(K.minimum(y_pred, 1 - 1e-15), 1e-15)
+        softmax_loss = - K.sum(y_true * K.log(y_pred), axis=-1)
         return softmax_loss
 
     def compute_loss(self, y_true, y_pred):
