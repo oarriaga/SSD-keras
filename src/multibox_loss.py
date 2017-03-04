@@ -93,6 +93,7 @@ class MultiboxLoss(object):
                                                  y_pred[:, :, :4])
 
         # get positives loss
+        # num_positives is matrix of dimensions batch_size, num_priors
         num_positives = K.sum(y_true[:, :, -8], axis=-1)
         positive_localization_losses = localization_loss * y_true[:, :, -8]
         positive_localization_loss = K.sum(positive_localization_losses, 1)
@@ -100,14 +101,21 @@ class MultiboxLoss(object):
         positive_classification_loss = K.sum(positive_classification_losses, 1)
 
         # TODO: Refactor -------------------------------------------------------
+        # every batch contains all priors: here we take the least amount of
+        # negatives which depends on the amount of positives at every batch
+        # at every set of priors.
         num_negatives = self.neg_pos_ratio * num_positives
-        pos_num_neg_mask = K.greater(num_negatives, 0)
-        has_min = K.cast(K.any(pos_num_neg_mask), 'float')
+        """
+        positive_num_negatives_mask = K.greater(num_negatives, 0)
+        has_positive = K.cast(K.any(positive_num_negatives_mask), 'float')
         num_negatives = tf.concat(0, [num_negatives,
-                                [(1 - has_min) * self.negatives_for_hard]])
-        num_neg_batch = K.min(tf.boolean_mask(num_negatives,
-                                K.greater(num_negatives, 0)))
+                            [(1 - has_positive) * self.negatives_for_hard]])
+        positive_num_negatives = tf.boolean_mask(num_negatives,
+                                    positive_num_negatives_mask)
+        num_neg_batch = K.min(positive_num_negatives)
         num_neg_batch = K.cast(num_neg_batch, 'int32')
+        """
+        num_neg_batch = K.min(K.cast(num_negatives, 'int32'))
         # ----------------------------------------------------------------------
 
         class_start = 4 + self.background_label_id + 1
@@ -130,7 +138,7 @@ class MultiboxLoss(object):
         negative_classification_loss = K.sum(negative_classification_loss, 1)
 
         # loss is sum of positives and negatives
-        total_loss = positive_classification_loss + negative_classification_loss
+        total_loss = positive_classification_loss +negative_classification_loss
         num_boxes_per_batch = num_positives + K.cast(num_neg_batch, 'float')
         total_loss = total_loss / num_boxes_per_batch
         num_positives = tf.select(K.not_equal(num_positives, 0), num_positives,
