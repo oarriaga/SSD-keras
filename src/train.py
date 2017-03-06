@@ -1,7 +1,7 @@
 # In[1]:
 
 from image_generator import ImageGenerator
-from utils import create_prior_box
+from utils import create_prior_box, get_prior_parameters
 from XML_parser import XMLParser
 from models import SSD300
 from multibox_loss import MultiboxLoss
@@ -21,25 +21,15 @@ variances = [0.1, 0.1, 0.2, 0.2]
 training_data_ratio = .8
 data_path = '../datasets/VOCdevkit/VOC2007/'
 
-box_configs = [
-    {'layer_width': 38, 'layer_height': 38, 'num_prior': 3, 'min_size': 30.0,
-     'max_size': None, 'aspect_ratios': [1.0, 2.0, 1/2.0]},
-    {'layer_width': 19, 'layer_height': 19, 'num_prior': 6, 'min_size': 60.0,
-     'max_size': 114.0, 'aspect_ratios': [1.0, 1.0, 2.0, 1/2.0, 3.0, 1/3.0]},
-    {'layer_width': 10, 'layer_height': 10, 'num_prior': 6, 'min_size': 114.0,
-     'max_size': 168.0, 'aspect_ratios': [1.0, 1.0, 2.0, 1/2.0, 3.0, 1/3.0]},
-    {'layer_width':  5, 'layer_height':  5, 'num_prior': 6, 'min_size': 168.0,
-     'max_size': 222.0, 'aspect_ratios': [1.0, 1.0, 2.0, 1/2.0, 3.0, 1/3.0]},
-    {'layer_width':  3, 'layer_height':  3, 'num_prior': 6, 'min_size': 222.0,
-     'max_size': 276.0, 'aspect_ratios': [1.0, 1.0, 2.0, 1/2.0, 3.0, 1/3.0]},
-    {'layer_width':  1, 'layer_height':  1, 'num_prior': 6, 'min_size': 276.0,
-     'max_size': 330.0, 'aspect_ratios': [1.0, 1.0, 2.0, 1/2.0, 3.0, 1/3.0]},
-]
+model = SSD300(image_shape, num_classes=num_classes)
+model.load_weights('../weights/weights_SSD300.hdf5', by_name=True)
+freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
+          'conv2_1', 'conv2_2', 'pool2',
+          'conv3_1', 'conv3_2', 'conv3_3', 'pool3']
 
+box_configurations = get_prior_parameters(model)
 
-# In[7]:
-
-priors = create_prior_box(image_shape[0:2], box_configs, variances)
+priors = create_prior_box(image_shape[0:2], box_configurations, variances)
 bounding_box_manager = BoundingBoxManager(num_classes, priors)
 ground_truth_data = XMLParser(data_path+'Annotations/').data
 
@@ -61,15 +51,7 @@ image_generator = ImageGenerator(ground_truth_data, bounding_box_manager, batch_
 
 # In[13]:
 
-model = SSD300(image_shape, num_classes=num_classes)
-model.load_weights('../weights/weights_SSD300.hdf5', by_name=True)
-
-
 # In[14]:
-
-freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
-          'conv2_1', 'conv2_2', 'pool2',
-          'conv3_1', 'conv3_2', 'conv3_3', 'pool3']
 
 for layer in model.layers:
     if layer.name in freeze:

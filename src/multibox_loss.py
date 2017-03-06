@@ -83,8 +83,8 @@ class MultiboxLoss(object):
         # Returns
             loss: Loss for prediction, tensor of shape (?,).
         """
-        batch_size = tf.shape(y_true)[0]
-        num_boxes = K.cast(tf.shape(y_true)[1], 'float')
+        batch_size = K.shape(y_true)[0]
+        num_boxes = K.cast(K.shape(y_true)[1], 'float')
 
         # loss for all priors
         classification_loss = self._softmax_loss(y_true[:, :, 4:-8],

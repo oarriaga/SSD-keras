@@ -1,4 +1,4 @@
-import pickle
+#import pickle
 import numpy as np
 
 """
@@ -102,12 +102,16 @@ def get_prior_parameters(model):
             box_configurations.append(layer_data)
     return box_configurations
 
-
+def get_scales(num_feature_maps,start=1, s_min=.2, s_max=.9):
+    scales = []
+    for k in range(start,num_feature_maps+1):
+        scale = s_min + ((s_max - s_min)/(num_feature_maps -1)*(k - 1))
+        scales.append(scale)
+    return np.asarray(scales)
 
 
 if __name__ == "__main__":
-    
-    from models import SSD300
+    #from models import SSD300
     """
     box_configs = [
         {'layer_width': 38, 'layer_height': 38, 'num_prior': 3, 'min_size':  30.0,
@@ -124,19 +128,19 @@ if __name__ == "__main__":
          'max_size': 330.0, 'aspect_ratios': [1.0, 1.0, 2.0, 1/2.0, 3.0, 1/3.0]},
     ]
     """
-    image_shape = (300, 300, 3)
-    model = SSD300(image_shape)
-    box_configurations = get_prior_parameters(model)
+    #image_shape = (300, 300, 3)
+    #model = SSD300(image_shape)
+    #box_configurations = get_prior_parameters(model)
 
-    variances = [0.1, 0.1, 0.2, 0.2]
-    image_shape = (300,300)
-    boxes_parameters = create_prior_box(image_shape,
-                                    box_configurations,
-                                    variances)
-    priors = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
-    diff = boxes_parameters - priors
-    print("simi {}, max value {}, min value {}".format(diff.shape, diff.max(), diff.min()))
-
-
+    #variances = [0.1, 0.1, 0.2, 0.2]
+    #image_shape = (300,300)
+    #boxes_parameters = create_prior_box(image_shape,
+                                    #box_configurations,
+                                    #variances)
+    #priors = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
+    #diff = boxes_parameters - priors
+    #print("simi {}, max value {}, min value {}".format(diff.shape, diff.max(), diff.min()))
 
 
+    scales = get_scales(6,start=1,s_min=.2,s_max=.9)
+    print(scales*300)
