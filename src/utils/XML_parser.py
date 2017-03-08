@@ -20,6 +20,9 @@ class XMLParser(object):
         self.data = dict()
         self._preprocess_XML()
 
+    def get_data(self):
+        return self.data
+
     def _preprocess_XML(self):
         filenames = os.listdir(self.path_prefix)
         for filename in filenames:
@@ -45,6 +48,8 @@ class XMLParser(object):
             bounding_boxes = np.asarray(bounding_boxes)
             one_hot_classes = np.asarray(one_hot_classes)
             image_data = np.hstack((bounding_boxes, one_hot_classes))
+            #if len(bounding_boxes.shape) == 1:
+                #image_data = np.expand_dims(image_data, axis=0)
             self.data[image_name] = image_data
 
     def _to_one_hot(self,name):
@@ -94,8 +99,7 @@ class XMLParser(object):
 
         return one_hot_vector
 
-## example on how to use it
-# import pickle
-# data = XML_preprocessor('VOC2007/Annotations/').data
-# pickle.dump(data,open('VOC2007.p','wb'))
+if __name__ == '__main__':
+    data_path = '../../datasets/VOCdevkit/VOC2007/'
+    ground_truths = XMLParser(data_path + 'Annotations/').get_data()
 
