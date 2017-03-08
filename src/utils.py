@@ -36,7 +36,6 @@ def create_prior_box(image_shape, box_configs, variances):
         aspect_ratios = layer_config["aspect_ratios"]
         min_size = layer_config["min_size"]
         max_size = layer_config["max_size"]
-
         # the .5 here in the step is to step in the center of the bounding box
         step_x = 0.5 * (float(image_width) / float(layer_width))
         step_y = 0.5 * (float(image_height) / float(layer_height))
@@ -85,7 +84,6 @@ def create_prior_box(image_shape, box_configs, variances):
         boxes_parameters.append(boxes_para)
 
     return np.concatenate(boxes_parameters, axis=0)
-
 
 def get_prior_parameters(model):
     box_configurations = []
