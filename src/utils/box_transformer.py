@@ -1,6 +1,6 @@
 import numpy as np
 
-class BoxEncoder(object):
+class BoxTransformer(object):
     def __init__(self, assigned_boxes, ground_truth_boxes):
         self.encoded_boxes = assigned_boxes.copy()
         self.ground_truth_boxes = ground_truth_boxes
@@ -52,29 +52,41 @@ class BoxEncoder(object):
             decode_bbox: Shifted priors.
         """
 
-        prior_width = prior_boxes[:, 2] - prior_boxes[:, 0]
-        prior_height = prior_boxes[:, 3] - prior_boxes[:, 1]
-        prior_center_x = 0.5 * (prior_boxes[:, 2] + prior_boxes[:, 0])
-        prior_center_y = 0.5 * (prior_boxes[:, 3] + prior_boxes[:, 1])
-        # ???????????????
+        prior_x_min = prior_boxes[:, 0]
+        prior_y_min = prior_boxes[:, 1]
+        prior_x_max = prior_boxes[:, 2]
+        prior_y_max = prior_boxes[:, 3]
 
-        decoded_center_x = predicted_boxes[:, 0] * prior_width * variances[:, 0]
+        prior_width = prior_x_max - prior_x_min
+        prior_height = prior_y_max - prior_y_min
+        prior_center_x = 0.5 * (prior_x_max + prior_x_min)
+        prior_center_y = 0.5 * (prior_y_max + prior_y_min)
+
+        #rename to g_hat_center_x all the other variables 
+        pred_center_x = predicted_boxes[:, 0]
+        pred_center_y = predicted_boxes[:, 1]
+        pred_width = predicted_boxes[:, 2]
+        pred_height = predicted_boxes[:, 3]
+
+        decoded_center_x = pred_center_x * prior_width * variances[:, 0]
         decoded_center_x = decoded_center_x + prior_center_x
-        decode_bbox_center_y = mbox_loc[:, 1] * prior_width * variances[:, 1]
-        decode_bbox_center_y += prior_center_y
-        decode_bbox_width = np.exp(mbox_loc[:, 2] * variances[:, 2])
-        decode_bbox_width *= prior_width
-        decode_bbox_height = np.exp(mbox_loc[:, 3] * variances[:, 3])
-        decode_bbox_height *= prior_height
-        decode_bbox_xmin = decode_bbox_center_x - 0.5 * decode_bbox_width
-        decode_bbox_ymin = decode_bbox_center_y - 0.5 * decode_bbox_height
-        decode_bbox_xmax = decode_bbox_center_x + 0.5 * decode_bbox_width
-        decode_bbox_ymax = decode_bbox_center_y + 0.5 * decode_bbox_height
-        decode_bbox = np.concatenate((decode_bbox_xmin[:, None],
-                                      decode_bbox_ymin[:, None],
-                                      decode_bbox_xmax[:, None],
-                                      decode_bbox_ymax[:, None]), axis=-1)
-        decode_bbox = np.minimum(np.maximum(decode_bbox, 0.0), 1.0)
-        return decode_bbox
+        decoded_center_y = pred_center_y * prior_width * variances[:, 1]
+        decoded_center_y = decoded_center_y + prior_center_y
 
+        decoded_width = np.exp(pred_width * variances[:, 2])
+        decoded_width = decoded_width * prior_width
+        decoded_height = np.exp(pred_height * variances[:, 3])
+        decoded_height = decoded_height * prior_height
+
+        decoded_x_min = decoded_center_x - (0.5 * decoded_width)
+        decoded_y_min = decoded_center_y - (0.5 * decoded_height)
+        decoded_x_max = decoded_center_x + (0.5 * decoded_width)
+        decoded_y_max = decoded_center_y + (0.5 * decoded_height)
+
+        decoded_box = np.concatenate((decoded_x_min[:, None],
+                                      decoded_y_min[:, None],
+                                      decoded_x_max[:, None],
+                                      decoded_y_max[:, None]), axis=-1)
+        decoded_box = np.clip(decoded_box, 0.0, 1.0)
+        return decoded_box
 
