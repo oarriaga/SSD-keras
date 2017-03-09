@@ -114,9 +114,9 @@ class ImageGenerator(object):
     def preprocess_images(self, image_array):
         return preprocess_input(image_array)
 
-    def flow(self, train=True):
+    def flow(self, mode='train'):
             while True:
-                if train:
+                if mode=='train':
                     shuffle(self.train_keys)
                     keys = self.train_keys
                 else:
@@ -131,7 +131,7 @@ class ImageGenerator(object):
                     image_array = self._imresize(image_array, self.image_size)
                     image_array = image_array.astype('float32')
                     box_corners = self.assigned_boxes[key].copy()
-                    if train:
+                    if mode == 'train' or mode == 'demo':
                         image_array, box_corners = self.transform(image_array,
                                                                 box_corners)
                     inputs.append(image_array)
@@ -139,7 +139,10 @@ class ImageGenerator(object):
                     if len(targets) == self.batch_size:
                         inputs = np.asarray(inputs)
                         targets = np.asarray(targets)
-                        yield self.preprocess_images(inputs), targets
+                        if mode == 'train':
+                            yield self.preprocess_images(inputs), targets
+                        if mode == 'demo':
+                            yield inputs, targets
                         inputs = []
                         targets = []
 
