@@ -1,8 +1,5 @@
 import numpy as np
-"""
-This can be thought of as bounding-box regression from an anchor box to a nearby
-ground-truth box.
-"""
+
 class BoxEncoder(object):
     def __init__(self, assigned_boxes, ground_truth_boxes):
         self.encoded_boxes = assigned_boxes.copy()
@@ -59,6 +56,7 @@ class BoxEncoder(object):
         prior_height = prior_boxes[:, 3] - prior_boxes[:, 1]
         prior_center_x = 0.5 * (prior_boxes[:, 2] + prior_boxes[:, 0])
         prior_center_y = 0.5 * (prior_boxes[:, 3] + prior_boxes[:, 1])
+        # ???????????????
 
         decoded_center_x = predicted_boxes[:, 0] * prior_width * variances[:, 0]
         decoded_center_x = decoded_center_x + prior_center_x

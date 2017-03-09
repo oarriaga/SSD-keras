@@ -75,13 +75,13 @@ class PriorBoxAssigner(object):
     def draw_assigned_boxes(self, image_prefix, image_shape=(300,300),
                                                         image_key=None):
         if image_key == None:
-            random_key = random.choice(list(self.assigned_boxes.keys()))
-        image_path = image_prefix + str(random_key)
+            image_key = random.choice(list(self.assigned_boxes.keys()))
+        image_path = image_prefix + str(image_key)
         image_array = self.imread(image_path)
         image_array = self.resize_image(image_array, image_shape)
         figure, axis = plt.subplots(1)
         axis.imshow(image_array)
-        box_coordinates = self.assigned_boxes[random_key][:, 0:4]
+        box_coordinates = self.assigned_boxes[image_key][:, 0:4]
         print(box_coordinates.shape)
         original_coordinates = self.denormalize_box(box_coordinates,
                                                         image_shape)
@@ -121,9 +121,9 @@ if __name__ == '__main__':
     model = SSD300((300,300,3))
     box_creator = PriorBoxCreator(model)
     prior_boxes = box_creator.create_boxes()
+
     data_path = '../../datasets/VOCdevkit/VOC2007/'
     ground_truths = XMLParser(data_path+'Annotations/').get_data()
     prior_box_manager = PriorBoxAssigner(prior_boxes, ground_truths)
     assigned_boxes = prior_box_manager.assign_boxes()
     prior_box_manager.draw_assigned_boxes(data_path+'JPEGImages/')
-
