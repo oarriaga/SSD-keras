@@ -5,9 +5,10 @@ import random
 
 class PriorBoxAssigner(object):
     def __init__(self, prior_boxes, ground_truths):
-        self.ground_truth_boxes = ground_truths
+        #self.ground_truth_boxes = ground_truths
         self.prior_boxes = self._flatten_prior_boxes(prior_boxes)
-        self.assigned_boxes = self.ground_truth_boxes.copy()
+        self.ground_truths = ground_truths
+        self.assigned_boxes = {}
         self.intersection_over_unions = []
 
     def _flatten_prior_boxes(self, prior_boxes):
@@ -15,6 +16,7 @@ class PriorBoxAssigner(object):
         prior_boxes = np.concatenate(prior_boxes, axis=0)
         return prior_boxes
 
+    """
     def _flatten_ground_truths(self, ground_truths):
         ground_truth_boxes = []
         self.ground_truth_keys = ground_truths.keys()
@@ -22,18 +24,21 @@ class PriorBoxAssigner(object):
             image_ground_truths = ground_truths[image_key]
             ground_truth_boxes.append(image_ground_truths)
         return np.concatenate(ground_truth_boxes, axis=0)
+    """
 
     def assign_boxes(self):
-        for image_key in self.ground_truth_boxes.keys():
-            num_objects_in_image = self.ground_truth_boxes[image_key].shape[0]
+        for image_key, ground_truth in self.ground_truths.items():
+            num_objects_in_image = ground_truth.shape[0]
+            assigned_truths = ground_truth.copy()
             for object_arg in range(num_objects_in_image):
-                ground_truth = self.ground_truth_boxes[image_key][object_arg][0:4]
-                ious = self._calculate_intersection_over_unions(ground_truth)
+                coordinates = ground_truth[object_arg][0:4]
+                ious = self._calculate_intersection_over_unions(coordinates)
                 best_iou = np.max(ious)
                 self.intersection_over_unions.append(best_iou)
                 best_iou_arg = np.argmax(ious)
                 best_coordinates = self.prior_boxes[best_iou_arg]
-                self.assigned_boxes[image_key][object_arg][0:4] = best_coordinates
+                assigned_truths[object_arg][0:4] = best_coordinates
+                self.assigned_boxes[image_key] = assigned_truths
         return self.assigned_boxes
 
     def _calculate_intersection_over_unions(self, ground_truth):
@@ -82,7 +87,7 @@ class PriorBoxAssigner(object):
         figure, axis = plt.subplots(1)
         axis.imshow(image_array)
         box_coordinates = self.assigned_boxes[image_key][:, 0:4]
-        print(box_coordinates.shape)
+        #print(box_coordinates.shape)
         original_coordinates = self.denormalize_box(box_coordinates,
                                                         image_shape)
         x_min = original_coordinates[0]

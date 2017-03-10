@@ -2,6 +2,7 @@ from image_generator import ImageGenerator
 from models import SSD300
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_assigner import PriorBoxAssigner
+from utils.box_transformer import BoxTransformer
 from utils.XML_parser import XMLParser
 from utils.utils import split_data
 from utils.utils import read_image, resize_image
@@ -21,10 +22,14 @@ box_creator.draw_boxes(image_path + image_key, box_coordinates)
 
 data_path = '../datasets/VOCdevkit/VOC2007/'
 ground_truths = XMLParser(data_path+'Annotations/').get_data()
+print(ground_truths['000007.jpg'])
 prior_box_manager = PriorBoxAssigner(prior_boxes, ground_truths)
+print(ground_truths['000007.jpg'])
 assigned_boxes = prior_box_manager.assign_boxes()
+print(ground_truths['000007.jpg'])
 prior_box_manager.draw_assigned_boxes(image_path, image_shape[0:2], image_key)
-
+print(ground_truths['000007.jpg'])
+"""
 batch_size = 7
 train_keys, validation_keys = split_data(assigned_boxes, training_ratio=.8)
 
@@ -37,7 +42,6 @@ transformed_image = next(image_generator.flow(mode='demo'))[0]
 transformed_image = np.squeeze(transformed_image[0]).astype('uint8')
 original_image = read_image(data_path+'JPEGImages/'+validation_keys[0])
 original_image = resize_image(original_image, image_shape[0:2])
-
 plt.figure(1)
 plt.subplot(121)
 plt.title('Original image')
@@ -47,5 +51,8 @@ plt.title('Transformed image')
 plt.imshow(transformed_image)
 plt.show()
 
+#box_transfomer = BoxTransformer(assigned_boxes, ground_truths)
+#encoded_boxes = box_transfomer.encode_boxes()
 
 
+"""

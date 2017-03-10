@@ -2,12 +2,13 @@ import numpy as np
 
 class BoxTransformer(object):
     def __init__(self, assigned_boxes, ground_truth_boxes):
-        self.encoded_boxes = assigned_boxes.copy()
+        #self.assigned_boxes = assigned_boxes
+        self.transformed_boxes = assigned_boxes.copy()
         self.ground_truth_boxes = ground_truth_boxes
 
     def encode_boxes(self):
-        for image_key in self.assigned_boxes.keys():
-            d_box_coordinates = self.encoded_boxes[image_key][:, 0:4]
+        for image_key in self.transformed_boxes.keys():
+            d_box_coordinates = self.transformed_boxes[image_key][:, 0:4]
             d_x_min = d_box_coordinates[:, 0]
             d_y_min = d_box_coordinates[:, 1]
             d_x_max = d_box_coordinates[:, 2]
@@ -33,12 +34,12 @@ class BoxTransformer(object):
             g_hat_width  = np.log(g_width  / d_width)
             g_hat_height = np.log(g_height / d_height)
 
-            self.encoded_boxes[image_key][:, 0] = g_hat_center_x
-            self.encoded_boxes[image_key][:, 1] = g_hat_center_y
-            self.encoded_boxes[image_key][:, 2] = g_hat_width
-            self.encoded_boxes[image_key][:, 3] = g_hat_height
+            self.transformed_boxes[image_key][:, 0] = g_hat_center_x
+            self.transformed_boxes[image_key][:, 1] = g_hat_center_y
+            self.transformed_boxes[image_key][:, 2] = g_hat_width
+            self.transformed_boxes[image_key][:, 3] = g_hat_height
 
-        return self.encoded_boxes
+        return self.transformed_boxes
 
     def decode_boxes(self, predicted_boxes, prior_boxes, variances):
         """Convert bboxes from local predictions to shifted priors.
