@@ -27,11 +27,11 @@ class PriorBoxAssigner(object):
     """
 
     def assign_boxes(self):
-        for image_key, ground_truth in self.ground_truths.items():
-            num_objects_in_image = ground_truth.shape[0]
-            assigned_truths = ground_truth.copy()
+        for image_key, ground_truth_values in self.ground_truths.items():
+            num_objects_in_image = ground_truth_values.shape[0]
+            assigned_truths = ground_truth_values.copy()
             for object_arg in range(num_objects_in_image):
-                coordinates = ground_truth[object_arg][0:4]
+                coordinates = ground_truth_values[object_arg][0:4]
                 ious = self._calculate_intersection_over_unions(coordinates)
                 best_iou = np.max(ious)
                 self.intersection_over_unions.append(best_iou)
