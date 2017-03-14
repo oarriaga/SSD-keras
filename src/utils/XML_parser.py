@@ -48,8 +48,8 @@ class XMLParser(object):
             bounding_boxes = np.asarray(bounding_boxes)
             one_hot_classes = np.asarray(one_hot_classes)
             image_data = np.hstack((bounding_boxes, one_hot_classes))
-            #if len(bounding_boxes.shape) == 1:
-                #image_data = np.expand_dims(image_data, axis=0)
+            if len(bounding_boxes.shape) == 1:
+                image_data = np.expand_dims(image_data, axis=0)
             self.data[image_name] = image_data
 
     def _to_one_hot(self,name):

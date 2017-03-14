@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import random
 from utils.utils import read_image
 from utils.utils import resize_image
@@ -15,6 +14,7 @@ class BoxVisualizer(object):
             self.random_instance.seed(seed)
 
     def denormalize_box(self, box_coordinates):
+        #num_objects_in_image = box_coordinates.shape[0]
         x_min = box_coordinates[:, 0]
         y_min = box_coordinates[:, 1]
         x_max = box_coordinates[:, 2]
@@ -31,12 +31,10 @@ class BoxVisualizer(object):
             image_path = self.random_instance.choice(self.image_paths)
         else:
             image_path = self.image_prefix + image_key
-
         image_array = read_image(image_path)
         image_array = resize_image(image_array, self.image_size)
         figure, axis = plt.subplots(1)
         axis.imshow(image_array)
-        box_coordinates = np.squeeze(box_coordinates)
         num_boxes = len(box_coordinates)
         original_coordinates = self.denormalize_box(box_coordinates)
         x_min = original_coordinates[0]

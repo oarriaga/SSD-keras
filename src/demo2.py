@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import random
 
@@ -38,10 +37,13 @@ batch_size =7
 image_generator = ImageGenerator(ground_truth_data, batch_size,
                                  image_shape[0:2],
                                  train_keys, validation_keys,
-                                 image_prefix)
+                                 image_prefix,
+                                 vertical_flip_probability=0,
+                                 horizontal_flip_probability=0.5)
 
 transformed_image = next(image_generator.flow(mode='demo'))[0]
 transformed_image = np.squeeze(transformed_image[0]).astype('uint8')
 original_image = read_image(image_prefix + validation_keys[0])
 original_image = resize_image(original_image, image_shape[0:2])
 plot_images(original_image, transformed_image)
+
