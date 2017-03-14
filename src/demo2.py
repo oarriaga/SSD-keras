@@ -1,3 +1,7 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import random
+
 from image_generator import ImageGenerator
 from models import SSD300
 from utils.prior_box_creator import PriorBoxCreator
@@ -5,8 +9,9 @@ from utils.prior_box_creator import PriorBoxCreator
 from utils.box_visualizer import BoxVisualizer
 from utils.XML_parser import XMLParser
 from utils.utils import split_data
-#from utils.utils import read_image, resize_image
-import random
+from utils.utils import read_image
+from utils.utils import resize_image
+from utils.utils import plot_images
 
 image_shape = (300, 300, 3)
 model =SSD300(image_shape)
@@ -29,11 +34,14 @@ box_visualizer.draw_normalized_box(ground_truth_box_coordinates, random_key)
 
 train_keys, validation_keys = split_data(ground_truth_data, training_ratio=.8)
 
-####???? what is the input of the ImageGenerator which keys????
-assigned_image_generator = ImageGenerator(, batch_size,
-                                image_shape[0:2],
-                                train_keys, validation_keys,
-                                data_path+'JPEGImages/')
+batch_size =7
+image_generator = ImageGenerator(ground_truth_data, batch_size,
+                                 image_shape[0:2],
+                                 train_keys, validation_keys,
+                                 image_prefix)
 
-
-
+transformed_image = next(image_generator.flow(mode='demo'))[0]
+transformed_image = np.squeeze(transformed_image[0]).astype('uint8')
+original_image = read_image(image_prefix + validation_keys[0])
+original_image = resize_image(original_image, image_shape[0:2])
+plot_images(original_image, transformed_image)

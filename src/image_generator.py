@@ -13,7 +13,8 @@ class ImageGenerator(object):
         - Add random crop method.
         - Finish support for not using bounding_boxes.
     """
-    def __init__(self, assigned_boxes, batch_size, image_size,
+    #change ground_truth_data to ground_truth_data
+    def __init__(self, ground_truth_data, batch_size, image_size,
                 train_keys, validation_keys, path_prefix=None,
                  saturation_var=0.5,
                  brightness_var=0.5,
@@ -25,7 +26,7 @@ class ImageGenerator(object):
                  crop_area_range=[0.75, 1.0],
                  aspect_ratio_range=[3./4., 4./3.]):
 
-        self.assigned_boxes = assigned_boxes
+        self.ground_truth_data = ground_truth_data
         self.batch_size = batch_size
         self.path_prefix = path_prefix
         self.train_keys = train_keys
@@ -130,7 +131,7 @@ class ImageGenerator(object):
                     image_array = self._imread(image_path)
                     image_array = self._imresize(image_array, self.image_size)
                     image_array = image_array.astype('float32')
-                    box_corners = self.assigned_boxes[key].copy()
+                    box_corners = self.ground_truth_data[key].copy()
                     if mode == 'train' or mode == 'demo':
                         image_array, box_corners = self.transform(image_array,
                                                                 box_corners)

@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from scipy.misc import imread
 from scipy.misc import imresize
 import glob
@@ -17,5 +18,20 @@ def resize_image(image_array, shape):
 
 def list_files_in_directory(path_name='*'):
     return glob.glob(path_name)
+
+def plot_images(original_image, transformed_image):
+    plt.figure(1)
+    plt.subplot(121)
+    plt.title('Original image')
+    plt.imshow(original_image)
+    plt.subplot(122)
+    plt.title('Transformed image')
+    plt.imshow(transformed_image)
+    plt.show()
+
+
+
+
+
 
 
