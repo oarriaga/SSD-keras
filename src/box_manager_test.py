@@ -18,3 +18,9 @@ prior_box_manager = PriorBoxManager(prior_boxes,
                                     background_id=0)
 
 a = prior_box_manager.assign_boxes(ground_truths['000009.jpg'])
+
+encoded_boxes = prior_box_manager.encoded_boxes
+best_iou_indices = prior_box_manager.best_iou_indices
+num_assigned_boxes = prior_box_manager.num_assigned_boxes
+best_iou_mask = prior_box_manager.best_iou_mask
+

@@ -47,48 +47,6 @@ class PriorBoxManager(object):
         intersection_over_unions = intersections / unions
         return intersection_over_unions
 
-    def _assign_boxes_to_object(self, ground_truth_box, return_iou=True):
-        ious = self._calculate_intersection_over_unions(ground_truth_box)
-        print(np.max(ious))
-        encoded_boxes = np.zeros((self.num_priors, 4 + return_iou))
-        assign_mask = ious > self.overlap_threshold
-        print(np.sum(assign_mask))
-        if not assign_mask.any():
-            assign_mask[ious.argmax()] = True
-        if return_iou:
-            encoded_boxes[:, -1][assign_mask] = ious[assign_mask]
-        assigned_priors = self.prior_boxes[assign_mask]
-        assigned_encoded_priors = self._encode_box(assigned_priors,
-                                                   ground_truth_box)
-        encoded_boxes[assign_mask, 0:4] = assigned_encoded_priors
-        return encoded_boxes.ravel()
-
-    def assign_boxes(self, ground_truth_data):
-        assignment = np.zeros((self.num_priors, 4 + self.num_classes + 8))
-        assignment[:, 4 + self.background_id] = 1.0
-        num_objects_in_image = len(ground_truth_data)
-        if num_objects_in_image == 0:
-            return assignment
-        encoded_boxes = np.apply_along_axis(self._assign_boxes_to_object,
-                                            1, ground_truth_data[:, :4])
-        print(encoded_boxes.shape)
-        encoded_boxes = encoded_boxes.reshape(-1, self.num_priors, 5)
-        print(encoded_boxes.shape)
-        best_iou = encoded_boxes[:, :, -1].max(axis=0)
-        print(best_iou) #aquí te quedaste 
-        best_iou_idx = encoded_boxes[:, :, -1].argmax(axis=0)
-        best_iou_mask = best_iou > 0
-        best_iou_idx = best_iou_idx[best_iou_mask]
-        assign_num = len(best_iou_idx)
-        encoded_boxes = encoded_boxes[:, best_iou_mask, :]
-        assignment[:, :4][best_iou_mask] = encoded_boxes[best_iou_idx,
-                                                         np.arange(assign_num),
-                                                         :4]
-        assignment[:, 4][best_iou_mask] = 0
-        assignment[:, 5:-8][best_iou_mask] = ground_truth_data[best_iou_idx, 4:]
-        assignment[:, -8][best_iou_mask] = 1
-        return assignment
-
     def _encode_box(self, assigned_prior_boxes, ground_truth_box):
         d_box_values = assigned_prior_boxes
         d_box_coordinates = d_box_values[:, 0:4]
@@ -121,3 +79,92 @@ class PriorBoxManager(object):
                                         g_hat_height.reshape(-1, 1)],
                                         axis=1)
         return encoded_boxes
+
+    def _assign_boxes_to_object(self, ground_truth_box, return_iou=True):
+        ious = self._calculate_intersection_over_unions(ground_truth_box)
+        print(np.max(ious))
+        encoded_boxes = np.zeros((self.num_priors, 4 + return_iou))
+        assign_mask = ious > self.overlap_threshold
+        # all the other will contain an iou of zero
+        print(np.sum(assign_mask))
+        if not assign_mask.any():
+            assign_mask[ious.argmax()] = True
+        if return_iou:
+            encoded_boxes[:, -1][assign_mask] = ious[assign_mask]
+        assigned_priors = self.prior_boxes[assign_mask]
+        assigned_encoded_priors = self._encode_box(assigned_priors,
+                                                   ground_truth_box)
+        encoded_boxes[assign_mask, 0:4] = assigned_encoded_priors
+        return encoded_boxes.ravel()
+
+    def assign_boxes(self, ground_truth_data):
+        assignments = np.zeros((self.num_priors, 4 + self.num_classes + 8))
+        assignments[:, 4 + self.background_id] = 1.0
+        num_objects_in_image = len(ground_truth_data)
+        if num_objects_in_image == 0:
+            return assignments
+        encoded_boxes = np.apply_along_axis(self._assign_boxes_to_object,
+                                            1, ground_truth_data[:, :4])
+        # (num_objects_in_image, num_priors, encoded_coordinates + iou)
+        encoded_boxes = encoded_boxes.reshape(-1, self.num_priors, 5)
+        # we will take the best boxes for every object in the image
+        best_iou = encoded_boxes[:, :, -1].max(axis=0)
+        best_iou_indices = encoded_boxes[:, :, -1].argmax(axis=0)
+        best_iou_mask = best_iou > 0
+        best_iou_indices = best_iou_indices[best_iou_mask]
+        num_assigned_boxes = len(best_iou_indices)
+        encoded_boxes = encoded_boxes[:, best_iou_mask, :]
+        self.best_iou = best_iou
+        self.encoded_boxes = encoded_boxes
+        self.best_iou_indices = best_iou_indices
+        self.num_assigned_boxes = num_assigned_boxes
+        self.best_iou_mask = best_iou_mask
+        # np.arange is needed since you want to do it for every box
+        assignments[best_iou_mask, :4] = encoded_boxes[best_iou_indices,
+                                                np.arange(num_assigned_boxes),
+                                                :4]
+
+        assignments[best_iou_mask, 4] = 0
+        assignments[best_iou_mask, 5:-8] = ground_truth_data[best_iou_indices, 4:]
+        # background counter
+        assignments[:, -8][best_iou_mask] = 1
+        return assignments
+
+    def decode_boxes(self, predicted_boxes, prior_boxes):
+        prior_x_min = prior_boxes[:, 0]
+        prior_y_min = prior_boxes[:, 1]
+        prior_x_max = prior_boxes[:, 2]
+        prior_y_max = prior_boxes[:, 3]
+
+        prior_width = prior_x_max - prior_x_min
+        prior_height = prior_y_max - prior_y_min
+        prior_center_x = 0.5 * (prior_x_max + prior_x_min)
+        prior_center_y = 0.5 * (prior_y_max + prior_y_min)
+
+        #rename to g_hat_center_x all the other variables 
+        pred_center_x = predicted_boxes[:, 0]
+        pred_center_y = predicted_boxes[:, 1]
+        pred_width = predicted_boxes[:, 2]
+        pred_height = predicted_boxes[:, 3]
+
+        decoded_center_x = pred_center_x * prior_width
+        decoded_center_x = decoded_center_x + prior_center_x
+        decoded_center_y = pred_center_y * prior_width
+        decoded_center_y = decoded_center_y + prior_center_y
+
+        decoded_width = np.exp(pred_width)
+        decoded_width = decoded_width * prior_width
+        decoded_height = np.exp(pred_height)
+        decoded_height = decoded_height * prior_height
+
+        decoded_x_min = decoded_center_x - (0.5 * decoded_width)
+        decoded_y_min = decoded_center_y - (0.5 * decoded_height)
+        decoded_x_max = decoded_center_x + (0.5 * decoded_width)
+        decoded_y_max = decoded_center_y + (0.5 * decoded_height)
+
+        decoded_boxes = np.concatenate((decoded_x_min[:, None],
+                                      decoded_y_min[:, None],
+                                      decoded_x_max[:, None],
+                                      decoded_y_max[:, None]), axis=-1)
+        decoded_boxes = np.clip(decoded_boxes, 0.0, 1.0)
+        return decoded_boxes
