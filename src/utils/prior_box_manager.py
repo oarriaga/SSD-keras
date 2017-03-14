@@ -130,11 +130,11 @@ class PriorBoxManager(object):
         assignments[:, -8][best_iou_mask] = 1
         return assignments
 
-    def decode_boxes(self, predicted_boxes, prior_boxes):
-        prior_x_min = prior_boxes[:, 0]
-        prior_y_min = prior_boxes[:, 1]
-        prior_x_max = prior_boxes[:, 2]
-        prior_y_max = prior_boxes[:, 3]
+    def decode_boxes(self, predicted_boxes):
+        prior_x_min = self.prior_boxes[:, 0]
+        prior_y_min = self.prior_boxes[:, 1]
+        prior_x_max = self.prior_boxes[:, 2]
+        prior_y_max = self.prior_boxes[:, 3]
 
         prior_width = prior_x_max - prior_x_min
         prior_height = prior_y_max - prior_y_min

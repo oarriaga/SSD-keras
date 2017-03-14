@@ -4,7 +4,7 @@ import random
 from image_generator import ImageGenerator
 from models import SSD300
 from utils.prior_box_creator import PriorBoxCreator
-#from utils.prior_box_manager import PriorBoxManager
+from utils.prior_box_manager import PriorBoxManager
 from utils.box_visualizer import BoxVisualizer
 from utils.XML_parser import XMLParser
 from utils.utils import split_data
@@ -28,9 +28,10 @@ box_visualizer.draw_normalized_box(box_coordinates)
 ground_data_prefix = root_prefix + 'Annotations/'
 ground_truth_data = XMLParser(ground_data_prefix).get_data()
 random_key =  random.choice(list(ground_truth_data.keys()))
-ground_truth_box_coordinates = ground_truth_data[random_key][:,0:4]
-box_visualizer.draw_normalized_box(ground_truth_box_coordinates, random_key)
+selected_data = ground_truth_data[random_key]
+selected_box_coordinates = selected_data[:, 0:4]
 
+box_visualizer.draw_normalized_box(selected_box_coordinates, random_key)
 train_keys, validation_keys = split_data(ground_truth_data, training_ratio=.8)
 
 batch_size =7
@@ -46,4 +47,15 @@ transformed_image = np.squeeze(transformed_image[0]).astype('uint8')
 original_image = read_image(image_prefix + validation_keys[0])
 original_image = resize_image(original_image, image_shape[0:2])
 plot_images(original_image, transformed_image)
+
+prior_box_manager = PriorBoxManager(prior_boxes)
+assigned_encoded_boxes = prior_box_manager.assign_boxes(selected_data)
+positive_mask = assigned_encoded_boxes[:, -8] > 0
+#encoded_positive_boxes = assigned_boxes[positive_mask, 0:4]
+#decoded_positive_boxes = prior_box_manager.decode_boxes(encoded_positive_boxes)
+assigned_decoded_boxes = prior_box_manager.decode_boxes(assigned_encoded_boxes)
+decoded_positive_boxes = assigned_encoded_boxes[positive_mask, 0:4]
+box_visualizer.draw_normalized_box(decoded_positive_boxes)
+
+
 
