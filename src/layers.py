@@ -45,7 +45,6 @@ class Normalize(Layer):
         output *= self.gamma
         return output
 
-
 class PriorBox(Layer):
     """Generate the prior boxes of designated sizes and aspect ratios.
 

@@ -1,60 +1,57 @@
+import numpy as np
+import random
+
 from image_generator import ImageGenerator
 from models import SSD300
 from utils.prior_box_creator import PriorBoxCreator
-from utils.prior_box_assigner import PriorBoxAssigner
-from utils.box_transformer import BoxTransformer
+from utils.prior_box_manager import PriorBoxManager
+from utils.box_visualizer import BoxVisualizer
 from utils.XML_parser import XMLParser
 from utils.utils import split_data
-from utils.utils import read_image, resize_image
-import numpy as np
-import matplotlib.pyplot as plt
+from utils.utils import read_image
+from utils.utils import resize_image
+from utils.utils import plot_images
 
 image_shape = (300, 300, 3)
-model = SSD300(image_shape)
+model =SSD300(image_shape)
 box_creator = PriorBoxCreator(model)
 prior_boxes = box_creator.create_boxes()
 
+root_prefix = '../datasets/VOCdevkit/VOC2007/'
+image_prefix = root_prefix + 'JPEGImages/'
+box_visualizer = BoxVisualizer(image_prefix, image_shape[0:2])
+
 layer_scale, box_arg = 0, 780
 box_coordinates = prior_boxes[layer_scale][box_arg, :, :]
-image_path = '../images/'
-image_key = '007040.jpg'
-box_creator.draw_boxes(image_path + image_key, box_coordinates)
+box_visualizer.draw_normalized_box(box_coordinates)
 
-data_path = '../datasets/VOCdevkit/VOC2007/'
-ground_truths = XMLParser(data_path+'Annotations/').get_data()
-prior_box_manager = PriorBoxAssigner(prior_boxes, ground_truths)
-assigned_boxes = prior_box_manager.assign_boxes()
-prior_box_manager.draw_assigned_boxes(image_path, image_shape[0:2], image_key)
-batch_size = 7
-train_keys, validation_keys = split_data(assigned_boxes, training_ratio=.8)
+ground_data_prefix = root_prefix + 'Annotations/'
+ground_truth_data = XMLParser(ground_data_prefix).get_data()
+random_key =  random.choice(list(ground_truth_data.keys()))
+selected_data = ground_truth_data[random_key]
+selected_box_coordinates = selected_data[:, 0:4]
 
-assigned_image_generator = ImageGenerator(assigned_boxes, batch_size,
-                                image_shape[0:2],
-                                train_keys, validation_keys,
-                                data_path+'JPEGImages/')
+box_visualizer.draw_normalized_box(selected_box_coordinates, random_key)
+train_keys, validation_keys = split_data(ground_truth_data, training_ratio=.8)
 
-transformed_image = next(assigned_image_generator.flow(mode='demo'))[0]
+batch_size =7
+image_generator = ImageGenerator(ground_truth_data, batch_size,
+                                 image_shape[0:2],
+                                 train_keys, validation_keys,
+                                 image_prefix,
+                                 vertical_flip_probability=0,
+                                 horizontal_flip_probability=0.5)
+
+transformed_image = next(image_generator.flow(mode='demo'))[0]
 transformed_image = np.squeeze(transformed_image[0]).astype('uint8')
-original_image = read_image(data_path+'JPEGImages/'+validation_keys[0])
+original_image = read_image(image_prefix + validation_keys[0])
 original_image = resize_image(original_image, image_shape[0:2])
-plt.figure(1)
-plt.subplot(121)
-plt.title('Original image')
-plt.imshow(original_image)
-plt.subplot(122)
-plt.title('Transformed image')
-plt.imshow(transformed_image)
-plt.show()
+plot_images(original_image, transformed_image)
 
-box_transfomer = BoxTransformer(assigned_boxes, ground_truths)
-encoded_boxes = box_transfomer.encode_boxes()
-
-image_generator = ImageGenerator(encoded_boxes, batch_size,
-                                image_shape[0:2],
-                                train_keys, validation_keys,
-                                data_path+'JPEGImages/')
-
-
-
-
+prior_box_manager = PriorBoxManager(prior_boxes)
+assigned_encoded_boxes = prior_box_manager.assign_boxes(selected_data)
+positive_mask = assigned_encoded_boxes[:, -8] > 0
+assigned_decoded_boxes = prior_box_manager.decode_boxes(assigned_encoded_boxes)
+decoded_positive_boxes = assigned_decoded_boxes[positive_mask, 0:4]
+box_visualizer.draw_normalized_box(decoded_positive_boxes, random_key)
 
