@@ -80,6 +80,54 @@ class PriorBoxManager(object):
                                         axis=1)
         return encoded_boxes
 
+    def assign_boxes2(self, ground_truth_data, encode_box=True):
+        """ you need to give a single set of all the prior boxes back,
+        you can't give a set of prior boxes for every object in the image.
+        """
+        num_objects_in_image = ground_truth_data.shape[0]
+        assigned_data = np.zeros((self.num_priors, 4 + self.num_classes))
+        assigned_data[:, 3 + self.background_id] = 1.0
+        # this is incorrect maybe: len(if num_objects_in_image.shape) < 2
+        num_objects_in_image = ground_truth_data.shape[0]
+        encoded_boxes = np.zeros((num_objects_in_image, self.num_priors, 4 + 1))
+        if num_objects_in_image == 0:
+            return assigned_data
+        for object_arg in range(num_objects_in_image):
+            ground_truth_object = ground_truth_data[object_arg]
+            ious = self._calculate_intersection_over_unions(ground_truth_object)
+            assign_mask = ious > self.overlap_threshold
+            if not assign_mask.any():
+                assign_mask[ious.argmax()] = True
+            encoded_boxes[object_arg, :, -1][assign_mask] = ious[assign_mask]
+            #encoded_boxes[:, -1][assign_mask] = ious[assign_mask]
+            assigned_priors = self.prior_boxes[assign_mask]
+            if encode_box:
+                assigned_encoded_priors = self._encode_box(assigned_priors,
+                                                        ground_truth_object)
+                encoded_boxes[object_arg, assign_mask] = (
+                                                    assigned_encoded_priors)
+            else:
+                encoded_boxes[object_arg, assign_mask] = assigned_priors
+
+
+        # best_object_iou best_box_for_object
+        best_object_iou = np.max(encoded_boxes, axis=0)
+        best_object_iou_indices = np.argmax(encoded_boxes, axis=0)
+        best_object_iou_mask = best_object_iou > 0
+        best_object_iou_indices = best_object_iou_indices[best_object_iou_mask]
+        num_assigned_boxes = len(best_object_iou_indices)
+        encoded_boxes[:, best_object_iou_mask, :4] = 0
+
+        assigned_data[best_object_iou_mask, :4] = encoded_boxes[
+                                                best_object_iou_indices,
+                                                np.arange(num_assigned_boxes),
+                                                :4]
+
+        assigned_data[best_object_iou_mask, 4] = 0
+        assigned_data[best_object_iou_mask, 5:-8] = ground_truth_data[best_object_iou_indices, 4:]
+        return assigned_data
+
+
     def _assign_boxes_to_object(self, ground_truth_box, return_iou=True):
         ious = self._calculate_intersection_over_unions(ground_truth_box)
         print(np.max(ious))
@@ -114,12 +162,7 @@ class PriorBoxManager(object):
         best_iou_indices = best_iou_indices[best_iou_mask]
         num_assigned_boxes = len(best_iou_indices)
         encoded_boxes = encoded_boxes[:, best_iou_mask, :]
-        self.best_iou = best_iou
-        self.encoded_boxes = encoded_boxes
-        self.best_iou_indices = best_iou_indices
-        self.num_assigned_boxes = num_assigned_boxes
-        self.best_iou_mask = best_iou_mask
-        # np.arange is needed since you want to do it for every box
+        #np.arange is needed since you want to do it for every box
         assignments[best_iou_mask, :4] = encoded_boxes[best_iou_indices,
                                                 np.arange(num_assigned_boxes),
                                                 :4]

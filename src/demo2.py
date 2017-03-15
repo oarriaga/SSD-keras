@@ -51,11 +51,7 @@ plot_images(original_image, transformed_image)
 prior_box_manager = PriorBoxManager(prior_boxes)
 assigned_encoded_boxes = prior_box_manager.assign_boxes(selected_data)
 positive_mask = assigned_encoded_boxes[:, -8] > 0
-#encoded_positive_boxes = assigned_boxes[positive_mask, 0:4]
-#decoded_positive_boxes = prior_box_manager.decode_boxes(encoded_positive_boxes)
 assigned_decoded_boxes = prior_box_manager.decode_boxes(assigned_encoded_boxes)
-decoded_positive_boxes = assigned_encoded_boxes[positive_mask, 0:4]
-box_visualizer.draw_normalized_box(decoded_positive_boxes)
-
-
+decoded_positive_boxes = assigned_decoded_boxes[positive_mask, 0:4]
+box_visualizer.draw_normalized_box(decoded_positive_boxes, random_key)
 
