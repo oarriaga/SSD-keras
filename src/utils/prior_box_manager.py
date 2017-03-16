@@ -82,11 +82,11 @@ class PriorBoxManager(object):
 
     def _assign_boxes_to_object(self, ground_truth_box, return_iou=True):
         ious = self._calculate_intersection_over_unions(ground_truth_box)
-        print(np.max(ious))
+        #print(np.max(ious))
         encoded_boxes = np.zeros((self.num_priors, 4 + return_iou))
         assign_mask = ious > self.overlap_threshold
         # all the other will contain an iou of zero
-        print(np.sum(assign_mask))
+        #print(np.sum(assign_mask))
         if not assign_mask.any():
             assign_mask[ious.argmax()] = True
         if return_iou:
@@ -98,7 +98,8 @@ class PriorBoxManager(object):
         return encoded_boxes.ravel()
 
     def assign_boxes(self, ground_truth_data):
-        assignments = np.zeros((self.num_priors, 4 + self.num_classes + 8))
+        #assignments = np.zeros((self.num_priors, 4 + self.num_classes + 8))
+        assignments = np.zeros((self.num_priors, 4 + self.num_classes))
         assignments[:, 4 + self.background_id] = 1.0
         num_objects_in_image = len(ground_truth_data)
         if num_objects_in_image == 0:
@@ -125,7 +126,8 @@ class PriorBoxManager(object):
                                                 :4]
 
         assignments[best_iou_mask, 4] = 0
-        assignments[best_iou_mask, 5:-8] = ground_truth_data[best_iou_indices, 4:]
+        #assignments[best_iou_mask, 5:-8] = ground_truth_data[best_iou_indices, 4:]
+        assignments[best_iou_mask, 5:] = ground_truth_data[best_iou_indices, 4:]
         # background counter
         assignments[:, -8][best_iou_mask] = 1
         return assignments

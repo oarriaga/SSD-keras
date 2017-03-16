@@ -3,13 +3,14 @@ import numpy as np
 class PriorBoxCreator(object):
     def __init__(self, model, layer_type='PriorBox'):
         self.model = model
+        self.image_shape = self.model.input_shape[1:3]
         self.layer_type = layer_type
         self.scale_min = .2
         self.scale_max = .9
         self.layer_scales = None
         self.model_configurations = None
 
-    def create_prior_boxes(self):
+    def _create_prior_boxes(self):
         image_width, image_height = self.image_shape
         self.prior_boxes = []
         for layer_arg, configuration in enumerate(self.model_configurations):
@@ -19,7 +20,7 @@ class PriorBoxCreator(object):
             layer_prior_boxes = self._get_prior_boxes(layer_scale, aspect_ratios, layer_size)
             self.prior_boxes.append(layer_prior_boxes)
 
-    def calculate_layer_scales(self):
+    def _calculate_layer_scales(self):
         num_feature_maps = len(self.model_configurations)
         scales = []
         step = (self.scale_max - self.scale_min)/(num_feature_maps - 1)
@@ -28,17 +29,16 @@ class PriorBoxCreator(object):
             scales.append(scale)
         self.layer_scales = np.asarray(scales)
 
-    def get_model_configurations(self):
-        self.image_shape = self.model.input_shape[1:3]
+    def _get_model_configurations(self):
         self.model_configurations = []
         for layer in self.model.layers:
             layer_type = layer.__class__.__name__
-            if layer_type == self.layer_type:
+            if self.layer_type == layer_type:
                 layer_data = {}
                 layer_data['layer_width'] = layer.input_shape[1]
                 layer_data['layer_height'] = layer.input_shape[2]
-                layer_data['min_size'] = layer.min_size
-                layer_data['max_size'] = layer.max_size
+                #layer_data['min_size'] = layer.min_size
+                #layer_data['max_size'] = layer.max_size
                 layer_data['aspect_ratios'] = layer.aspect_ratios
                 layer_data['num_prior'] = len(layer.aspect_ratios)
                 self.model_configurations.append(layer_data)
@@ -75,7 +75,7 @@ class PriorBoxCreator(object):
         return prior_boxes
 
     def create_boxes(self):
-        self.get_model_configurations()
-        self.calculate_layer_scales()
-        self.create_prior_boxes()
+        self._get_model_configurations()
+        self._calculate_layer_scales()
+        self._create_prior_boxes()
         return self.prior_boxes

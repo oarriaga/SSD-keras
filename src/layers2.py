@@ -46,7 +46,8 @@ class Normalize(Layer):
         return output
 
 class PriorBox(Layer):
-    def __init__(self, **kwargs):
+    def __init__(self, aspect_ratios, **kwargs):
+        self.aspect_ratios = aspect_ratios
         super(PriorBox, self).__init__(**kwargs)
 
     def build(self, input_shape):

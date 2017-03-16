@@ -1,8 +1,11 @@
-import numpy as np
 import random
 
+import numpy as np
+
 from image_generator import ImageGenerator
-from models import SSD300
+#from models import SSD300
+from models2 import mini_SSD
+from multibox_loss_2 import MultiboxLoss
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
 from utils.box_visualizer import BoxVisualizer
@@ -13,7 +16,9 @@ from utils.utils import resize_image
 from utils.utils import plot_images
 
 image_shape = (300, 300, 3)
-model =SSD300(image_shape)
+num_classes = 21
+#model =SSD300(image_shape)
+model = mini_SSD(image_shape, num_classes)
 box_creator = PriorBoxCreator(model)
 prior_boxes = box_creator.create_boxes()
 
@@ -34,8 +39,17 @@ selected_box_coordinates = selected_data[:, 0:4]
 box_visualizer.draw_normalized_box(selected_box_coordinates, random_key)
 train_keys, validation_keys = split_data(ground_truth_data, training_ratio=.8)
 
-batch_size =7
-image_generator = ImageGenerator(ground_truth_data, batch_size,
+prior_box_manager = PriorBoxManager(prior_boxes)
+assigned_encoded_boxes = prior_box_manager.assign_boxes(selected_data)
+positive_mask = assigned_encoded_boxes[:, -8] > 0
+assigned_decoded_boxes = prior_box_manager.decode_boxes(assigned_encoded_boxes)
+decoded_positive_boxes = assigned_decoded_boxes[positive_mask, 0:4]
+box_visualizer.draw_normalized_box(decoded_positive_boxes, random_key)
+
+batch_size = 10
+image_generator = ImageGenerator(ground_truth_data,
+                                 prior_box_manager,
+                                 batch_size,
                                  image_shape[0:2],
                                  train_keys, validation_keys,
                                  image_prefix,
@@ -48,10 +62,12 @@ original_image = read_image(image_prefix + validation_keys[0])
 original_image = resize_image(original_image, image_shape[0:2])
 plot_images(original_image, transformed_image)
 
-prior_box_manager = PriorBoxManager(prior_boxes)
-assigned_encoded_boxes = prior_box_manager.assign_boxes(selected_data)
-positive_mask = assigned_encoded_boxes[:, -8] > 0
-assigned_decoded_boxes = prior_box_manager.decode_boxes(assigned_encoded_boxes)
-decoded_positive_boxes = assigned_decoded_boxes[positive_mask, 0:4]
-box_visualizer.draw_normalized_box(decoded_positive_boxes, random_key)
-
+num_epochs = 10
+model.compile(optimizer='adam', loss='categorical_crossentropy')
+multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=2.0).compute_loss
+model.fit_generator(image_generator.flow(mode='train'),
+                    len(train_keys),
+                    num_epochs)
+                    #,
+                    #validation_data=image_generator.flow(mode='val'),
+                    #nb_val_samples = len(validation_keys))

@@ -14,7 +14,7 @@ class ImageGenerator(object):
         - Finish support for not using bounding_boxes.
     """
     #change ground_truth_data to ground_truth_data
-    def __init__(self, ground_truth_data, batch_size, image_size,
+    def __init__(self, ground_truth_data, box_manager, batch_size, image_size,
                 train_keys, validation_keys, path_prefix=None,
                  saturation_var=0.5,
                  brightness_var=0.5,
@@ -27,6 +27,7 @@ class ImageGenerator(object):
                  aspect_ratio_range=[3./4., 4./3.]):
 
         self.ground_truth_data = ground_truth_data
+        self.box_manager = box_manager
         self.batch_size = batch_size
         self.path_prefix = path_prefix
         self.train_keys = train_keys
@@ -117,12 +118,14 @@ class ImageGenerator(object):
 
     def flow(self, mode='train'):
             while True:
-                if mode=='train':
+                if mode =='train':
                     shuffle(self.train_keys)
                     keys = self.train_keys
-                else:
+                elif mode == 'val' or  mode == 'demo':
                     shuffle(self.validation_keys)
                     keys = self.validation_keys
+                else:
+                    raise Exception('invalid mode: %s' % mode)
 
                 inputs = []
                 targets = []
@@ -135,12 +138,13 @@ class ImageGenerator(object):
                     if mode == 'train' or mode == 'demo':
                         image_array, box_corners = self.transform(image_array,
                                                                 box_corners)
+                    box_corners = self.box_manager.assign_boxes(box_corners)
                     inputs.append(image_array)
                     targets.append(box_corners)
                     if len(targets) == self.batch_size:
                         inputs = np.asarray(inputs)
                         targets = np.asarray(targets)
-                        if mode == 'train':
+                        if mode == 'train' or mode == 'val':
                             yield self.preprocess_images(inputs), targets
                         if mode == 'demo':
                             yield inputs, targets

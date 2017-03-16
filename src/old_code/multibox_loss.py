@@ -24,9 +24,7 @@ class MultiboxLoss(object):
         self.alpha = alpha
         self.neg_pos_ratio = neg_pos_ratio
         if background_label_id != 0:
-            #raise Exception('Only 0 as background label id is supported')
-            print('Only 0 as background label id is supported')
-
+            raise Exception('Only 0 as background label id is supported')
         self.background_label_id = background_label_id
         self.negatives_for_hard = negatives_for_hard
 
@@ -89,19 +87,17 @@ class MultiboxLoss(object):
         num_boxes = K.cast(K.shape(y_true)[1], 'float')
 
         # loss for all priors
-        classification_loss = self._softmax_loss(y_true[:, :, 4:],
-                                                 y_pred[:, :, 4:])
+        classification_loss = self._softmax_loss(y_true[:, :, 4:-8],
+                                                 y_pred[:, :, 4:-8])
         localization_loss = self._l1_smooth_loss(y_true[:, :, :4],
                                                  y_pred[:, :, :4])
 
         # get positives loss
         # num_positives is matrix of dimensions batch_size, num_priors
-        num_positives = K.sum(y_true[:, :, 4 + self.background_id + 1], axis=-1)
-        positive_localization_losses = (localization_loss *
-                                        y_true[:, :, 4 + self.background_label_id + 1])
+        num_positives = K.sum(y_true[:, :, -8], axis=-1)
+        positive_localization_losses = localization_loss * y_true[:, :, -8]
         positive_localization_loss = K.sum(positive_localization_losses, 1)
-        positive_classification_losses = (classification_loss *
-                                        y_true[:, :, 4 + self.background_label_id + 1])
+        positive_classification_losses = classification_loss * y_true[:, :, -8]
         positive_classification_loss = K.sum(positive_classification_losses, 1)
 
         # TODO: Refactor -------------------------------------------------------
@@ -123,10 +119,10 @@ class MultiboxLoss(object):
         # ----------------------------------------------------------------------
 
         class_start = 4 + self.background_label_id + 1
-        #class_end = class_start + self.num_classes - 1
+        class_end = class_start + self.num_classes - 1
         # each prior box can only have one class then we take the max at axis 2
-        best_class_scores = K.max(y_pred[:, :, class_start:], 2)
-        y_true_negatives_mask = 1 - y_true[:, :, 4 + self.background_label_id]
+        best_class_scores = K.max(y_pred[:, :, class_start:class_end], 2)
+        y_true_negatives_mask = 1 - y_true[:, :, -8]
         best_negative_class_scores = best_class_scores * y_true_negatives_mask
         top_k_negative_indices = tf.nn.top_k(best_negative_class_scores,
                                                     k=num_neg_batch)[1]
