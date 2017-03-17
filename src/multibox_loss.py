@@ -88,11 +88,11 @@ class MultiboxLoss(object):
         batch_size = K.shape(y_true)[0]
         num_boxes = K.cast(K.shape(y_true)[1], 'float')
 
+        y_pred_loc = y_pred[0]
+        y_pred_class = y_pred[1]
         # loss for all priors
-        classification_loss = self._softmax_loss(y_true[:, :, 4:],
-                                                 y_pred[:, :, 4:])
-        localization_loss = self._l1_smooth_loss(y_true[:, :, :4],
-                                                 y_pred[:, :, :4])
+        classification_loss = self._softmax_loss(y_true[:, :, 4:], y_pred_class)
+        localization_loss = self._l1_smooth_loss(y_true[:, :, :4], y_pred_loc)
 
         # get positives loss
         # num_positives is matrix of dimensions batch_size, num_priors
@@ -125,7 +125,8 @@ class MultiboxLoss(object):
         class_start = 4 + self.background_label_id + 1
         #class_end = class_start + self.num_classes - 1
         # each prior box can only have one class then we take the max at axis 2
-        best_class_scores = K.max(y_pred[:, :, class_start:], 2)
+        #best_class_scores = K.max(y_pred[:, :, class_start:], 2)
+        best_class_scores = K.max(y_pred_loc, 2)
         y_true_negatives_mask = 1 - y_true[:, :, 4 + self.background_label_id]
         best_negative_class_scores = best_class_scores * y_true_negatives_mask
         top_k_negative_indices = tf.nn.top_k(best_negative_class_scores,
