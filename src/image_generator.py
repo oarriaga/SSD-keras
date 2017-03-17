@@ -145,11 +145,17 @@ class ImageGenerator(object):
                         inputs = np.asarray(inputs)
                         targets = np.asarray(targets)
                         if mode == 'train' or mode == 'val':
-                            yield self.preprocess_images(inputs), targets
+                            inputs = self.preprocess_images(inputs)
+                            yield self._wrap_in_dictionary(inputs, targets)
                         if mode == 'demo':
-                            yield inputs, targets
+                            yield self._wrap_in_dictionary(inputs, targets)
                         inputs = []
                         targets = []
+
+    def _wrap_in_dictionary(self, image_array, targets):
+        return [{'image_array':image_array},
+                {'encoded_box':targets[:,:,:4],
+                'classes':targets[:,:,4:]}]
 
     def _imread(self, image_name):
         return imread(image_name)
