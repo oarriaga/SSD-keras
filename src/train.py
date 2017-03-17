@@ -1,93 +1,84 @@
-# In[1]:
+import random
+
+import numpy as np
+from keras.callbacks import ModelCheckpoint
 
 from image_generator import ImageGenerator
-from utils import create_prior_box, get_prior_parameters
-from XML_parser import XMLParser
-from models import SSD300
+#from models import SSD300
+#from models2 import mini_SSD
+from models import my_SSD
 from multibox_loss import MultiboxLoss
-from bounding_boxes_manager import BoundingBoxManager
-from keras.callbacks import ModelCheckpoint, LearningRateScheduler
-from keras.optimizers import Adam
-#import numpy as np
+from utils.prior_box_creator import PriorBoxCreator
+from utils.prior_box_manager import PriorBoxManager
+from utils.box_visualizer import BoxVisualizer
+from utils.XML_parser import XMLParser
+from utils.utils import split_data
+from utils.utils import read_image
+from utils.utils import resize_image
+from utils.utils import plot_images
 
-
-# In[6]:
-
-# constants
-image_shape = (300, 300, 3)
+#image_shape = (300, 300, 3)
 num_classes = 21
-batch_size = 5
-variances = [0.1, 0.1, 0.2, 0.2]
-training_data_ratio = .8
-data_path = '../datasets/VOCdevkit/VOC2007/'
+#model =SSD300(image_shape)
+model = my_SSD(num_classes)
+image_shape = model.input_shape[1:]
+box_creator = PriorBoxCreator(model)
+prior_boxes = box_creator.create_boxes()
 
-model = SSD300(image_shape, num_classes=num_classes)
-model.load_weights('../weights/weights_SSD300.hdf5', by_name=True)
-freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
-          'conv2_1', 'conv2_2', 'pool2',
-          'conv3_1', 'conv3_2', 'conv3_3', 'pool3']
+root_prefix = '../datasets/VOCdevkit/VOC2007/'
+image_prefix = root_prefix + 'JPEGImages/'
+box_visualizer = BoxVisualizer(image_prefix, image_shape[0:2])
 
-box_configurations = get_prior_parameters(model)
+layer_scale, box_arg = 0, 780
+box_coordinates = prior_boxes[layer_scale][box_arg, :, :]
+box_visualizer.draw_normalized_box(box_coordinates)
 
-priors = create_prior_box(image_shape[0:2], box_configurations, variances)
-bounding_box_manager = BoundingBoxManager(num_classes, priors)
-ground_truth_data = XMLParser(data_path+'Annotations/').data
+ground_data_prefix = root_prefix + 'Annotations/'
+ground_truth_data = XMLParser(ground_data_prefix).get_data()
+random_key =  random.choice(list(ground_truth_data.keys()))
+selected_data = ground_truth_data[random_key]
+selected_box_coordinates = selected_data[:, 0:4]
 
+box_visualizer.draw_normalized_box(selected_box_coordinates, random_key)
+train_keys, validation_keys = split_data(ground_truth_data, training_ratio=.8)
 
-# In[11]:
+prior_box_manager = PriorBoxManager(prior_boxes)
+assigned_encoded_boxes = prior_box_manager.assign_boxes(selected_data)
+positive_mask = assigned_encoded_boxes[:, -8] > 0
+assigned_decoded_boxes = prior_box_manager.decode_boxes(assigned_encoded_boxes)
+decoded_positive_boxes = assigned_decoded_boxes[positive_mask, 0:4]
+box_visualizer.draw_normalized_box(decoded_positive_boxes, random_key)
 
-keys = sorted(ground_truth_data.keys())
-num_train = int(round(training_data_ratio * len(keys)))
-train_keys = keys[:num_train]
-validation_keys = keys[num_train:]
-num_val = len(validation_keys)
+batch_size = 10
+image_generator = ImageGenerator(ground_truth_data,
+                                 prior_box_manager,
+                                 batch_size,
+                                 image_shape[0:2],
+                                 train_keys, validation_keys,
+                                 image_prefix,
+                                 vertical_flip_probability=0,
+                                 horizontal_flip_probability=0.5)
 
+transformed_image = next(image_generator.flow(mode='demo'))[0]['image_array']
+transformed_image = np.squeeze(transformed_image[0]).astype('uint8')
+original_image = read_image(image_prefix + validation_keys[0])
+original_image = resize_image(original_image, image_shape[0:2])
+plot_images(original_image, transformed_image)
 
-# In[12]:
-
-image_generator = ImageGenerator(ground_truth_data, bounding_box_manager, batch_size,
-                    data_path+'JPEGImages/',train_keys, validation_keys, image_shape[:2])
-
-
-# In[13]:
-
-# In[14]:
-
-for layer in model.layers:
-    if layer.name in freeze:
-        layer.trainable = False
-
-
-# In[15]:
-
-models_path = '../weights/model_checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5'
-model_checkpoint = ModelCheckpoint(models_path, verbose=1, save_weights_only=True)
-base_learning_rate = 3e-4
-def schedule(epoch, decay=0.9):
-    return base_learning_rate * decay**(epoch)
-learning_rate_scheduler =  LearningRateScheduler(schedule)
-callbacks = [model_checkpoint, learning_rate_scheduler]
-
-
-# In[16]:
-
+num_epochs = 10
+model.compile(optimizer='adam', loss='categorical_crossentropy',
+                                            metrics=['acc'])
+model_names = ('../trained_models/model_checkpoints/' +
+               'weights.{epoch:02d}-{val_loss:.2f}.hdf5')
+model_checkpoint = ModelCheckpoint(model_names,
+                                   monitor='val_loss',
+                                   verbose=1,
+                                   save_best_only=False,
+                                   save_weights_only=False)
 multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=2.0).compute_loss
-
-
-# In[17]:
-
-optimizer = Adam(lr=base_learning_rate)
-model.compile(optimizer=optimizer,
-              loss=multibox_loss)
-
-
-# In[18]:
-
-nb_epoch = 30
-history = model.fit_generator(image_generator.flow(True), num_train,
-                              nb_epoch, verbose=1,
-                              callbacks=callbacks,
-                              validation_data=image_generator.flow(False),
-                              nb_val_samples=num_val,
-                              nb_worker=1)
-
+model.fit_generator(image_generator.flow(mode='train'),
+                    len(train_keys),
+                    num_epochs,
+                    callbacks=[model_checkpoint],
+                    validation_data=image_generator.flow(mode='val'),
+                    nb_val_samples = len(validation_keys))
