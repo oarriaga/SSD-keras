@@ -65,7 +65,7 @@ original_image = read_image(image_prefix + validation_keys[0])
 original_image = resize_image(original_image, image_shape[0:2])
 plot_images(original_image, transformed_image)
 
-num_epochs = 10
+num_epochs = 15
 model.compile(optimizer='adam', loss='categorical_crossentropy',
                                             metrics=['acc'])
 model_names = ('../trained_models/model_checkpoints/' +
@@ -74,7 +74,7 @@ model_checkpoint = ModelCheckpoint(model_names,
                                    monitor='val_loss',
                                    verbose=1,
                                    save_best_only=False,
-                                   save_weights_only=False)
+                                   save_weights_only=True)
 multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=2.0).compute_loss
 model.fit_generator(image_generator.flow(mode='train'),
                     len(train_keys),
