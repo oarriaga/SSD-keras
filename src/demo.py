@@ -4,7 +4,8 @@ import numpy as np
 
 from image_generator import ImageGenerator
 #from models import SSD300
-from models2 import mini_SSD
+#from models2 import mini_SSD
+from model_test import my_SSD
 from multibox_loss_2 import MultiboxLoss
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
@@ -15,10 +16,11 @@ from utils.utils import read_image
 from utils.utils import resize_image
 from utils.utils import plot_images
 
-image_shape = (300, 300, 3)
+#image_shape = (300, 300, 3)
 num_classes = 21
 #model =SSD300(image_shape)
-model = mini_SSD(image_shape, num_classes)
+model = my_SSD(num_classes)
+image_shape = model.input_shape[1:]
 box_creator = PriorBoxCreator(model)
 prior_boxes = box_creator.create_boxes()
 

@@ -1,59 +1,31 @@
-from keras.applications import VGG16
 import keras.backend as K
+from keras.applications import VGG16
 from keras.layers import Activation
 from keras.layers import Convolution2D
 from keras.layers import Dropout
-#from keras.layers import Flatten
-from keras.layers import Input
 from keras.layers import Lambda
 from keras.layers import MaxPooling2D
 from keras.layers import merge
 from keras.layers import Reshape
 from keras.models import Model
-from keras.utils.visualize_util import plot
 
 from layers2 import PriorBox
 
-"""
-before any prior box you have to make sure that the size of the tensor
-has to be reshaped for (-1, 25). One can achieved this by having multiples
-of 25 in the number of kernels
-"""
-
-def medium_SSD(input_shape, num_classes=21):
-    pretrained_model = VGG16(weights='imagenet')
-    base_model = Model(input=base_model.input, output=base_model.get_layer('block3_pool').output)
-    for layer in base_model.layers:
-        layer.trainable = False
-
-
-
-    img_path = 'elephant.jpg'
-    img = image.load_img(img_path, target_size=(224, 224))
-    x = image.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
-    x = preprocess_input(x)
-
-    block4_pool_features = model.predict(x)
-
-def mini_SSD(input_shape, num_classes=21):
+def my_SSD(num_classes=21):
 
     base_kernel_size = 4 + num_classes
     #aspect_ratios = (1, 2, 3, 1/2, 1/3)
     aspect_ratios = (1, 2, 1/2)
     num_aspect_ratios = len(aspect_ratios)
-    input_tensor = Input(shape=input_shape)
 
-    body = Convolution2D(32, 5, 5, border_mode='same')(input_tensor)
-    body = Activation('relu')(body)
-    body = MaxPooling2D((2, 2))(body)
-    body = Dropout(.5)(body)
 
-    body = Convolution2D(32, 5, 5, border_mode='same')(input_tensor)
-    body = Activation('relu')(body)
-    body = MaxPooling2D((2, 2))(body)
-    body = Dropout(.5)(body)
+    base_model = VGG16(weights='imagenet')
 
+    input_tensor = base_model.input
+
+    for layer in base_model.layers:
+        layer.trainable = False
+    body = base_model.get_layer('block3_pool').output
     body = Convolution2D((base_kernel_size * num_aspect_ratios), 3, 3,
                           border_mode='same')(body)
     branch_1 = PriorBox(aspect_ratios)(body)
@@ -97,14 +69,5 @@ def mini_SSD(input_shape, num_classes=21):
     return model
 
 if __name__ == '__main__':
-    input_shape=(100, 100, 3)
-    model = mini_SSD(input_shape)
-    model.compile(optimizer='adam', loss='categorical_crossentropy')
-    print(model.summary())
-    plot(model, 'mini_SSD.png')
-    from utils.prior_box_creator import PriorBoxCreator
-    from utils.prior_box_manager import PriorBoxManager
-    prior_box_creator = PriorBoxCreator(model)
-    prior_boxes = prior_box_creator.create_boxes()
-    prior_box_manager = PriorBoxManager(prior_boxes)
-    print(prior_box_manager.prior_boxes.shape)
+   model = my_SSD()
+   model.summary()
