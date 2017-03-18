@@ -17,5 +17,6 @@ image_array = np.expand_dims(image_array, 0)
 image_array = preprocess_input(image_array)
 predictions = model.predict([image_array])
 classification = np.squeeze(predictions[1])
+best_classes = np.argmax(classification, axis=1)
 
 
