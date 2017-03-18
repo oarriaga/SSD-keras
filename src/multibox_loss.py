@@ -109,7 +109,6 @@ class MultiboxLoss(object):
         # negatives which depends on the amount of positives at every batch
         # at every set of priors.
         num_negatives = self.neg_pos_ratio * num_positives
-        """
         positive_num_negatives_mask = K.greater(num_negatives, 0)
         has_positive = K.cast(K.any(positive_num_negatives_mask), 'float')
         num_negatives = tf.concat(0, [num_negatives,
@@ -118,11 +117,10 @@ class MultiboxLoss(object):
                                     positive_num_negatives_mask)
         num_neg_batch = K.min(positive_num_negatives)
         num_neg_batch = K.cast(num_neg_batch, 'int32')
-        """
-        num_neg_batch = K.min(K.cast(num_negatives, 'int32'))
+        #num_neg_batch = K.min(K.cast(num_negatives, 'int32'))
         # ----------------------------------------------------------------------
 
-        class_start = 4 + self.background_label_id + 1
+        #class_start = 4 + self.background_label_id + 1
         #class_end = class_start + self.num_classes - 1
         # each prior box can only have one class then we take the max at axis 2
         #best_class_scores = K.max(y_pred[:, :, class_start:], 2)
