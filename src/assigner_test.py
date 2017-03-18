@@ -5,7 +5,6 @@ from utils.prior_box_manager import PriorBoxManager
 from utils.box_visualizer import BoxVisualizer
 from utils.XML_parser import XMLParser
 from utils.utils import flatten_prior_boxes
-from utils.utils import get_classes
 
 # parameters
 root_prefix = '../datasets/VOCdevkit/VOC2007/'
@@ -13,33 +12,31 @@ image_prefix = root_prefix + 'JPEGImages/'
 ground_data_prefix = root_prefix + 'Annotations/'
 model = my_SSD(num_classes=21)
 image_shape = model.input_shape[1:]
+background_id = 0
+
+
+
+
+ground_truth_manager = XMLParser(ground_data_prefix, background_id)
+ground_truth_data = ground_truth_manager.get_data()
+VOC2007_decoder = ground_truth_manager.arg_to_class
 
 box_creator = PriorBoxCreator(model)
 prior_boxes = box_creator.create_boxes()
-VOC2007_classes = get_classes(dataset='VOC2007')
-vis = BoxVisualizer(image_prefix, image_shape[0:2], VOC2007_classes)
+vis = BoxVisualizer(image_prefix, image_shape[0:2], VOC2007_decoder)
 prior_boxes = flatten_prior_boxes(prior_boxes)
 
-ground_truth_manager = XMLParser(ground_data_prefix, background_id=0)
-ground_truth_data = ground_truth_manager.get_data()
-arg_to_classes = ground_truth_manager.arg_to_class
 
 selected_key =  random.choice(list(ground_truth_data.keys()))
 selected_data = ground_truth_data[selected_key]
 selected_box_coordinates = selected_data[:, 0:4]
 
-
-prior_box_manager = PriorBoxManager(prior_boxes)
-# the assigne method should return the same amount of dimensions
-# therefore it should also give back the classes
-# new bug assign boxes mistakes the classes
-# encoded boxes should return only the number of boxes
-# it seems to work but the dict is not counting the background level id
+# check wether or nor decoding is working properly
+prior_box_manager = PriorBoxManager(prior_boxes, background_id)
 encoded_boxes = prior_box_manager.assign_boxes(selected_data)
-positive_mask = encoded_boxes[:, 4] != 1
+positive_mask = encoded_boxes[:, 4 + background_id] != 1
 vis.draw_normalized_box(encoded_boxes[positive_mask], selected_key)
-#decoded_boxes = prior_box_manager.decode_boxes(encoded_boxes)
-#decoded_positive_boxes = decoded_boxes[positive_mask]
-#vis.draw_normalized_box(decoded_positive_boxes, selected_key)
+decoded_boxes = prior_box_manager.decode_boxes(encoded_boxes)
+vis.draw_normalized_box(decoded_boxes[positive_mask], selected_key)
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 
 class PriorBoxManager(object):
-    def __init__(self, prior_boxes, overlap_threshold=.5, background_id=0,
+    def __init__(self, prior_boxes, background_id=0, overlap_threshold=.5,
                  num_classes=21):
         super(PriorBoxManager, self).__init__()
         if type(prior_boxes) == list:
@@ -133,7 +133,7 @@ class PriorBoxManager(object):
         print('gt best_iou_indices shape:',ground_truth_data[best_iou_indices,4:].shape)
         print('ass shape', assignments.shape)
 
-        assignments[best_iou_mask, 5:] = ground_truth_data[best_iou_indices, 4:]
+        assignments[best_iou_mask, 4:] = ground_truth_data[best_iou_indices, 4:]
         # background counter
         #assignments[:, -8][best_iou_mask] = 1
         return assignments
