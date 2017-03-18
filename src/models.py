@@ -71,5 +71,7 @@ def my_SSD(num_classes=21):
     return model
 
 if __name__ == '__main__':
-   model = my_SSD()
-   model.summary()
+    model = my_SSD()
+    model.summary()
+    from keras.utils.visualize_util import plot
+    plot(model, 'my_SSD.png')
