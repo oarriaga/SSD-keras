@@ -20,7 +20,10 @@ VOC2007_classes = get_classes(dataset='VOC2007')
 vis = BoxVisualizer(image_prefix, image_shape[0:2], VOC2007_classes)
 prior_boxes = flatten_prior_boxes(prior_boxes)
 
-ground_truth_data = XMLParser(ground_data_prefix).get_data()
+ground_truth_manager = XMLParser(ground_data_prefix, background_id=0)
+ground_truth_data = ground_truth_manager.get_data()
+arg_to_classes = ground_truth_manager.arg_to_class
+
 selected_key =  random.choice(list(ground_truth_data.keys()))
 selected_data = ground_truth_data[selected_key]
 selected_box_coordinates = selected_data[:, 0:4]
@@ -30,6 +33,8 @@ prior_box_manager = PriorBoxManager(prior_boxes)
 # the assigne method should return the same amount of dimensions
 # therefore it should also give back the classes
 # new bug assign boxes mistakes the classes
+# encoded boxes should return only the number of boxes
+# it seems to work but the dict is not counting the background level id
 encoded_boxes = prior_box_manager.assign_boxes(selected_data)
 positive_mask = encoded_boxes[:, 4] != 1
 vis.draw_normalized_box(encoded_boxes[positive_mask], selected_key)
