@@ -14,11 +14,38 @@ class XMLParser(object):
         num_objects refers to the number of objects in that specific image
     """
 
-    def __init__(self, data_path):
+    def __init__(self, data_path, background_id=None, class_names=None):
         self.path_prefix = data_path
-        self.num_classes = 20
+        self.background_id = background_id
+        if class_names == None:
+            self.arg_to_class = self._use_VOC2007_classes()
+        else:
+            if background_id != None and background_id != -1:
+                class_names.insert(background_id, 'background')
+            elif background_id == -1:
+                class_names.append('background')
+            keys = np.arange(len(class_names))
+            self.arg_to_class = dict(zip(keys, class_names))
+
+        self.class_to_arg = {value: key for key, value
+                             in self.arg_to_class.items()}
         self.data = dict()
         self._preprocess_XML()
+
+    def _use_VOC2007_classes(self):
+        class_names = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle',
+                       'bus', 'car', 'cat', 'chair', 'cow', 'diningtable',
+                       'dog', 'horse', 'motorbike', 'person', 'pottedplant',
+                       'sheep', 'sofa', 'train', 'tvmonitor']
+        if self.background_id != None and self.background_id != -1 :
+            class_names.insert(self.background_id, 'background')
+        elif self.background_id == -1:
+            class_names.append('background')
+
+        keys = np.arange(len(class_names))
+        arg_to_class = dict(zip(keys, class_names))
+
+        return arg_to_class
 
     def get_data(self):
         return self.data
@@ -52,54 +79,16 @@ class XMLParser(object):
                 image_data = np.expand_dims(image_data, axis=0)
             self.data[image_name] = image_data
 
-    def _to_one_hot(self,name):
-        one_hot_vector = [0] * self.num_classes
-        if name == 'aeroplane':
-            one_hot_vector[0] = 1
-        elif name == 'bicycle':
-            one_hot_vector[1] = 1
-        elif name == 'bird':
-            one_hot_vector[2] = 1
-        elif name == 'boat':
-            one_hot_vector[3] = 1
-        elif name == 'bottle':
-            one_hot_vector[4] = 1
-        elif name == 'bus':
-            one_hot_vector[5] = 1
-        elif name == 'car':
-            one_hot_vector[6] = 1
-        elif name == 'cat':
-            one_hot_vector[7] = 1
-        elif name == 'chair':
-            one_hot_vector[8] = 1
-        elif name == 'cow':
-            one_hot_vector[9] = 1
-        elif name == 'diningtable':
-            one_hot_vector[10] = 1
-        elif name == 'dog':
-            one_hot_vector[11] = 1
-        elif name == 'horse':
-            one_hot_vector[12] = 1
-        elif name == 'motorbike':
-            one_hot_vector[13] = 1
-        elif name == 'person':
-            one_hot_vector[14] = 1
-        elif name == 'pottedplant':
-            one_hot_vector[15] = 1
-        elif name == 'sheep':
-            one_hot_vector[16] = 1
-        elif name == 'sofa':
-            one_hot_vector[17] = 1
-        elif name == 'train':
-            one_hot_vector[18] = 1
-        elif name == 'tvmonitor':
-            one_hot_vector[19] = 1
-        else:
-            print('unknown label: %s' %name)
-
+    def _to_one_hot(self, name):
+        num_classes = len(self.class_to_arg)
+        one_hot_vector = [0] * num_classes
+        class_arg = self.class_to_arg[name]
+        one_hot_vector[class_arg] = 1
         return one_hot_vector
 
 if __name__ == '__main__':
-    data_path = '../../datasets/VOCdevkit/VOC2007/'
-    ground_truths = XMLParser(data_path + 'Annotations/').get_data()
+    data_path = '../../datasets/VOCdevkit/VOC2007/Annotations/'
+    xml_parser = XMLParser(data_path, background_id=0)
+    ground_truths = xml_parser.get_data()
+    print(xml_parser.arg_to_class)
 
