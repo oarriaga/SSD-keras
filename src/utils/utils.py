@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.misc import imread
 from scipy.misc import imresize
 import glob
@@ -29,8 +30,20 @@ def plot_images(original_image, transformed_image):
     plt.imshow(transformed_image)
     plt.show()
 
+def flatten_prior_boxes(prior_boxes):
+    prior_boxes = [layer_boxes.reshape(-1, 4)
+                   for layer_boxes in prior_boxes]
+    prior_boxes = np.concatenate(prior_boxes, axis=0)
+    return prior_boxes
 
-
+def get_classes(dataset='VOC2007'):
+    if dataset == 'VOC2007':
+        classes = {0:'aeroplane', 1:'bicyle', 2:'bird', 3:'boat', 4:'bottle',
+                   5:'bus', 6:'car', 7:'cat', 8:'chair', 9:'cow',
+                   10:'diningtable', 11:'dog', 12:'horse', 13:'motorbike',
+                   14:'person' ,15:'pottedplant', 16:'sheep', 17:'sofa',
+                   18:'train', 19:'tvmonitor'}
+    return classes
 
 
 

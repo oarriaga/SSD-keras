@@ -1,11 +1,13 @@
 import numpy as np
 
 class PriorBoxManager(object):
-    """docstring for PriorBoxManager"""
     def __init__(self, prior_boxes, overlap_threshold=.5, background_id=0,
                  num_classes=21):
         super(PriorBoxManager, self).__init__()
-        self.prior_boxes = self._flatten_prior_boxes(prior_boxes)
+        if type(prior_boxes) == list:
+            self.prior_boxes = self._flatten_prior_boxes(prior_boxes)
+        else:
+            self.prior_boxes = prior_boxes
         self.num_priors = self.prior_boxes.shape[0]
         self.num_classes = num_classes
         self.overlap_threshold = overlap_threshold
@@ -169,6 +171,9 @@ class PriorBoxManager(object):
                                       decoded_x_max[:, None],
                                       decoded_y_max[:, None]), axis=-1)
         decoded_boxes = np.clip(decoded_boxes, 0.0, 1.0)
+        if predicted_boxes.shape[1] > 4:
+            decoded_boxes = np.concatenate([decoded_boxes,
+                            predicted_boxes[:, 4:]], axis=-1)
         return decoded_boxes
 
 
