@@ -129,7 +129,7 @@ class PriorBoxManager(object):
         #assignments[best_iou_mask, 5:-8] = ground_truth_data[best_iou_indices, 4:]
         assignments[best_iou_mask, 5:] = ground_truth_data[best_iou_indices, 4:]
         # background counter
-        assignments[:, -8][best_iou_mask] = 1
+        #assignments[:, -8][best_iou_mask] = 1
         return assignments
 
     def decode_boxes(self, predicted_boxes):
