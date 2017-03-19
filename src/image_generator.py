@@ -146,11 +146,15 @@ class ImageGenerator(object):
                         targets = np.asarray(targets)
                         if mode == 'train' or mode == 'val':
                             inputs = self.preprocess_images(inputs)
-                            yield self._wrap_in_dictionary(inputs, targets)
+                            yield self._wrap_in_dictionary2(inputs, targets)
                         if mode == 'demo':
-                            yield self._wrap_in_dictionary(inputs, targets)
+                            yield self._wrap_in_dictionary2(inputs, targets)
                         inputs = []
                         targets = []
+
+    def _wrap_in_dictionary2(self, image_array, targets):
+        return [{'image_array':image_array},
+                {'merge_1':targets}]
 
     def _wrap_in_dictionary(self, image_array, targets):
         return [{'image_array':image_array},
