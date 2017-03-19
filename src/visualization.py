@@ -78,5 +78,3 @@ transformed_image = np.squeeze(transformed_image[0]).astype('uint8')
 original_image = read_image(image_prefix + validation_keys[0])
 original_image = resize_image(original_image, image_shape[0:2])
 plot_images(original_image, transformed_image)
-
-
