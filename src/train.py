@@ -37,8 +37,8 @@ image_generator = ImageGenerator(ground_truth_data,
                                  vertical_flip_probability=0,
                                  horizontal_flip_probability=0.5)
 
-model.compile(optimizer='adam', loss='categorical_crossentropy',
-                                            metrics=['acc'])
+multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=2.0).compute_loss
+model.compile(optimizer='adam', loss=multibox_loss, metrics=['acc'])
 
 model_names = ('../trained_models/model_checkpoints/' +
                'weights.{epoch:02d}-{val_loss:.2f}.hdf5')
@@ -48,7 +48,6 @@ model_checkpoint = ModelCheckpoint(model_names,
                                    save_best_only=False,
                                    save_weights_only=True)
 
-multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=2.0).compute_loss
 model.fit_generator(image_generator.flow(mode='train'),
                     len(train_keys),
                     num_epochs,

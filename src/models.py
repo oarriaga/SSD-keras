@@ -65,9 +65,9 @@ def my_SSD(num_classes=21):
 
     localization_tensor = merge([local_1, local_2, local_3], mode='concat',
                                     concat_axis=1, name='encoded_box')
-    #output_tensor = merge([localization_tensor, classification_tensor],
-                           #mode='concat', concat_axis=-1)
-    model = Model(input_tensor, [localization_tensor, classification_tensor])
+    output_tensor = merge([localization_tensor, classification_tensor],
+                           mode='concat', concat_axis=-1)
+    model = Model(input_tensor, output_tensor)
     return model
 
 if __name__ == '__main__':
