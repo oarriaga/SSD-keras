@@ -43,14 +43,23 @@ class MultiboxLoss(object):
         # TODO: Refactor/understand ----------------------------------------------
         # every batch contains all priors: here we take the least amount of
         # negatives which depends on the amount of positives at every batch
-        # at every set of priors.
+        # at every set of priors. num_negatives/positives = (?, num_positives)
+        # in the second num_positive_mask the values the concatenated value does
+        # not get counted since you are doing greater than zero.
+        # the most probable value that num_neg_batch will have is:
+        # neg_pos_ratio * num_positives where num_positives is the batch element
+        # with less positive boxes.
         num_negatives_1 = self.neg_pos_ratio * num_positives
         num_negatives_2 = num_prior_boxes - num_positives
         num_negatives = tf.minimum(num_negatives_1, num_negatives_2)
-        positive_num_negatives_mask = tf.greater(num_negatives, 0)
-        has_min = tf.to_float(tf.reduce_any(positive_num_negatives_mask))
-        num_negatives = tf.concat(0, [num_negatives, [(1 - has_min) * self.negatives_for_hard]])
-        num_neg_batch = tf.reduce_min(tf.boolean_mask(num_negatives, positive_num_negatives_mask))
+
+        #positive_num_negatives_mask = tf.greater(num_negatives, 0)
+        num_positive_mask = tf.greater(num_negatives, 0)
+        has_a_positive = tf.to_float(tf.reduce_any(num_positive_mask))
+        num_negatives = tf.concat(0, [num_negatives,
+                                     [(1 - has_a_positive) * self.negatives_for_hard]])
+        num_positive_mask = tf.greater(num_negatives, 0)
+        num_neg_batch = tf.reduce_min(tf.boolean_mask(num_negatives, num_positive_mask))
         num_neg_batch = tf.to_int32(num_neg_batch)
         # ----------------------------------------------------------------------
 
@@ -58,10 +67,13 @@ class MultiboxLoss(object):
         #class_end = class_start + self.num_classes - 1
         # each prior box can only have one class then we take the max at axis 2
         #best_class_scores = K.max(y_pred[:, :, class_start:], 2)
-        best_predicted_class_scores = K.max(y_pred_classification, axis=2)
+
+        # picking up the negative examples with the highest probability (highest loss)
+        pred_class_values = K.max(y_pred_classification, axis=2)
         int_negatives_mask = y_true[:, :, 4 + self.background_id + 1]
-        best_negative_class_scores = best_class_scores * int_negatives_mask
-        top_k_negative_indices = tf.nn.top_k(best_negative_class_scores, k=num_neg_batch)[1]
+        pred_negative_class_values = pred_class_values * int_negatives_mask
+        top_k_negative_indices = tf.nn.top_k(pred_negative_class_values, k=num_neg_batch)[1]
+
         batch_indices = K.expand_dims(K.arange(0, batch_size), 1)
         batch_indices = K.tile(batch_indices, (1, num_neg_batch))
         batch_indices = K.flatten(batch_indices) * K.cast(num_prior_boxes, 'int32')
