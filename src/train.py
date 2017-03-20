@@ -8,7 +8,6 @@ from ssd import SSD300
 from multibox_loss import MultiboxLoss
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
-from utils.box_visualizer import BoxVisualizer
 from utils.XML_parser import XMLParser
 from utils.utils import split_data
 from utils.utils import scheduler
@@ -33,7 +32,6 @@ prior_boxes = box_creator.create_boxes()
 
 root_prefix = '../datasets/VOCdevkit/VOC2007/'
 image_prefix = root_prefix + 'JPEGImages/'
-box_visualizer = BoxVisualizer(image_prefix, image_shape[0:2])
 
 ground_data_prefix = root_prefix + 'Annotations/'
 ground_truth_manager = XMLParser(ground_data_prefix, background_id=0)
