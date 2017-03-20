@@ -16,7 +16,8 @@ image_array = image_array.astype('float32')
 image_array = np.expand_dims(image_array, 0)
 image_array = preprocess_input(image_array)
 predictions = model.predict([image_array])
-classification = np.squeeze(predictions[1])
+predictions = np.squeeze(predictions)
+classification = predictions[: , 4:]
 best_classes = np.argmax(classification, axis=1)
-print(np.sum(best_classes))
+positive_mask = best_classes != 0
 
