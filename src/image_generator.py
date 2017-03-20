@@ -153,8 +153,8 @@ class ImageGenerator(object):
                         targets = []
 
     def _wrap_in_dictionary2(self, image_array, targets):
-        return [{'image_array':image_array},
-                {'merge_1':targets}]
+        return [{'input_1':image_array},
+                {'predictions':targets}]
 
     def _wrap_in_dictionary(self, image_array, targets):
         return [{'image_array':image_array},
