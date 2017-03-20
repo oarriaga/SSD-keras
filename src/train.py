@@ -1,7 +1,8 @@
 from keras.callbacks import ModelCheckpoint
 
 from image_generator import ImageGenerator
-from models import my_SSD
+from ssd import SSD300
+#from models import my_SSD
 from multibox_loss import MultiboxLoss
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
@@ -9,10 +10,11 @@ from utils.box_visualizer import BoxVisualizer
 from utils.XML_parser import XMLParser
 from utils.utils import split_data
 
-batch_size = 10
+batch_size = 5
 num_epochs = 15
 num_classes = 21
-model = my_SSD(num_classes)
+#model = my_SSD(num_classes)
+model = SSD300((300,300,3))
 image_shape = model.input_shape[1:]
 box_creator = PriorBoxCreator(model)
 prior_boxes = box_creator.create_boxes()
