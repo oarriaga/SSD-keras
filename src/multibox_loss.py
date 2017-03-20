@@ -91,8 +91,10 @@ class MultiboxLoss(object):
                                         y_pred[:, :, :4])
 
         # get positives loss
-        num_pos = tf.reduce_sum(y_true[:, :, -8], reduction_indices=-1)
-        int_positive_mask = 1 - y_true[:,:,5 + self.background_label_id]
+        #num_pos = tf.reduce_sum(y_true[:, :, -8], reduction_indices=-1)
+        num_pos = tf.reduce_sum(1 - y_true[:, :, 5 + self.background_label_id],
+                                                    reduction_indices=-1)
+        int_positive_mask = 1 - y_true[:,:, 5 + self.background_label_id]
         pos_loc_loss = tf.reduce_sum(loc_loss * int_positive_mask,
                                      reduction_indices=1)
         pos_conf_loss = tf.reduce_sum(conf_loss * int_positive_mask,
