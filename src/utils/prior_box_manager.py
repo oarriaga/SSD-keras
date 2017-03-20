@@ -2,7 +2,7 @@ import numpy as np
 
 class PriorBoxManager(object):
     def __init__(self, prior_boxes, background_id=0, overlap_threshold=.5,
-                 num_classes=21):
+                 num_classes=21, box_scale_factors=[1, 1, 1, 1]):
         super(PriorBoxManager, self).__init__()
         if type(prior_boxes) == list:
             self.prior_boxes = self._flatten_prior_boxes(prior_boxes)
@@ -12,6 +12,7 @@ class PriorBoxManager(object):
         self.num_classes = num_classes
         self.overlap_threshold = overlap_threshold
         self.background_id = background_id
+        self.box_scale_factors = box_scale_factors
 
     def _flatten_prior_boxes(self, prior_boxes):
         prior_boxes = [layer_boxes.reshape(-1, 4)
@@ -71,10 +72,15 @@ class PriorBoxManager(object):
         g_center_x = 0.5 * (g_x_min + g_x_max)
         g_center_y = 0.5 * (g_y_min + g_y_max)
 
-        g_hat_center_x = (g_center_x - d_center_x) / d_width
-        g_hat_center_y = (g_center_y - d_center_y) / d_height
-        g_hat_width  = np.log(g_width  / d_width)
-        g_hat_height = np.log(g_height / d_height)
+        scale_center_x = self.box_scale_factors[0]
+        scale_center_y = self.box_scale_factors[1]
+        scale_width = self.box_scale_factors[2]
+        scale_height = self.box_scale_factors[3]
+
+        g_hat_center_x = (g_center_x - d_center_x) / (d_width * scale_center_x)
+        g_hat_center_y = (g_center_y - d_center_y) / (d_height * scale_center_y)
+        g_hat_width  = np.log(g_width  / d_width) / scale_width
+        g_hat_height = np.log(g_height / d_height) / scale_height
         encoded_boxes = np.concatenate([g_hat_center_x.reshape(-1, 1),
                                         g_hat_center_y.reshape(-1, 1),
                                         g_hat_width.reshape(-1, 1),
@@ -155,14 +161,19 @@ class PriorBoxManager(object):
         pred_width = predicted_boxes[:, 2]
         pred_height = predicted_boxes[:, 3]
 
-        decoded_center_x = pred_center_x * prior_width
+        scale_center_x = self.box_scale_factors[0]
+        scale_center_y = self.box_scale_factors[1]
+        scale_width = self.box_scale_factors[2]
+        scale_height = self.box_scale_factors[3]
+
+        decoded_center_x = pred_center_x * prior_width * scale_center_x
         decoded_center_x = decoded_center_x + prior_center_x
-        decoded_center_y = pred_center_y * prior_height
+        decoded_center_y = pred_center_y * prior_height * scale_center_y
         decoded_center_y = decoded_center_y + prior_center_y
 
-        decoded_width = np.exp(pred_width)
+        decoded_width = np.exp(pred_width * scale_width)
         decoded_width = decoded_width * prior_width
-        decoded_height = np.exp(pred_height)
+        decoded_height = np.exp(pred_height * scale_height)
         decoded_height = decoded_height * prior_height
 
         decoded_x_min = decoded_center_x - (0.5 * decoded_width)
