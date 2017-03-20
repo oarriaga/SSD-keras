@@ -27,7 +27,7 @@ selected_key =  random.choice(list(ground_truth_data.keys()))
 selected_data = ground_truth_data[selected_key]
 selected_box_coordinates = selected_data[:, 0:4]
 
-prior_box_manager = PriorBoxManager(prior_boxes, background_id)
+prior_box_manager = PriorBoxManager(prior_boxes, background_id,box_scale_factors=[.1,.1,.2,.2])
 encoded_boxes = prior_box_manager.assign_boxes(selected_data)
 positive_mask = encoded_boxes[:, 4 + background_id] != 1
 
