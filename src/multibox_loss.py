@@ -1,139 +1,98 @@
 import tensorflow as tf
+import keras.backend as K
 
 class MultiboxLoss(object):
-    """Multibox loss with some helper functions.
-
-    # Arguments
-        num_classes: Number of classes including background.
-        alpha: Weight of L1-smooth loss.
-        neg_pos_ratio: Max ratio of negative to positive boxes in loss.
-        background_label_id: Id of background label.
-        negatives_for_hard: Number of negative boxes to consider
-            it there is no positive boxes in batch.
-
-    # References
-        https://arxiv.org/abs/1512.02325
-
-    # TODO
-        Add possibility for background label id be not zero
-    """
     def __init__(self, num_classes, alpha=1.0, neg_pos_ratio=3.0,
-                 background_label_id=0, negatives_for_hard=100.0):
+                 background_id=0, negatives_for_hard=300.0):
         self.num_classes = num_classes
         self.alpha = alpha
         self.neg_pos_ratio = neg_pos_ratio
-        if background_label_id != 0:
-            raise Exception('Only 0 as background label id is supported')
-        self.background_label_id = background_label_id
+        self.background_id = background_id
         self.negatives_for_hard = negatives_for_hard
 
     def _l1_smooth_loss(self, y_true, y_pred):
-        """Compute L1-smooth loss.
-
-        # Arguments
-            y_true: Ground truth bounding boxes,
-                tensor of shape (?, num_boxes, 4).
-            y_pred: Predicted bounding boxes,
-                tensor of shape (?, num_boxes, 4).
-
-        # Returns
-            l1_loss: L1-smooth loss, tensor of shape (?, num_boxes).
-
-        # References
-            https://arxiv.org/abs/1504.08083
-        """
-        abs_loss = tf.abs(y_true - y_pred)
-        sq_loss = 0.5 * (y_true - y_pred)**2
-        l1_loss = tf.select(tf.less(abs_loss, 1.0), sq_loss, abs_loss - 0.5)
-        return tf.reduce_sum(l1_loss, -1)
+        absolute_value_loss = K.abs(y_true - y_pred) - 0.5
+        square_loss = 0.5 * (y_true - y_pred)**2
+        absolute_value_condition = K.lesser(absolute_value_loss, 1.0)
+        l1_smooth_loss = tf.select(absolute_value_condition, square_loss,
+                                                    absolute_value_loss)
+        return K.sum(l1_smooth_loss, axis=-1)
 
     def _softmax_loss(self, y_true, y_pred):
-        """Compute softmax loss.
-
-        # Arguments
-            y_true: Ground truth targets,
-                tensor of shape (?, num_boxes, num_classes).
-            y_pred: Predicted logits,
-                tensor of shape (?, num_boxes, num_classes).
-
-        # Returns
-            softmax_loss: Softmax loss, tensor of shape (?, num_boxes).
-        """
-        y_pred = y_pred[:,:,:21]
-        y_pred = tf.maximum(tf.minimum(y_pred, 1 - 1e-15), 1e-15)
-        softmax_loss = -tf.reduce_sum(y_true * tf.log(y_pred),
-                                      reduction_indices=-1)
+        y_pred = K.maximum(K.minimum(y_pred, 1 - 1e-15), 1e-15)
+        softmax_loss = - K.sum(y_true * K.log(y_pred), axis=-1)
         return softmax_loss
 
     def compute_loss(self, y_true, y_pred):
-        """Compute mutlibox loss.
+        batch_size = K.shape(y_true)[0]
+        num_prior_boxes = K.cast(K.shape(y_true)[1], 'float')
 
-        # Arguments
-            y_true: Ground truth targets,
-                tensor of shape (?, num_boxes, 4 + num_classes + 8),
-                priors in ground truth are fictitious,
-                y_true[:, :, -8] has 1 if prior should be penalized
-                    or in other words is assigned to some ground truth box,
-                y_true[:, :, -7:] are all 0.
-            y_pred: Predicted logits,
-                tensor of shape (?, num_boxes, 4 + num_classes + 8).
+        y_pred_localization = y_pred[:, :, :4]
+        y_true_localization = y_true[:, :, :4]
+        y_pred_classification = y_pred[:, :, 4:25]
+        y_true_classification = y_true[:, :, 4:25]
+        # loss for all priors boxes
+        localization_loss = self._l1_smooth_loss(y_true_localization, y_pred_localization)
+        classification_loss = self._softmax_loss(y_true_classification, y_pred_classification)
 
-        # Returns
-            loss: Loss for prediction, tensor of shape (?,).
-        """
-        batch_size = tf.shape(y_true)[0]
-        num_boxes = tf.to_float(tf.shape(y_true)[1])
+        int_positive_mask = 1 - y_true[:, :, 4 + self.background_id]
+        num_positives = K.sum(int_positive_mask, axis=-1)
+        positive_localization_losses = (localization_loss * int_positive_mask) #scalar times vector
+        positive_classification_losses = (classification_loss * int_positive_mask)
+        positive_classification_loss = K.sum(positive_classification_losses, 1)
+        positive_localization_loss = K.sum(positive_localization_losses, 1)
 
-        # loss for all priors
-        conf_loss = self._softmax_loss(y_true[:, :, 4:],
-                                       y_pred[:, :, 4:])
-        loc_loss = self._l1_smooth_loss(y_true[:, :, :4],
-                                        y_pred[:, :, :4])
+        # TODO: Refactor/understand ----------------------------------------------
+        # every batch contains all priors: here we take the least amount of
+        # negatives which depends on the amount of positives at every batch
+        # at every set of priors. num_negatives/positives = (?, num_positives)
+        # in the second num_positive_mask the values the concatenated value does
+        # not get counted since you are doing greater than zero.
+        # the most probable value that num_neg_batch will have is:
+        # neg_pos_ratio * num_positives where num_positives is the batch element
+        # with less positive boxes.
+        num_negatives_1 = self.neg_pos_ratio * num_positives
+        num_negatives_2 = num_prior_boxes - num_positives
+        num_negatives = tf.minimum(num_negatives_1, num_negatives_2)
 
-        # get positives loss
-        #num_pos = tf.reduce_sum(y_true[:, :, -8], reduction_indices=-1)
-        num_pos = tf.reduce_sum(1 - y_true[:, :, 5 + self.background_label_id],
-                                                    reduction_indices=-1)
-        int_positive_mask = 1 - y_true[:,:, 5 + self.background_label_id]
-        pos_loc_loss = tf.reduce_sum(loc_loss * int_positive_mask,
-                                     reduction_indices=1)
-        pos_conf_loss = tf.reduce_sum(conf_loss * int_positive_mask,
-                                      reduction_indices=1)
-
-        # get negatives loss, we penalize only confidence here
-        num_neg = tf.minimum(self.neg_pos_ratio * num_pos,
-                             num_boxes - num_pos)
-        pos_num_neg_mask = tf.greater(num_neg, 0)
-        has_min = tf.to_float(tf.reduce_any(pos_num_neg_mask))
-        num_neg = tf.concat(0, [num_neg,
-                                [(1 - has_min) * self.negatives_for_hard]])
-        num_neg_batch = tf.reduce_min(tf.boolean_mask(num_neg,
-                                                      tf.greater(num_neg, 0)))
+        #positive_num_negatives_mask = tf.greater(num_negatives, 0)
+        num_positive_mask = tf.greater(num_negatives, 0)
+        has_a_positive = tf.to_float(tf.reduce_any(num_positive_mask))
+        num_negatives = tf.concat(0, [num_negatives,
+                                     [(1 - has_a_positive) * self.negatives_for_hard]])
+        num_positive_mask = tf.greater(num_negatives, 0)
+        num_neg_batch = tf.reduce_min(tf.boolean_mask(num_negatives, num_positive_mask))
         num_neg_batch = tf.to_int32(num_neg_batch)
-        confs_start = 4 + self.background_label_id + 1
-        confs_end = confs_start + self.num_classes - 1
-        max_confs = tf.reduce_max(y_pred[:, :, confs_start:confs_end],
-                                  reduction_indices=2)
-        #_, indices = tf.nn.top_k(max_confs * (1 - y_true[:, :, -8]),
-        _, indices = tf.nn.top_k(max_confs * (y_true[:, :,5 + self.background_label_id]),
-                                 k=num_neg_batch)
-        batch_idx = tf.expand_dims(tf.range(0, batch_size), 1)
-        batch_idx = tf.tile(batch_idx, (1, num_neg_batch))
-        full_indices = (tf.reshape(batch_idx, [-1]) * tf.to_int32(num_boxes) +
-                        tf.reshape(indices, [-1]))
-        # full_indices = tf.concat(2, [tf.expand_dims(batch_idx, 2),
-        #                              tf.expand_dims(indices, 2)])
-        # neg_conf_loss = tf.gather_nd(conf_loss, full_indices)
-        neg_conf_loss = tf.gather(tf.reshape(conf_loss, [-1]),
-                                  full_indices)
-        neg_conf_loss = tf.reshape(neg_conf_loss,
-                                   [batch_size, num_neg_batch])
-        neg_conf_loss = tf.reduce_sum(neg_conf_loss, reduction_indices=1)
+        # ----------------------------------------------------------------------
+
+        #class_start = 4 + self.background_id + 1
+        #class_end = class_start + self.num_classes - 1
+        # each prior box can only have one class then we take the max at axis 2
+        #best_class_scores = K.max(y_pred[:, :, class_start:], 2)
+
+        # picking up the negative examples with the highest probability (highest loss)
+        pred_class_values = K.max(y_pred_classification, axis=2)
+        int_negatives_mask = y_true[:, :, 4 + self.background_id]
+        pred_negative_class_values = pred_class_values * int_negatives_mask
+        top_k_negative_indices = tf.nn.top_k(pred_negative_class_values, k=num_neg_batch)[1]
+
+        batch_indices = K.expand_dims(K.arange(0, batch_size), 1)
+        batch_indices = K.tile(batch_indices, (1, num_neg_batch))
+        batch_indices = K.flatten(batch_indices) * K.cast(num_prior_boxes, 'int32')
+        full_indices = batch_indices + K.flatten(top_k_negative_indices)
+
+        negative_classification_loss = K.gather(K.flatten(classification_loss), full_indices)
+        negative_classification_loss = K.reshape(negative_classification_loss,
+                                                    [batch_size, num_neg_batch])
+        negative_classification_loss = K.sum(negative_classification_loss, 1)
 
         # loss is sum of positives and negatives
-        total_loss = pos_conf_loss + neg_conf_loss
-        total_loss /= (num_pos + tf.to_float(num_neg_batch))
-        num_pos = tf.select(tf.not_equal(num_pos, 0), num_pos,
-                            tf.ones_like(num_pos))
-        total_loss += (self.alpha * pos_loc_loss) / num_pos
+        total_loss = positive_classification_loss + negative_classification_loss
+        num_prior_boxes_per_batch = num_positives + K.cast(num_neg_batch, 'float')
+        total_loss = total_loss / num_prior_boxes_per_batch
+        num_positives = tf.select(K.not_equal(num_positives, 0), num_positives,
+                                                   K.ones_like(num_positives))
+        positive_localization_loss = self.alpha * positive_classification_loss
+        positive_localization_loss = positive_localization_loss / num_positives
+        total_loss = total_loss + positive_localization_loss
         return total_loss
