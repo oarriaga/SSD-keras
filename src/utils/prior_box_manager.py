@@ -133,7 +133,7 @@ class PriorBoxManager(object):
                                                 np.arange(num_assigned_boxes),
                                                 :4]
 
-        assignments[best_iou_mask, 4] = 0
+        assignments[:, 4][best_iou_mask] = 0
         #assignments[best_iou_mask, 5:-8] = ground_truth_data[best_iou_indices, 4:]
         #print('gt shape', ground_truth_data.shape)
         #print('gt best_iou_indices shape:',ground_truth_data[best_iou_indices,4:].shape)

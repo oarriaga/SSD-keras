@@ -1,11 +1,11 @@
 from keras.applications.vgg16 import preprocess_input
 import numpy as np
 
-from models import my_SSD
+from ssd import SSD300
 from utils.utils import read_image
 from utils.utils import resize_image
 
-model = my_SSD(num_classes=21)
+model = SSD300((300,300,3))
 weights_filename = '../trained_models/model_checkpoints/weights.hdf5'
 model.load_weights(weights_filename)
 image_size = model.input_shape[1:3]
