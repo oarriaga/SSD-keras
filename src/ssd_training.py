@@ -59,7 +59,6 @@ class MultiboxLoss(object):
         # Returns
             softmax_loss: Softmax loss, tensor of shape (?, num_boxes).
         """
-        y_pred = y_pred[:,:,:21]
         y_pred = tf.maximum(tf.minimum(y_pred, 1 - 1e-15), 1e-15)
         softmax_loss = -tf.reduce_sum(y_true * tf.log(y_pred),
                                       reduction_indices=-1)
@@ -83,21 +82,18 @@ class MultiboxLoss(object):
         """
         batch_size = tf.shape(y_true)[0]
         num_boxes = tf.to_float(tf.shape(y_true)[1])
-
+        y_pred = y_pred[:, :, :25]
         # loss for all priors
-        conf_loss = self._softmax_loss(y_true[:, :, 4:],
-                                       y_pred[:, :, 4:])
+        conf_loss = self._softmax_loss(y_true[:, :, 4:25],
+                                       y_pred[:, :, 4:25])
         loc_loss = self._l1_smooth_loss(y_true[:, :, :4],
                                         y_pred[:, :, :4])
 
         # get positives loss
-        #num_pos = tf.reduce_sum(y_true[:, :, -8], reduction_indices=-1)
-        num_pos = tf.reduce_sum(1 - y_true[:, :, 5 + self.background_label_id],
-                                                    reduction_indices=-1)
-        int_positive_mask = 1 - y_true[:,:, 5 + self.background_label_id]
-        pos_loc_loss = tf.reduce_sum(loc_loss * int_positive_mask,
+        num_pos = tf.reduce_sum(1 - y_true[:, :, 4], reduction_indices=-1)
+        pos_loc_loss = tf.reduce_sum(loc_loss * (1 - y_true[:, :, 4]),
                                      reduction_indices=1)
-        pos_conf_loss = tf.reduce_sum(conf_loss * int_positive_mask,
+        pos_conf_loss = tf.reduce_sum(conf_loss * (1 - y_true[:, :, 4]),
                                       reduction_indices=1)
 
         # get negatives loss, we penalize only confidence here
@@ -114,8 +110,7 @@ class MultiboxLoss(object):
         confs_end = confs_start + self.num_classes - 1
         max_confs = tf.reduce_max(y_pred[:, :, confs_start:confs_end],
                                   reduction_indices=2)
-        #_, indices = tf.nn.top_k(max_confs * (1 - y_true[:, :, -8]),
-        _, indices = tf.nn.top_k(max_confs * (y_true[:, :,5 + self.background_label_id]),
+        _, indices = tf.nn.top_k(max_confs * (y_true[:, :, 4]),
                                  k=num_neg_batch)
         batch_idx = tf.expand_dims(tf.range(0, batch_size), 1)
         batch_idx = tf.tile(batch_idx, (1, num_neg_batch))

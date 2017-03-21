@@ -5,10 +5,11 @@ from keras.optimizers import Adam
 from image_generator import ImageGenerator
 from ssd import SSD300
 #from models import my_SSD
-from multibox_loss import MultiboxLoss
+#from multibox_loss import MultiboxLoss
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
-from ssd_utils import BBoxUtility
+#from ssd_utils import BBoxUtility
+from ssd_training import MultiboxLoss
 from utils.XML_parser import XMLParser
 from utils.utils import split_data
 from utils.utils import scheduler
@@ -36,7 +37,7 @@ root_prefix = '../datasets/VOCdevkit/VOC2007/'
 image_prefix = root_prefix + 'JPEGImages/'
 
 ground_data_prefix = root_prefix + 'Annotations/'
-ground_truth_manager = XMLParser(ground_data_prefix, background_id=None)
+ground_truth_manager = XMLParser(ground_data_prefix, background_id=0)
 ground_truth_data = ground_truth_manager.get_data()
 
 train_keys, validation_keys = split_data(ground_truth_data, training_ratio=.8)
@@ -45,10 +46,10 @@ prior_box_manager = PriorBoxManager(prior_boxes,
                                     box_scale_factors=[.1, .1, .2, .2])
 
 prior_boxes = flatten_prior_boxes(prior_boxes)
-bbox_util = BBoxUtility(21, prior_boxes)
+#bbox_util = BBoxUtility(21, prior_boxes)
 image_generator = ImageGenerator(ground_truth_data,
-                                 #prior_box_manager,
-                                 bbox_util,
+                                 prior_box_manager,
+                                 #bbox_util,
                                  batch_size,
                                  image_shape[0:2],
                                  train_keys, validation_keys,
