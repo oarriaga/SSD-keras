@@ -3,4 +3,5 @@ weights/*
 src/.ipynb_checkpoints
 src/__pycache__
 src/utils/__pycache__
+wtf/*.hdf5
 trained_models/*
