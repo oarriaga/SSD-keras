@@ -1,5 +1,5 @@
 [x] same image generator
 [x] same box manager
 [] same prior boxes
-[] same loss function
+[x?] same loss function
 
