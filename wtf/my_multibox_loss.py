@@ -3,7 +3,7 @@ import keras.backend as K
 
 class MultiboxLoss(object):
     def __init__(self, num_classes, alpha=1.0, neg_pos_ratio=3.0,
-                 background_id=0, negatives_for_hard=300.0):
+                 background_id=0, negatives_for_hard=100.0):
         self.num_classes = num_classes
         self.alpha = alpha
         self.neg_pos_ratio = neg_pos_ratio
@@ -71,7 +71,9 @@ class MultiboxLoss(object):
         #best_class_scores = K.max(y_pred[:, :, class_start:], 2)
 
         # picking up the negative examples with the highest probability (highest loss)
-        pred_class_values = K.max(y_pred_classification, axis=2)
+        ### ?????? THIS IS WEIRD, the original implementation starts from 5: therefore it
+        #### does not take into consideration the background boxes
+        pred_class_values = K.max(y_pred_classification[1:], axis=2)
         int_negatives_mask = y_true[:, :, 4 + self.background_id]
         pred_negative_class_values = pred_class_values * int_negatives_mask
         top_k_negative_indices = tf.nn.top_k(pred_negative_class_values, k=num_neg_batch)[1]
