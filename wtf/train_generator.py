@@ -8,7 +8,7 @@ import keras
 import pickle
 
 from ssd import SSD300
-from my_multibox_loss import MultiboxLoss
+from my_multibox_loss_2 import MultiboxLoss
 #from ssd_training import MultiboxLoss
 from ssd_utils import BBoxUtility
 
