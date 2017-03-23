@@ -47,7 +47,7 @@ num_val = len(val_keys)
 # In[5]:
 from image_generator import ImageGenerator
 path_prefix = '../datasets/VOCdevkit/VOC2007/JPEGImages/'
-gen = ImageGenerator(gt, bbox_util, 7, (input_shape[0], input_shape[1]), train_keys, val_keys, path_prefix)
+gen = ImageGenerator(gt, bbox_util, 7, (input_shape[0], input_shape[1]), train_keys, val_keys, path_prefix, vertical_flip_probability=0)
 
 # In[6]:
 
