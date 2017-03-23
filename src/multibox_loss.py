@@ -11,7 +11,7 @@ class MultiboxLoss(object):
         self.negatives_for_hard = negatives_for_hard
 
     def _l1_smooth_loss(self, y_true, y_pred):
-        absolute_value_loss = K.abs(y_true - y_pred) - 0.5
+        absolute_value_loss = tf.abs(y_true - y_pred) - 0.5
         square_loss = 0.5 * (y_true - y_pred)**2
         absolute_value_condition = K.lesser(absolute_value_loss, 1.0)
         l1_smooth_loss = tf.select(absolute_value_condition, square_loss,
@@ -29,14 +29,14 @@ class MultiboxLoss(object):
 
         y_pred_localization = y_pred[:, :, :4]
         y_true_localization = y_true[:, :, :4]
-        y_pred_classification = y_pred[:, :, 4:25]
-        y_true_classification = y_true[:, :, 4:25]
+        y_pred_classification = y_pred[:, :, 4:(4 + self.num_classes)]
+        y_true_classification = y_true[:, :, 4:(4 + self.num_classes)]
         # loss for all priors boxes
         localization_loss = self._l1_smooth_loss(y_true_localization, y_pred_localization)
         classification_loss = self._softmax_loss(y_true_classification, y_pred_classification)
 
         int_positive_mask = 1 - y_true[:, :, 4 + self.background_id]
-        num_positives = K.sum(int_positive_mask, axis=-1)
+        num_positives = tf.reduce_sum(int_positive_mask, axis=-1)
         positive_localization_losses = (localization_loss * int_positive_mask) #scalar times vector
         positive_classification_losses = (classification_loss * int_positive_mask)
         positive_classification_loss = K.sum(positive_classification_losses, 1)
