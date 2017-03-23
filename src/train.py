@@ -3,7 +3,8 @@ from keras.callbacks import LearningRateScheduler
 from keras.optimizers import Adam
 
 from image_generator import ImageGenerator
-from multibox_loss import MultiboxLoss
+from training_beta import MultiboxLoss
+#from multibox_loss import MultiboxLoss
 from ssd import SSD300
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
