@@ -33,7 +33,7 @@ def plot_images(original_image, transformed_image):
 def flatten_prior_boxes(prior_boxes):
     prior_boxes = [layer_boxes.reshape(-1, 4)
                    for layer_boxes in prior_boxes]
-    prior_boxes = np.concatenate(prior_boxes, axis=0)
+    prior_boxes = np.concatenate(prior_boxes,axis=0)
     return prior_boxes
 
 def get_classes(dataset='VOC2007'):
