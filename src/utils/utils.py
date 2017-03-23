@@ -4,6 +4,8 @@ from scipy.misc import imread
 from scipy.misc import imresize
 import glob
 
+from keras.applications.vgg16 import preprocess_input
+
 def split_data(ground_truths, training_ratio=.8):
     ground_truth_keys = sorted(ground_truths.keys())
     num_train = int(round(training_ratio * len(ground_truth_keys)))
@@ -47,4 +49,7 @@ def get_classes(dataset='VOC2007'):
 
 def scheduler(epoch, decay=0.9, base_learning_rate=3e-4):
     return base_learning_rate * decay**(epoch)
+
+def preprocess_image(image_array):
+    return preprocess_input(image_array)
 

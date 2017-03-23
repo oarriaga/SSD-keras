@@ -3,8 +3,9 @@ from keras.callbacks import LearningRateScheduler
 from keras.optimizers import Adam
 
 from image_generator import ImageGenerator
-from training_beta import MultiboxLoss
+#from training_beta import MultiboxLoss
 #from multibox_loss import MultiboxLoss
+from ssd_training import MultiboxLoss
 from ssd import SSD300
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
@@ -34,7 +35,7 @@ ground_data_prefix = root_prefix + 'Annotations/'
 image_prefix = root_prefix + 'JPEGImages/'
 
 
-ground_truth_manager = XMLParser(ground_data_prefix, background_id=0)
+ground_truth_manager = XMLParser(ground_data_prefix, background_id=None)
 ground_truth_data = ground_truth_manager.get_data()
 
 train_keys, validation_keys = split_data(ground_truth_data, training_ratio=.8)
@@ -62,6 +63,7 @@ model_checkpoint = ModelCheckpoint(model_names,
                                    save_best_only=False,
                                    save_weights_only=True)
 learning_rate_schedule = LearningRateScheduler(scheduler)
+
 model.fit_generator(image_generator.flow(mode='train'),
                     len(train_keys),
                     num_epochs,

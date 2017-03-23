@@ -5,17 +5,26 @@ import random
 from utils.utils import read_image
 from utils.utils import resize_image
 from utils.utils import list_files_in_directory
+from utils.utils import preprocess_image
 
 class BoxVisualizer(object):
     def __init__(self, image_prefix, image_size=(300, 300),
-                 classes_decoder=None, seed=None):
+                 classes_decoder=None, seed=None, box_decoder=None):
         self.image_prefix = image_prefix
         self.image_size = image_size
         self.image_paths = list_files_in_directory(self.image_prefix + '*.jpg')
         self.classes_decoder = classes_decoder
+        self.box_decoder = box_decoder
         self.random_instance = random.Random()
         if seed != None:
             self.random_instance.seed(seed)
+
+    def draw_predictions(self, image_array, predicted_boxes):
+        image_array = resize_image(image_array, self.image_size)
+        predicted_boxes = self.box_decoder(predicted_boxes)
+        positive_mask = predicted_boxes[:, :, 4] != 1
+        positive_boxes = predicted_boxes[positive_mask]
+
 
     def denormalize_box(self, box_coordinates):
         #num_objects_in_image = box_coordinates.shape[0]

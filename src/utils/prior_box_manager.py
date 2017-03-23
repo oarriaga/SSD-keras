@@ -106,8 +106,8 @@ class PriorBoxManager(object):
         return encoded_boxes.ravel()
 
     def assign_boxes(self, ground_truth_data):
-        #assignments = np.zeros((self.num_priors, 4 + self.num_classes + 8))
-        assignments = np.zeros((self.num_priors, 4 + self.num_classes))
+        assignments = np.zeros((self.num_priors, 4 + self.num_classes + 8))
+        #assignments = np.zeros((self.num_priors, 4 + self.num_classes))
         assignments[:, 4 + self.background_id] = 1.0
         num_objects_in_image = len(ground_truth_data)
         if num_objects_in_image == 0:
@@ -123,26 +123,17 @@ class PriorBoxManager(object):
         best_iou_indices = best_iou_indices[best_iou_mask]
         num_assigned_boxes = len(best_iou_indices)
         encoded_boxes = encoded_boxes[:, best_iou_mask, :]
-        self.best_iou = best_iou
-        self.encoded_boxes = encoded_boxes
-        self.best_iou_indices = best_iou_indices
-        self.num_assigned_boxes = num_assigned_boxes
-        self.best_iou_mask = best_iou_mask
         # np.arange is needed since you want to do it for every box
         assignments[best_iou_mask, :4] = encoded_boxes[best_iou_indices,
                                                 np.arange(num_assigned_boxes),
                                                 :4]
 
         assignments[:, 4][best_iou_mask] = 0
-        #assignments[best_iou_mask, 5:-8] = ground_truth_data[best_iou_indices, 4:]
-        #print('gt shape', ground_truth_data.shape)
-        #print('gt best_iou_indices shape:',ground_truth_data[best_iou_indices,4:].shape)
-        #print('ass shape', assignments.shape)
-
-        assignments[best_iou_mask, 4:] = ground_truth_data[best_iou_indices, 4:]
-        # background counter
-        #assignments[:, -8][best_iou_mask] = 1
+        assignments[:, 5:-8][best_iou_mask] = ground_truth_data[best_iou_indices, 4:]
+        assignments[:, -8][best_iou_mask] = 1
         return assignments
+        #assignments[best_iou_mask, 4:] = ground_truth_data[best_iou_indices, 4:]
+        #return assignments
 
     def decode_boxes(self, predicted_boxes):
         prior_x_min = self.prior_boxes[:, 0]
@@ -190,7 +181,6 @@ class PriorBoxManager(object):
             decoded_boxes = np.concatenate([decoded_boxes,
                             predicted_boxes[:, 4:]], axis=-1)
         return decoded_boxes
-
 
     def apply_non_max_suppression(self, boxes, overlap_threshold=.3):
 
