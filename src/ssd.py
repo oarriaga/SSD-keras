@@ -18,7 +18,7 @@ from ssd_layers import Normalize
 from ssd_layers import PriorBox
 
 
-def SSD300(input_shape, num_classes=21):
+def SSD300(input_shape=(300,300,3), num_classes=21):
     """SSD300 architecture.
 
     # Arguments
