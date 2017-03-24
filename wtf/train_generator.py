@@ -2,8 +2,9 @@ import keras
 import pickle
 
 from ssd import SSD300
-#from my_multibox_loss_2 import MultiboxLoss
-from ssd_training import MultiboxLoss
+from multibox_loss import MultiboxLoss
+#from ssd_training import MultiboxLoss
+
 #from ssd_utils import BBoxUtility
 from image_generator import ImageGenerator
 #from prior_box_creator import PriorBoxCreator
