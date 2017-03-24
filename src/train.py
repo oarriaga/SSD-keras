@@ -4,8 +4,8 @@ from keras.optimizers import Adam
 
 from image_generator import ImageGenerator
 #from training_beta import MultiboxLoss
-from multibox_loss import MultiboxLoss
-#from ssd_training import MultiboxLoss
+#from multibox_loss import MultiboxLoss
+from ssd_training import MultiboxLoss
 from ssd import SSD300
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
@@ -49,12 +49,12 @@ prior_box_manager = PriorBoxManager(prior_boxes,
 
 prior_boxes = flatten_prior_boxes(prior_boxes)
 prior_boxes = add_variances(prior_boxes)
-bbox_util = BBoxUtility(num_classes, prior_boxes)
+#bbox_util = BBoxUtility(num_classes, prior_boxes)
 
 
 image_generator = ImageGenerator(ground_truth_data,
-                                 #prior_box_manager,
-                                 bbox_util,
+                                 prior_box_manager,
+                                 #bbox_util,
                                  batch_size,
                                  image_shape[0:2],
                                  train_keys, validation_keys,
