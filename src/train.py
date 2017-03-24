@@ -4,14 +4,18 @@ from keras.optimizers import Adam
 
 from image_generator import ImageGenerator
 #from training_beta import MultiboxLoss
-#from multibox_loss import MultiboxLoss
-from ssd_training import MultiboxLoss
+from multibox_loss import MultiboxLoss
+#from ssd_training import MultiboxLoss
 from ssd import SSD300
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
 from utils.XML_parser import XMLParser
 from utils.utils import split_data
 from utils.utils import scheduler
+from utils.utils import flatten_prior_boxes
+from utils.utils import add_variances
+
+from utils.ssd_utils import BBoxUtility
 
 batch_size = 7
 num_epochs = 15
@@ -43,16 +47,20 @@ train_keys, validation_keys = split_data(ground_truth_data, training_ratio=.8)
 prior_box_manager = PriorBoxManager(prior_boxes,
                                     box_scale_factors=[.1, .1, .2, .2])
 
+prior_boxes = flatten_prior_boxes(prior_boxes)
+prior_boxes = add_variances(prior_boxes)
+bbox_util = BBoxUtility(num_classes, prior_boxes)
+
+
 image_generator = ImageGenerator(ground_truth_data,
-                                 prior_box_manager,
-                                 #bbox_util,
+                                 #prior_box_manager,
+                                 bbox_util,
                                  batch_size,
                                  image_shape[0:2],
                                  train_keys, validation_keys,
                                  image_prefix,
                                  vertical_flip_probability=0,
                                  horizontal_flip_probability=0.5)
-
 multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=3.0).compute_loss
 model.compile(optimizer=Adam(lr=3e-4), loss=multibox_loss, metrics=['acc'])
 model_names = ('../trained_models/model_checkpoints/' +

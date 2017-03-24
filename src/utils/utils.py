@@ -53,3 +53,12 @@ def scheduler(epoch, decay=0.9, base_learning_rate=3e-4):
 def preprocess_image(image_array):
     return preprocess_input(image_array)
 
+def add_variances(prior_boxes, variances=[.1, .1, .2, .2]):
+    num_prior_boxes = prior_boxes.shape[0]
+    variances = np.asarray(variances) * np.ones((num_prior_boxes, 4))
+    return np.concatenate([prior_boxes, variances], axis=1)
+
+def add_classes(prior_boxes, variances=[.1, .1, .2, .2]):
+    num_prior_boxes = prior_boxes.shape[0]
+    variances = np.asarray(variances) * np.ones((num_prior_boxes, 4))
+    return np.concatenate([prior_boxes, variances], axis=1)
