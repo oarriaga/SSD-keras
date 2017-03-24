@@ -8,10 +8,10 @@ import keras
 import pickle
 
 from ssd import SSD300
-from my_multibox_loss_2 import MultiboxLoss
-#from ssd_training import MultiboxLoss
+#from my_multibox_loss_2 import MultiboxLoss
+from ssd_training import MultiboxLoss
 from ssd_utils import BBoxUtility
-
+from image_generator import ImageGenerator
 
 # config = tf.ConfigProto()
 # config.gpu_options.per_process_gpu_memory_fraction = 0.9
@@ -30,7 +30,6 @@ input_shape = (300, 300, 3)
 priors = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
 bbox_util = BBoxUtility(NUM_CLASSES, priors)
 
-
 # In[4]:
 
 #gt = pickle.load(open('gt_pascal.pkl', 'rb'))
@@ -45,7 +44,6 @@ num_val = len(val_keys)
 
 
 # In[5]:
-from image_generator import ImageGenerator
 path_prefix = '../datasets/VOCdevkit/VOC2007/JPEGImages/'
 gen = ImageGenerator(gt, bbox_util, 7, (input_shape[0], input_shape[1]), train_keys, val_keys, path_prefix, vertical_flip_probability=0)
 
