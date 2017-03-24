@@ -4,11 +4,12 @@ import pickle
 from ssd import SSD300
 #from my_multibox_loss_2 import MultiboxLoss
 from ssd_training import MultiboxLoss
-from ssd_utils import BBoxUtility
+#from ssd_utils import BBoxUtility
 from image_generator import ImageGenerator
-from prior_box_creator import PriorBoxCreator
-from utils import flatten_prior_boxes
-from utils import add_variances
+#from prior_box_creator import PriorBoxCreator
+#from utils import flatten_prior_boxes
+#from utils import add_variances
+from prior_box_manager import PriorBoxManager
 
 # some constants
 NUM_CLASSES = 21
@@ -25,13 +26,14 @@ for L in model.layers:
     if L.name in freeze:
         L.trainable = False
 
-#priors = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
-box_creator = PriorBoxCreator(model)
-priors = box_creator.create_boxes()
-priors = flatten_prior_boxes(priors)
-priors = add_variances(priors)
+priors = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
+#box_creator = PriorBoxCreator(model)
+#priors = box_creator.create_boxes()
+#priors = flatten_prior_boxes(priors)
+#priors = add_variances(priors)
 
-bbox_util = BBoxUtility(NUM_CLASSES, priors)
+#bbox_util = BBoxUtility(NUM_CLASSES, priors)
+bbox_util = PriorBoxManager(priors, box_scale_factors=[.1, .1, .2, .2])
 
 # In[4]:
 
