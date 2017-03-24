@@ -1,9 +1,3 @@
-
-# coding: utf-8
-
-# In[1]:
-
-#import cv2
 import keras
 import pickle
 
@@ -12,22 +6,31 @@ from ssd import SSD300
 from ssd_training import MultiboxLoss
 from ssd_utils import BBoxUtility
 from image_generator import ImageGenerator
-
-# config = tf.ConfigProto()
-# config.gpu_options.per_process_gpu_memory_fraction = 0.9
-# set_session(tf.Session(config=config))
-
-
-# In[2]:
+from prior_box_creator import PriorBoxCreator
+from utils import flatten_prior_boxes
+from utils import add_variances
 
 # some constants
 NUM_CLASSES = 21
 input_shape = (300, 300, 3)
 
 
-# In[3]:
+model = SSD300(input_shape, num_classes=NUM_CLASSES)
+model.load_weights('../trained_models/weights_SSD300.hdf5', by_name=True)
+freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
+          'conv2_1', 'conv2_2', 'pool2',
+          'conv3_1', 'conv3_2', 'conv3_3', 'pool3']#,
 
-priors = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
+for L in model.layers:
+    if L.name in freeze:
+        L.trainable = False
+
+#priors = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
+box_creator = PriorBoxCreator(model)
+priors = box_creator.create_boxes()
+priors = flatten_prior_boxes(priors)
+priors = add_variances(priors)
+
 bbox_util = BBoxUtility(NUM_CLASSES, priors)
 
 # In[4]:
@@ -50,22 +53,6 @@ gen = ImageGenerator(gt, bbox_util, 7, (input_shape[0], input_shape[1]), train_k
 # In[6]:
 
 # In[7]:
-
-model = SSD300(input_shape, num_classes=NUM_CLASSES)
-model.load_weights('../trained_models/weights_SSD300.hdf5', by_name=True)
-
-
-# In[8]:
-
-freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
-          'conv2_1', 'conv2_2', 'pool2',
-          'conv3_1', 'conv3_2', 'conv3_3', 'pool3']#,
-#           'conv4_1', 'conv4_2', 'conv4_3', 'pool4']
-
-for L in model.layers:
-    if L.name in freeze:
-        L.trainable = False
-
 
 # In[9]:
 
