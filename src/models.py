@@ -14,8 +14,10 @@ from keras.layers import Reshape
 from keras.layers import ZeroPadding2D
 from keras.models import Model
 
-from ssd_layers import Normalize
-from ssd_layers import PriorBox
+#from ssd_layers import Normalize
+#from ssd_layers import PriorBox
+from layers import Normalize
+from layers import PriorBox
 
 
 def SSD300(input_shape=(300,300,3), num_classes=21):

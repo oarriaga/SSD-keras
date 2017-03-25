@@ -2,7 +2,7 @@ import random
 import numpy as np
 
 from image_generator import ImageGenerator
-from ssd import SSD300
+from models import SSD300
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
 from utils.box_visualizer import BoxVisualizer

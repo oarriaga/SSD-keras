@@ -6,7 +6,7 @@ from keras.optimizers import Adam
 
 from image_generator import ImageGenerator
 from multibox_loss import MultiboxLoss
-from ssd import SSD300
+from models import SSD300
 #from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
 from utils.XML_parser import XMLParser
@@ -22,7 +22,6 @@ ground_data_prefix = root_prefix + 'Annotations/'
 image_prefix = root_prefix + 'JPEGImages/'
 image_shape = (300, 300 ,3)
 model = SSD300(image_shape, num_classes)
-#image_shape = model.input_shape[1:]
 
 model.load_weights('../trained_models/weights_SSD300.hdf5', by_name=True)
 freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
