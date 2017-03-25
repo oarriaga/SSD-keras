@@ -173,3 +173,17 @@ class PriorBox(Layer):
         pattern = [K.shape(x)[0], 1, 1]
         prior_boxes_tensor = K.tile(prior_boxes_tensor, pattern)
         return prior_boxes_tensor
+
+class PriorBox2(Layer):
+    def __init__(self, aspect_ratios, **kwargs):
+        self.aspect_ratios = aspect_ratios
+        super(PriorBox2, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        super(PriorBox2, self).build(input_shape)
+
+    def get_output_shape_for(self, input_shape):
+        return input_shape
+
+    def call(self, x, mask=None):
+        return x
