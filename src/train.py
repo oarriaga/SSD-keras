@@ -32,7 +32,7 @@ for layer in model.layers:
     if layer.name in freeze:
         layer.trainable = False
 
-multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=3.0).compute_loss
+multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=2.0).compute_loss
 model.compile(optimizer=Adam(lr=3e-4), loss=multibox_loss, metrics=['acc'])
 
 #box_creator = PriorBoxCreator(model)
