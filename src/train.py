@@ -70,6 +70,6 @@ learning_rate_schedule = LearningRateScheduler(scheduler)
 model.fit_generator(image_generator.flow(mode='train'),
                     len(train_keys),
                     num_epochs,
-                    callbacks=[model_checkpoint],
+                    callbacks=[model_checkpoint, learning_rate_schedule],
                     validation_data=image_generator.flow(mode='val'),
                     nb_val_samples = len(validation_keys))
