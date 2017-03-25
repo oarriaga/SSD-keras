@@ -27,7 +27,7 @@ def mini_SSD(num_classes=21):
 
     for layer in base_model.layers:
         layer.trainable = False
-    body = base_model.get_layer('block3_pool').output
+    body = base_model.get_layer('block4_pool').output
     body = Convolution2D((base_kernel_size * num_aspect_ratios), 3, 3,
                           border_mode='same')(body)
     branch_1 = PriorBox(aspect_ratios)(body)
