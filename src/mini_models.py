@@ -9,9 +9,9 @@ from keras.layers import merge
 from keras.layers import Reshape
 from keras.models import Model
 
-from layers import PriorBox
+from layers import PriorBox2 as PriorBox
 
-def my_SSD(num_classes=21):
+def mini_SSD(num_classes=21):
 
     base_kernel_size = 4 + num_classes
     aspect_ratios = (1, 2, 1/2)
@@ -19,7 +19,7 @@ def my_SSD(num_classes=21):
 
 
     base_model = VGG16(weights='imagenet')
-    base_model.layers[0].name = 'image_array'
+    base_model.layers[0].name = 'input_1'
     input_tensor = base_model.input
     #input_tensor = base_model
 
@@ -66,12 +66,14 @@ def my_SSD(num_classes=21):
     localization_tensor = merge([local_1, local_2, local_3], mode='concat',
                                     concat_axis=1, name='encoded_box')
     output_tensor = merge([localization_tensor, classification_tensor],
-                           mode='concat', concat_axis=-1)
+                           mode='concat', concat_axis=-1, name='predictions')
     model = Model(input_tensor, output_tensor)
     return model
 
+"""
 if __name__ == '__main__':
-    model = my_SSD()
+    model = mini_SSD()
     model.summary()
     from keras.utils.visualize_util import plot
     plot(model, 'my_SSD.png')
+"""
