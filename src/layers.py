@@ -1,4 +1,3 @@
-"""Some special pupropse layers for SSD."""
 import keras.backend as K
 from keras.engine.topology import InputSpec
 from keras.engine.topology import Layer
