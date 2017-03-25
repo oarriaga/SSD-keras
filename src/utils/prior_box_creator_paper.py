@@ -33,7 +33,7 @@ class PriorBoxCreator(object):
         self.model_configurations = []
         for layer in self.model.layers:
             layer_type = layer.__class__.__name__
-            if self.layer_type == layer_type:
+            if self.layer_type in layer_type:
                 layer_data = {}
                 layer_data['layer_width'] = layer.input_shape[1]
                 layer_data['layer_height'] = layer.input_shape[2]
