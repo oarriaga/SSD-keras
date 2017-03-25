@@ -1,5 +1,3 @@
-import pickle
-
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import LearningRateScheduler
 from keras.optimizers import Adam
@@ -7,7 +5,7 @@ from keras.optimizers import Adam
 from image_generator import ImageGenerator
 from multibox_loss import MultiboxLoss
 from models import SSD300
-#from utils.prior_box_creator import PriorBoxCreator
+from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
 from utils.XML_parser import XMLParser
 from utils.utils import split_data
@@ -35,9 +33,9 @@ for layer in model.layers:
 multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=2.0).compute_loss
 model.compile(optimizer=Adam(lr=3e-4), loss=multibox_loss, metrics=['acc'])
 
-#box_creator = PriorBoxCreator(model)
-#prior_boxes = box_creator.create_boxes()
-prior_boxes = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
+box_creator = PriorBoxCreator(model)
+prior_boxes = box_creator.create_boxes()
+#prior_boxes = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
 
 ground_truth_manager = XMLParser(ground_data_prefix, background_id=None)
 ground_truth_data = ground_truth_manager.get_data()
