@@ -1,6 +1,6 @@
 import keras.backend as K
 from keras.layers import Activation
-from keras.layers import AtrousConvolution2D
+#from keras.layers import AtrousConvolution2D
 from keras.layers import Convolution2D
 from keras.layers import Flatten
 from keras.layers import Input
@@ -65,6 +65,7 @@ def mini_SSD300(input_shape=(300,300,3), num_classes=21):
                                    name='conv3_3')(net['conv3_2'])
     net['pool3'] = MaxPooling2D((2, 2), strides=(2, 2), border_mode='same',
                                 name='pool3')(net['conv3_3'])
+    """
     # Block 4
     net['conv4_1'] = Convolution2D(512, 3, 3,
                                    activation='relu',
@@ -106,8 +107,9 @@ def mini_SSD300(input_shape=(300,300,3), num_classes=21):
     # x = Dropout(0.5, name='drop7')(x)
     # Block 6
     # deleted
+    """
 
-    net['conv4_3_norm'] = Normalize(20, name='conv4_3_norm')(net['conv4_3'])
+    net['conv4_3_norm'] = Normalize(20, name='conv4_3_norm')(net['conv3_3'])
     num_priors = 3
     x = Convolution2D(num_priors * 4, 3, 3, border_mode='same',
                       name='conv4_3_norm_mbox_loc')(net['conv4_3_norm'])
@@ -126,7 +128,9 @@ def mini_SSD300(input_shape=(300,300,3), num_classes=21):
                         variances=[0.1, 0.1, 0.2, 0.2],
                         name='conv4_3_norm_mbox_priorbox')
     net['conv4_3_norm_mbox_priorbox'] = priorbox(net['conv4_3_norm'])
+
     # Prediction from fc7
+    """
     num_priors = 6
     net['fc7_mbox_loc'] = Convolution2D(num_priors * 4, 3, 3,
                                         border_mode='same',
@@ -145,31 +149,33 @@ def mini_SSD300(input_shape=(300,300,3), num_classes=21):
                         variances=[0.1, 0.1, 0.2, 0.2],
                         name='fc7_mbox_priorbox')
     net['fc7_mbox_priorbox'] = priorbox(net['fc7'])
+    """
     # Gather all predictions
-    net['mbox_loc'] = merge([net['conv4_3_norm_mbox_loc_flat'],
-                             net['fc7_mbox_loc_flat']],
+    """
+    net['mbox_loc'] = merge([net['conv4_3_norm_mbox_loc_flat']],
                             mode='concat', concat_axis=1, name='mbox_loc')
-    net['mbox_conf'] = merge([net['conv4_3_norm_mbox_conf_flat'],
-                              net['fc7_mbox_conf_flat']],
+    net['mbox_conf'] = merge([net['conv4_3_norm_mbox_conf_flat']],
                              mode='concat', concat_axis=1, name='mbox_conf')
-    if hasattr(net['mbox_loc'], '_keras_shape'):
-        num_boxes = net['mbox_loc']._keras_shape[-1] // 4
+    """
+    if hasattr(net['conv4_3_norm_mbox_loc_flat'], '_keras_shape'):
+        num_boxes = net['conv4_3_norm_mbox_loc_flat']._keras_shape[-1] // 4
     elif hasattr(net['mbox_loc'], 'int_shape'):
-        num_boxes = K.int_shape(net['mbox_loc'])[-1] // 4
+        num_boxes = K.int_shape(net['conv4_3_norm_mbox_loc_flat'])[-1] // 4
     net['mbox_loc'] = Reshape((num_boxes, 4),
-                              name='mbox_loc_final')(net['mbox_loc'])
+                              name='mbox_loc_final')(net['conv4_3_norm_mbox_loc_flat'])
     net['mbox_conf'] = Reshape((num_boxes, num_classes),
-                               name='mbox_conf_logits')(net['mbox_conf'])
+                               name='mbox_conf_logits')(net['conv4_3_norm_mbox_conf_flat'])
     net['mbox_conf'] = Activation('softmax',
                                   name='mbox_conf_final')(net['mbox_conf'])
-    net['mbox_priorbox'] = merge([net['conv4_3_norm_mbox_priorbox'],
-                                  net['fc7_mbox_priorbox']],
+    """
+    net['mbox_priorbox'] = merge([net['conv4_3_norm_mbox_priorbox']],
                                  mode='concat', concat_axis=1,
                                  name='mbox_priorbox')
+    """
 
     net['predictions'] = merge([net['mbox_loc'],
                                net['mbox_conf'],
-                               net['mbox_priorbox']],
+                               net['conv4_3_norm_mbox_priorbox']],
                                mode='concat', concat_axis=2,
                                name='predictions')
     model = Model(net['input'], net['predictions'])
