@@ -13,7 +13,7 @@ from utils.XML_parser import XMLParser
 from utils.utils import split_data
 
 # constants
-batch_size = 8
+batch_size = 10
 num_epochs = 15
 classes=['chair', 'bottle', 'sofa', 'tvmonitor', 'diningtable']
 num_classes = len(classes) + 1
@@ -23,17 +23,6 @@ image_prefix = root_prefix + 'JPEGImages/'
 image_shape = (300, 300 ,3)
 model = mini_SSD300(image_shape, num_classes=num_classes)
 plot(model, to_file='mini_SSD300.png')
-
-"""
-model.load_weights('../trained_models/weights_SSD300.hdf5', by_name=True)
-freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
-          'conv2_1', 'conv2_2', 'pool2']
-          #'conv3_1', 'conv3_2', 'conv3_3', 'pool3']
-
-for layer in model.layers:
-    if layer.name in freeze:
-        layer.trainable = False
-"""
 
 def class_accuracy(y_true, y_pred):
     y_pred_classification = y_pred[:, :, 4:(4 + num_classes)]
