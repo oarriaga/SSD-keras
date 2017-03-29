@@ -1,5 +1,6 @@
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import ReduceLROnPlateau
+from keras.metrics import categorical_accuracy
 from keras.optimizers import Adam
 
 from image_generator import ImageGenerator
@@ -30,8 +31,14 @@ for layer in model.layers:
     if layer.name in freeze:
         layer.trainable = False
 
+def class_accuracy(y_true, y_pred):
+    y_pred_classification = y_pred[:, :, 4:(4 + num_classes)]
+    y_true_classification = y_true[:, :, 4:(4 + num_classes)]
+    return categorical_accuracy(y_true_classification, y_pred_classification)
+
 multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=2.0).compute_loss
-model.compile(optimizer=Adam(lr=3e-4), loss=multibox_loss, metrics=['acc'])
+model.compile(optimizer=Adam(lr=3e-4), loss=multibox_loss,
+                                metrics=[class_accuracy])
 box_creator = PriorBoxCreator(model)
 prior_boxes = box_creator.create_boxes()
 ground_truth_manager = XMLParser(ground_data_prefix, background_id=None,
