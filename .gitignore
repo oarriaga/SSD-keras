@@ -6,3 +6,4 @@ src/utils/__pycache__
 wtf/*.hdf5
 wtf/__pycache__
 trained_models/model_checkpoints
+__pycache__
