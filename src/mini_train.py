@@ -1,7 +1,6 @@
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import ReduceLROnPlateau
 from keras.optimizers import Adam
-from keras.utils.visualize_util import plot
 
 from image_generator import ImageGenerator
 from multibox_loss import MultiboxLoss
@@ -21,7 +20,17 @@ ground_data_prefix = root_prefix + 'Annotations/'
 image_prefix = root_prefix + 'JPEGImages/'
 image_shape = (300, 300 ,3)
 model = mini_SSD300(image_shape, num_classes=num_classes)
-plot(model, to_file='mini_SSD300.png')
+
+model.load_weights('../trained_models/weights_SSD300.hdf5', by_name=True)
+freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
+          'conv2_1', 'conv2_2', 'pool2',
+          'conv3_1', 'conv3_2', 'conv3_3', 'pool3']
+
+for layer in model.layers:
+    if layer.name in freeze:
+        layer.trainable = False
+
+
 
 multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=2.0).compute_loss
 model.compile(optimizer=Adam(lr=3e-4), loss=multibox_loss, metrics=['acc'])
@@ -59,7 +68,7 @@ learning_rate_schedule = ReduceLROnPlateau(monitor='val_loss', factor=0.1,
 
 model.fit_generator(image_generator.flow(mode='train'),
                     len(train_keys),
-                    num_epochs)
-                    #callbacks=[model_checkpoint, learning_rate_schedule],
-                    #validation_data=image_generator.flow(mode='val'),
-                    #nb_val_samples = len(validation_keys))
+                    num_epochs,
+                    callbacks=[model_checkpoint, learning_rate_schedule],
+                    validation_data=image_generator.flow(mode='val'),
+                    nb_val_samples = len(validation_keys))
