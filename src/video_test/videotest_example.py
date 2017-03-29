@@ -13,7 +13,7 @@ NUM_CLASSES = len(class_names)
 model = SSD(input_shape, num_classes=NUM_CLASSES)
 
 # Change this path if you want to use your own trained weights
-model.load_weights('../../trained_models/weights.10-1.26.hdf5')
+model.load_weights('../../trained_models/weights_SSD300.hdf5')
 vid_test = VideoTest(class_names, model, input_shape)
 
 # To test on webcam 0, remove the parameter (or change it to another number

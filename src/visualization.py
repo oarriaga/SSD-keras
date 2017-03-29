@@ -24,15 +24,15 @@ root_prefix = '../datasets/VOCdevkit/VOC2007/'
 ground_data_prefix = root_prefix + 'Annotations/'
 image_prefix = root_prefix + 'JPEGImages/'
 
-ground_truth_manager = XMLParser(ground_data_prefix, background_id=0)
+ground_truth_manager = XMLParser(ground_data_prefix, background_id=None)
 ground_truth_data = ground_truth_manager.get_data()
 class_decoder = ground_truth_manager.arg_to_class
 
 # drawing any set of prior boxes at a given scale
 box_visualizer = BoxVisualizer(image_prefix, image_shape, class_decoder)
-layer_scale, box_arg = 0, 777
-box_coordinates = prior_boxes[layer_scale][box_arg, :, :]
-box_visualizer.draw_normalized_box(box_coordinates)
+# layer_scale, box_arg = 0, 777
+# box_coordinates = prior_boxes[layer_scale][box_arg, :, :]
+# box_visualizer.draw_normalized_box(box_coordinates)
 
 # drawing ground truths
 selected_key =  random.choice(list(ground_truth_data.keys()))
