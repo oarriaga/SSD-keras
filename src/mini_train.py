@@ -2,11 +2,12 @@ from keras.callbacks import ModelCheckpoint
 from keras.callbacks import ReduceLROnPlateau
 from keras.metrics import categorical_accuracy
 from keras.optimizers import Adam
+from keras.utils.visualize_util import plot
 
 from image_generator import ImageGenerator
 from multibox_loss import MultiboxLoss
 from mini_models import mini_SSD300
-from utils.prior_box_creator_paper import PriorBoxCreator
+from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
 from utils.XML_parser import XMLParser
 from utils.utils import split_data
@@ -21,15 +22,18 @@ ground_data_prefix = root_prefix + 'Annotations/'
 image_prefix = root_prefix + 'JPEGImages/'
 image_shape = (300, 300 ,3)
 model = mini_SSD300(image_shape, num_classes=num_classes)
+plot(model, to_file='mini_SSD300.png')
 
+"""
 model.load_weights('../trained_models/weights_SSD300.hdf5', by_name=True)
 freeze = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
-          'conv2_1', 'conv2_2', 'pool2',
-          'conv3_1', 'conv3_2', 'conv3_3', 'pool3']
+          'conv2_1', 'conv2_2', 'pool2']
+          #'conv3_1', 'conv3_2', 'conv3_3', 'pool3']
 
 for layer in model.layers:
     if layer.name in freeze:
         layer.trainable = False
+"""
 
 def class_accuracy(y_true, y_pred):
     y_pred_classification = y_pred[:, :, 4:(4 + num_classes)]
