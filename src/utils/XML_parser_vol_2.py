@@ -26,7 +26,6 @@ class XMLParser(object):
                 class_names.append('background')
             keys = np.arange(len(class_names))
             self.arg_to_class = dict(zip(keys, class_names))
-
         self.class_to_arg = {value: key for key, value
                              in self.arg_to_class.items()}
         self.class_names = class_names
@@ -67,12 +66,15 @@ class XMLParser(object):
                     ymin = float(bounding_box.find('ymin').text) / height
                     xmax = float(bounding_box.find('xmax').text) / width
                     ymax = float(bounding_box.find('ymax').text) / height
+
                 class_name = object_tree.find('name').text
                 if class_name in self.class_names:
                     one_hot_class = self._to_one_hot(class_name)
                     one_hot_classes.append(one_hot_class)
-                    bounding_box = [xmin,ymin,xmax,ymax]
+
+                    bounding_box = [xmin, ymin, xmax, ymax]
                     bounding_boxes.append(bounding_box)
+
             if len(one_hot_classes) == 0:
                 continue
             image_name = root.find('filename').text

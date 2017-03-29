@@ -4,7 +4,7 @@ from keras.optimizers import Adam
 
 from image_generator import ImageGenerator
 from multibox_loss import MultiboxLoss
-from mini_models import mini_SSD
+from models import mini_SSD
 from utils.prior_box_creator_paper import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
 from utils.XML_parser import XMLParser
