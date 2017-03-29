@@ -26,9 +26,9 @@ class XMLParser(object):
                 class_names.append('background')
             keys = np.arange(len(class_names))
             self.arg_to_class = dict(zip(keys, class_names))
-
         self.class_to_arg = {value: key for key, value
                              in self.arg_to_class.items()}
+        self.class_names = class_names
         self.data = dict()
         self._preprocess_XML()
 
@@ -61,16 +61,19 @@ class XMLParser(object):
             width = float(size_tree.find('width').text)
             height = float(size_tree.find('height').text)
             for object_tree in root.findall('object'):
-                for bounding_box in object_tree.iter('bndbox'):
-                    xmin = float(bounding_box.find('xmin').text) / width
-                    ymin = float(bounding_box.find('ymin').text) / height
-                    xmax = float(bounding_box.find('xmax').text) / width
-                    ymax = float(bounding_box.find('ymax').text) / height
-                bounding_box = [xmin,ymin,xmax,ymax]
-                bounding_boxes.append(bounding_box)
                 class_name = object_tree.find('name').text
-                one_hot_class = self._to_one_hot(class_name)
-                one_hot_classes.append(one_hot_class)
+                if class_name in self.class_names:
+                    one_hot_class = self._to_one_hot(class_name)
+                    one_hot_classes.append(one_hot_class)
+                    for bounding_box in object_tree.iter('bndbox'):
+                        xmin = float(bounding_box.find('xmin').text) / width
+                        ymin = float(bounding_box.find('ymin').text) / height
+                        xmax = float(bounding_box.find('xmax').text) / width
+                        ymax = float(bounding_box.find('ymax').text) / height
+                    bounding_box = [xmin, ymin, xmax, ymax]
+                    bounding_boxes.append(bounding_box)
+            if len(one_hot_classes) == 0:
+                continue
             image_name = root.find('filename').text
             bounding_boxes = np.asarray(bounding_boxes)
             one_hot_classes = np.asarray(one_hot_classes)
@@ -88,7 +91,9 @@ class XMLParser(object):
 
 if __name__ == '__main__':
     data_path = '../../datasets/VOCdevkit/VOC2007/Annotations/'
-    xml_parser = XMLParser(data_path, background_id=0)
+    classes = ['bottle', 'sofa', 'tvmonitor', 'diningtable', 'chair']
+    xml_parser = XMLParser(data_path, background_id=None, class_names=classes)
     ground_truths = xml_parser.get_data()
+    print(len(ground_truths.keys()))
     print(xml_parser.arg_to_class)
 
