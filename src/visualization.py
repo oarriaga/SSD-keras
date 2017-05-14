@@ -14,18 +14,22 @@ from utils.utils import plot_images
 
 # BUG fix the flatten function ti give a one to one map when flattened
 # TODO: Incorporate the plot images into the box_visualizer class
+# TODO: Does not work with giving only some classes
 
 
 root_prefix = '../datasets/VOCdevkit/VOC2007/'
 ground_data_prefix = root_prefix + 'Annotations/'
 image_prefix = root_prefix + 'JPEGImages/'
+class_names = ['background', 'diningtable', 'chair']
+num_classes = len(class_names)
 
 model =SSD300()
 image_shape = model.input_shape[1:3]
 box_creator = PriorBoxCreator(model)
 prior_boxes = box_creator.create_boxes()
 
-ground_truth_manager = XMLParser(ground_data_prefix)
+ground_truth_manager = XMLParser(ground_data_prefix,
+                        class_names=class_names)
 ground_truth_data = ground_truth_manager.get_data()
 arg_to_class = ground_truth_manager.arg_to_class
 
@@ -42,7 +46,7 @@ selected_box_coordinates = selected_data[:, 0:4]
 box_visualizer.draw_normalized_box(selected_data, selected_key)
 
 # drawing encoded decoded boxes 
-prior_box_manager = PriorBoxManager(prior_boxes)
+prior_box_manager = PriorBoxManager(prior_boxes, num_classes=num_classes)
 assigned_encoded_boxes = prior_box_manager.assign_boxes(selected_data)
 positive_mask = assigned_encoded_boxes[:, 4] != 1
 encoded_positive_boxes = assigned_encoded_boxes[positive_mask]
