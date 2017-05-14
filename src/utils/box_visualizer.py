@@ -5,29 +5,20 @@ import random
 from utils.utils import read_image
 from utils.utils import resize_image
 from utils.utils import list_files_in_directory
-from utils.utils import preprocess_image
 
 class BoxVisualizer(object):
     def __init__(self, image_prefix, image_size=(300, 300),
-                 classes_decoder=None, seed=None, box_decoder=None):
+                 arg_to_class=None, seed=None, box_decoder=None):
         self.image_prefix = image_prefix
         self.image_size = image_size
         self.image_paths = list_files_in_directory(self.image_prefix + '*.jpg')
-        self.classes_decoder = classes_decoder
+        self.arg_to_class = arg_to_class
         self.box_decoder = box_decoder
         self.random_instance = random.Random()
         if seed != None:
             self.random_instance.seed(seed)
 
-    def draw_predictions(self, image_array, predicted_boxes):
-        image_array = resize_image(image_array, self.image_size)
-        predicted_boxes = self.box_decoder(predicted_boxes)
-        positive_mask = predicted_boxes[:, :, 4] != 1
-        positive_boxes = predicted_boxes[positive_mask]
-
-
     def denormalize_box(self, box_coordinates):
-        #num_objects_in_image = box_coordinates.shape[0]
         x_min = box_coordinates[:, 0]
         y_min = box_coordinates[:, 1]
         x_max = box_coordinates[:, 2]
@@ -40,7 +31,8 @@ class BoxVisualizer(object):
         return np.concatenate([x_min[:, None], y_min[:, None],
                                x_max[:, None], y_max[:, None]], axis=1)
 
-    def draw_normalized_box(self, box_coordinates, image_key=None, color='r'):
+    def draw_normalized_box(self, box_coordinates, image_key=None, color='r',
+                                                            image_array=None):
         if len(box_coordinates.shape) == 1:
             box_coordinates = np.expand_dims(box_coordinates, 0)
 
@@ -48,8 +40,8 @@ class BoxVisualizer(object):
             image_path = self.random_instance.choice(self.image_paths)
         else:
             image_path = self.image_prefix + image_key
-
-        image_array = read_image(image_path)
+        if image_array == None:
+            image_array = read_image(image_path)
         image_array = resize_image(image_array, self.image_size)
         figure, axis = plt.subplots(1)
         axis.imshow(image_array)
@@ -79,9 +71,9 @@ class BoxVisualizer(object):
                             box_width, box_height,
                             linewidth=1, edgecolor=color, facecolor='none')
             axis.add_patch(rectangle)
-            if self.classes_decoder != None and classes_flag:
+            if self.arg_to_class != None and classes_flag:
                 box_class = classes[box_arg]
-                class_name = self.classes_decoder[np.argmax(box_class)]
+                class_name = self.arg_to_class[np.argmax(box_class)]
                 axis.text(x_text, y_text, class_name, style='italic',
                       bbox={'facecolor':'red', 'alpha':0.5, 'pad':10})
         plt.show()

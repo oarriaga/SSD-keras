@@ -1,5 +1,3 @@
-"""Keras implementation of SSD."""
-
 import keras.backend as K
 from keras.layers import Activation
 from keras.layers import AtrousConvolution2D
@@ -14,11 +12,13 @@ from keras.layers import Reshape
 from keras.layers import ZeroPadding2D
 from keras.models import Model
 
+#from ssd_layers import Normalize
+#from ssd_layers import PriorBox
 from layers import Normalize
 from layers import PriorBox
 
 
-def SSD300(input_shape, num_classes=21):
+def SSD300(input_shape=(300,300,3), num_classes=21):
     """SSD300 architecture.
 
     # Arguments

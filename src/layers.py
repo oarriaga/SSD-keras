@@ -1,7 +1,11 @@
+"""Some special pupropse layers for SSD."""
+
 import keras.backend as K
 from keras.engine.topology import InputSpec
 from keras.engine.topology import Layer
 import numpy as np
+import tensorflow as tf
+
 
 class Normalize(Layer):
     """Normalization layer as described in ParseNet paper.
@@ -43,6 +47,7 @@ class Normalize(Layer):
         output = K.l2_normalize(x, self.axis)
         output *= self.gamma
         return output
+
 
 class PriorBox(Layer):
     """Generate the prior boxes of designated sizes and aspect ratios.
@@ -103,15 +108,16 @@ class PriorBox(Layer):
         self.clip = True
         super(PriorBox, self).__init__(**kwargs)
 
-    def build(self, input_shape):
-        super(PriorBox, self).build(input_shape)
-
     def get_output_shape_for(self, input_shape):
         num_priors_ = len(self.aspect_ratios)
         layer_width = input_shape[self.waxis]
         layer_height = input_shape[self.haxis]
         num_boxes = num_priors_ * layer_width * layer_height
-        return (input_shape[0], num_boxes, 8)
+        return input_shape[0], num_boxes, 8
+
+    # support for Keras 2.0
+    def compute_output_shape(self, input_shape):
+        return self.get_output_shape_for(input_shape)
 
     def call(self, x, mask=None):
         if hasattr(x, '_keras_shape'):
@@ -170,20 +176,10 @@ class PriorBox(Layer):
             raise Exception('Must provide one or four variances.')
         prior_boxes = np.concatenate((prior_boxes, variances), axis=1)
         prior_boxes_tensor = K.expand_dims(K.variable(prior_boxes), 0)
-        pattern = [K.shape(x)[0], 1, 1]
-        prior_boxes_tensor = K.tile(prior_boxes_tensor, pattern)
+        if K.backend() == 'tensorflow':
+            pattern = [tf.shape(x)[0], 1, 1]
+            prior_boxes_tensor = tf.tile(prior_boxes_tensor, pattern)
+        elif K.backend() == 'theano':
+            #TODO
+            pass
         return prior_boxes_tensor
-
-class PriorBox2(Layer):
-    def __init__(self, aspect_ratios, **kwargs):
-        self.aspect_ratios = aspect_ratios
-        super(PriorBox2, self).__init__(**kwargs)
-
-    def build(self, input_shape):
-        super(PriorBox2, self).build(input_shape)
-
-    def get_output_shape_for(self, input_shape):
-        return input_shape
-
-    def call(self, x, mask=None):
-        return x
