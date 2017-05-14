@@ -81,7 +81,7 @@ class ImageGenerator(object):
         noise = np.random.randn(3) * self.lighting_std
         noise = eigen_vectors.dot(eigen_values * noise) * 255
         image_array = image_array + noise
-        return np.clip(image_array, 0 ,255)
+        return np.clip(image_array, 0 , 255)
 
     def horizontal_flip(self, image_array, box_corners):
         if np.random.random() < self.horizontal_flip_probability:

@@ -1,9 +1,12 @@
 import numpy as np
 import os
 from xml.etree import ElementTree
+from utils.utils import get_class_names
 
 class XMLParser(object):
     """ Preprocess the VOC2007 xml annotations data.
+
+    # TODO: Add background label
 
     # Arguments
         data_path: Data path to VOC2007 annotations
@@ -14,40 +17,19 @@ class XMLParser(object):
         num_objects refers to the number of objects in that specific image
     """
 
-    def __init__(self, data_path, background_id=None, class_names=None):
+    def __init__(self, data_path, class_names=None, dataset_name='VOC2007'):
         self.path_prefix = data_path
-        self.background_id = background_id
-        if class_names == None:
-            self.arg_to_class = self._use_VOC2007_classes()
-        else:
-            if background_id != None and background_id != -1:
-                class_names.insert(background_id, 'background')
-            elif background_id == -1:
-                class_names.append('background')
-            keys = np.arange(len(class_names))
-            self.arg_to_class = dict(zip(keys, class_names))
-            self.class_names = class_names
-
+        self.dataset_name = dataset_name
+        self.class_names = class_names
+        if self.class_names == None:
+            self.class_names = get_class_names(self.dataset_name)
+        self.num_classes = len(self.class_names)
+        keys = np.arange(self.num_classes)
+        self.arg_to_class = dict(zip(keys, self.class_names))
         self.class_to_arg = {value: key for key, value
                              in self.arg_to_class.items()}
         self.data = dict()
         self._preprocess_XML()
-
-    def _use_VOC2007_classes(self):
-        class_names = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle',
-                       'bus', 'car', 'cat', 'chair', 'cow', 'diningtable',
-                       'dog', 'horse', 'motorbike', 'person', 'pottedplant',
-                       'sheep', 'sofa', 'train', 'tvmonitor']
-        if self.background_id != None and self.background_id != -1 :
-            class_names.insert(self.background_id, 'background')
-        elif self.background_id == -1:
-            class_names.append('background')
-
-        keys = np.arange(len(class_names))
-        arg_to_class = dict(zip(keys, class_names))
-        self.class_names = class_names
-
-        return arg_to_class
 
     def get_data(self):
         return self.data
@@ -84,17 +66,16 @@ class XMLParser(object):
                 image_data = np.expand_dims(image_data, axis=0)
             self.data[image_name] = image_data
 
-    def _to_one_hot(self, name):
-        num_classes = len(self.class_to_arg)
-        one_hot_vector = [0] * num_classes
-        class_arg = self.class_to_arg[name]
+    def _to_one_hot(self, class_name):
+        one_hot_vector = [0] * self.num_classes
+        class_arg = self.class_to_arg[class_name]
         one_hot_vector[class_arg] = 1
         return one_hot_vector
 
 if __name__ == '__main__':
     data_path = '../../datasets/VOCdevkit/VOC2007/Annotations/'
     classes = ['bottle', 'sofa', 'tvmonitor', 'diningtable', 'chair']
-    xml_parser = XMLParser(data_path, background_id=None, class_names=classes)
+    xml_parser = XMLParser(data_path, class_names=classes)
     ground_truths = xml_parser.get_data()
     print(len(ground_truths.keys()))
     print(xml_parser.arg_to_class)
