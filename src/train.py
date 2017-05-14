@@ -38,7 +38,7 @@ box_creator = PriorBoxCreator(model)
 prior_boxes = box_creator.create_boxes()
 #prior_boxes = pickle.load(open('prior_boxes_ssd300.pkl', 'rb'))
 
-ground_truth_manager = XMLParser(ground_data_prefix, background_id=None)
+ground_truth_manager = XMLParser(ground_data_prefix)
 ground_truth_data = ground_truth_manager.get_data()
 
 train_keys, validation_keys = split_data(ground_truth_data, training_ratio=.8)
