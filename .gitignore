@@ -1,9 +1,6 @@
 datasets/*
-weights/*
 src/.ipynb_checkpoints
 src/__pycache__
 src/utils/__pycache__
-wtf/*.hdf5
-wtf/__pycache__
 trained_models/model_checkpoints
 __pycache__
