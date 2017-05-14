@@ -16,7 +16,7 @@ num_classes = len(class_names) + 1
 model = mini_SSD300(input_shape, num_classes)
 
 # Change this path if you want to use your own trained weights
-model.load_weights('../../trained_models/minh.hdf5')
+model.load_weights('../../trained_models/model_checkpoints/weights.02-2.83.hdf5')
 vid_test = VideoTest(class_names, model, input_shape)
 
 # To test on webcam 0, remove the parameter (or change it to another number
