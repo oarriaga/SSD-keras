@@ -13,8 +13,8 @@ class MultiboxLoss(object):
     def _l1_smooth_loss(self, y_true, y_pred):
         absolute_value_loss = tf.abs(y_true - y_pred) - 0.5
         square_loss = 0.5 * (y_true - y_pred)**2
-        absolute_value_condition = K.lesser(absolute_value_loss, 1.0)
-        l1_smooth_loss = tf.select(absolute_value_condition, square_loss,
+        absolute_value_condition = K.less(absolute_value_loss, 1.0)
+        l1_smooth_loss = tf.where(absolute_value_condition, square_loss,
                                                     absolute_value_loss)
         return K.sum(l1_smooth_loss, axis=-1)
 
@@ -51,8 +51,8 @@ class MultiboxLoss(object):
 
         num_positive_mask = tf.greater(num_negatives, 0)
         has_a_positive = tf.to_float(tf.reduce_any(num_positive_mask))
-        num_negatives = tf.concat_v2(0, [num_negatives,
-                        [(1 - has_a_positive) * self.negatives_for_hard]])
+        num_negatives = tf.concat([num_negatives,
+                        [(1 - has_a_positive) * self.negatives_for_hard]], 0)
         num_positive_mask = tf.greater(num_negatives, 0)
         num_neg_batch = tf.reduce_min(tf.boolean_mask(num_negatives,
                                                 num_positive_mask))
@@ -82,7 +82,7 @@ class MultiboxLoss(object):
         num_prior_boxes_per_batch = (num_positives +
                                      K.cast(num_neg_batch, 'float'))
         total_loss = total_loss / num_prior_boxes_per_batch
-        num_positives = tf.select(K.not_equal(num_positives, 0), num_positives,
+        num_positives = tf.where(K.not_equal(num_positives, 0), num_positives,
                                                    K.ones_like(num_positives))
         positive_localization_loss = self.alpha * positive_classification_loss
         positive_localization_loss = positive_localization_loss / num_positives
