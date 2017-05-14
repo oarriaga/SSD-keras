@@ -129,7 +129,8 @@ class PriorBoxManager(object):
                                                 :4]
 
         assignments[:, 4][best_iou_mask] = 0
-        assignments[:, 5:-8][best_iou_mask] = ground_truth_data[best_iou_indices, 4:]
+        #assignments[:, 5:-8][best_iou_mask] = ground_truth_data[best_iou_indices, 4:]
+        assignments[:, 5:-8][best_iou_mask] = ground_truth_data[best_iou_indices, 5:]
         assignments[:, -8][best_iou_mask] = 1
         return assignments
         #assignments[best_iou_mask, 4:] = ground_truth_data[best_iou_indices, 4:]
@@ -146,7 +147,7 @@ class PriorBoxManager(object):
         prior_center_x = 0.5 * (prior_x_max + prior_x_min)
         prior_center_y = 0.5 * (prior_y_max + prior_y_min)
 
-        #rename to g_hat_center_x all the other variables 
+        # TODO rename to g_hat_center_x all the other variables 
         pred_center_x = predicted_boxes[:, 0]
         pred_center_y = predicted_boxes[:, 1]
         pred_width = predicted_boxes[:, 2]
@@ -181,60 +182,3 @@ class PriorBoxManager(object):
             decoded_boxes = np.concatenate([decoded_boxes,
                             predicted_boxes[:, 4:]], axis=-1)
         return decoded_boxes
-
-    def apply_non_max_suppression(self, boxes, overlap_threshold=.3):
-
-        if len(boxes) == 0:
-            return []
-
-	# if the bounding boxes integers, convert them to floats --
-	# this is important since we'll be doing a bunch of divisions
-        if boxes.dtype.kind == "i":
-            boxes = boxes.astype("float")
-
-	# initialize the list of picked indexes	
-        picked_indices = []
-
-	# grab the coordinates of the bounding boxes
-        x_min = boxes[:, 0]
-        y_min = boxes[:, 1]
-        x_max = boxes[:, 2]
-        y_max = boxes[:, 3]
-
-        # compute the area of the bounding boxes and sort the bounding
-        # boxes by the bottom-right y-coordinate of the bounding box
-        areas = (x_max - x_min + 1) * (y_max - y_min + 1)
-        indices = np.argsort(y_max)
-
-        # keep looping while some indexes still remain in the indexes
-        # list
-        while len(indices) > 0:
-                # grab the last index in the indexes list and add the
-                # index value to the list of picked indexes
-                last = len(indices) - 1
-                index = indices[last]
-                picked_indices.append(index)
-
-                # find the largest (x, y) coordinates for the start of
-                # the bounding box and the smallest (x, y) coordinates
-                # for the end of the bounding box
-                xx_min = np.maximum(x_min[index], x_min[indices[:last]])
-                yy_min = np.maximum(y_min[index], y_min[indices[:last]])
-                xx_max = np.minimum(x_max[index], x_max[indices[:last]])
-                yy_max = np.minimum(y_max[index], y_max[indices[:last]])
-
-                # compute the width and height of the bounding box
-                width = np.maximum(0, xx_max - xx_min + 1)
-                height = np.maximum(0, yy_max - yy_min + 1)
-
-                # compute the ratio of overlap
-                overlap = (width * height) / areas[indices[:last]]
-
-                # delete all indexes from the index list that have
-                indices = np.delete(indices, np.concatenate(([last],
-                        np.where(overlap > overlap_threshold)[0])))
-
-        # return only the bounding boxes that were picked using the
-        # integer data type
-        return boxes[picked_indices].astype("int")
-

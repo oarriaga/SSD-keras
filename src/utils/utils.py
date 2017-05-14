@@ -38,6 +38,17 @@ def flatten_prior_boxes(prior_boxes):
     prior_boxes = np.concatenate(prior_boxes,axis=0)
     return prior_boxes
 
+def get_class_names(dataset='VOC2007'):
+    if dataset == 'VOC2007':
+        class_names = ['background','aeroplane', 'bicycle', 'bird', 'boat', 'bottle',
+                       'bus', 'car', 'cat', 'chair', 'cow', 'diningtable',
+                       'dog', 'horse', 'motorbike', 'person', 'pottedplant',
+                       'sheep', 'sofa', 'train', 'tvmonitor']
+    else:
+        raise Exception('Invalid dataset', dataset)
+    return class_names
+
+
 def get_classes(dataset='VOC2007'):
     if dataset == 'VOC2007':
         classes = {0:'aeroplane', 1:'bicyle', 2:'bird', 3:'boat', 4:'bottle',
@@ -45,6 +56,8 @@ def get_classes(dataset='VOC2007'):
                    10:'diningtable', 11:'dog', 12:'horse', 13:'motorbike',
                    14:'person' ,15:'pottedplant', 16:'sheep', 17:'sofa',
                    18:'train', 19:'tvmonitor'}
+    else:
+        raise Exception('Invalid dataset name')
     return classes
 
 def scheduler(epoch, decay=0.9, base_learning_rate=3e-4):

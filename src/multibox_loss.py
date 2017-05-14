@@ -51,7 +51,7 @@ class MultiboxLoss(object):
 
         num_positive_mask = tf.greater(num_negatives, 0)
         has_a_positive = tf.to_float(tf.reduce_any(num_positive_mask))
-        num_negatives = tf.concat(0, [num_negatives,
+        num_negatives = tf.concat_v2(0, [num_negatives,
                         [(1 - has_a_positive) * self.negatives_for_hard]])
         num_positive_mask = tf.greater(num_negatives, 0)
         num_neg_batch = tf.reduce_min(tf.boolean_mask(num_negatives,
