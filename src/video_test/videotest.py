@@ -49,7 +49,7 @@ class VideoTest(object):
             col = (int(cvcol[0][0][0]), int(cvcol[0][0][1]), int(cvcol[0][0][2]))
             self.class_colors.append(col) 
 
-    def run(self, video_path = 0, start_frame = 0, conf_thresh = 0.95):
+    def run(self, video_path = 0, start_frame = 0, conf_thresh = 0.6):
         """ Runs the test on a video (or webcam)
         # Arguments
         video_path: A file path to a video to be tested on. Can also be a number,
@@ -103,7 +103,6 @@ class VideoTest(object):
             
             # This line creates a new TensorFlow device every time. Is there a 
             # way to avoid that?
-            """
             results = self.bbox_util.detection_out(y)
             
             if len(results) > 0 and len(results[0]) > 0:
@@ -141,7 +140,6 @@ class VideoTest(object):
                     text_pos = (xmin + 5, ymin)
                     cv2.rectangle(to_draw, text_top, text_bot, self.class_colors[class_num], -1)
                     cv2.putText(to_draw, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0,0,0), 1)
-            """
             
             # Calculate FPS
             # This computes FPS for everything, not just the model's execution 

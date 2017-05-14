@@ -26,9 +26,10 @@ class XMLParser(object):
                 class_names.append('background')
             keys = np.arange(len(class_names))
             self.arg_to_class = dict(zip(keys, class_names))
+            self.class_names = class_names
+
         self.class_to_arg = {value: key for key, value
                              in self.arg_to_class.items()}
-        self.class_names = class_names
         self.data = dict()
         self._preprocess_XML()
 
@@ -44,6 +45,7 @@ class XMLParser(object):
 
         keys = np.arange(len(class_names))
         arg_to_class = dict(zip(keys, class_names))
+        self.class_names = class_names
 
         return arg_to_class
 
