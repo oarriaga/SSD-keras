@@ -66,8 +66,8 @@ model_checkpoint = ModelCheckpoint(model_names,
 learning_rate_schedule = LearningRateScheduler(scheduler)
 
 model.fit_generator(image_generator.flow(mode='train'),
-                    len(train_keys),
-                    num_epochs,
+                    steps_per_epoch=int(len(train_keys) / batch_size),
+                    epochs = num_epochs, verbose = 1,
                     callbacks=[model_checkpoint, learning_rate_schedule],
                     validation_data=image_generator.flow(mode='val'),
-                    nb_val_samples = len(validation_keys))
+                    validation_steps=int(len(validation_keys) / batch_size))
