@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 class PriorBoxManager(object):
     def __init__(self, prior_boxes, background_id=0, overlap_threshold=.5,
@@ -13,6 +14,13 @@ class PriorBoxManager(object):
         self.overlap_threshold = overlap_threshold
         self.background_id = background_id
         self.box_scale_factors = box_scale_factors
+        # to be removed eventually (all this nms with tf) 
+        self.boxes = tf.placeholder(dtype='float32', shape=(None, 4))
+        self.scores = tf.placeholder(dtype='float32', shape=(None,))
+        self.nms = tf.image.non_max_suppression(self.boxes, self.scores,
+                                                max_output_size=400,
+                                                iou_threshold=0.45)
+ 
 
     def _flatten_prior_boxes(self, prior_boxes):
         prior_boxes = [layer_boxes.reshape(-1, 4)
@@ -182,3 +190,55 @@ class PriorBoxManager(object):
             decoded_boxes = np.concatenate([decoded_boxes,
                             predicted_boxes[:, 4:]], axis=-1)
         return decoded_boxes
+
+
+    def detection_out(self, predictions, background_label_id=0, keep_top_k=200,
+                      confidence_threshold=0.01):
+        """Do non maximum suppression (nms) on prediction results.
+
+        # Arguments
+            predictions: Numpy array of predicted values.
+            num_classes: Number of classes for prediction.
+            background_label_id: Label of background class.
+            keep_top_k: Number of total bboxes to be kept per image
+                after nms step.
+            confidence_threshold: Only consider detections,
+                whose confidences are larger than a threshold.
+
+        # Return
+            results: List of predictions for every picture. Each prediction is:
+                [label, confidence, xmin, ymin, xmax, ymax]
+        """
+        box_coordinates = predictions[:, :, :4]
+        #variances = predictions[:, :, -4:]
+        #mbox_priorbox = predictions[:, :, -8:-4]
+        box_classes = predictions[:, :, 4:-8]
+        num_samples = len(box_coordinates)
+        results = []
+        for sample_arg in range(num_samples):
+            results.append([])
+            decoded_boxes = self.decode_boxes(box_coordinates[sample_arg])
+            for class_arg in range(self.num_classes):
+                if class_arg == background_label_id:
+                    continue
+                class_probabilities = box_classes[sample_arg, :, class_arg]
+                class_probabilities_mask = class_probabilities > confidence_threshold
+                if len(class_probabilities[class_probabilities_mask]) > 0:
+                    positive_decoded_boxes = decoded_boxes[class_probabilities_mask]
+                    positive_class_probabilities = class_probabilities[class_probabilities_mask]
+
+                    input_dictionary = {self.boxes: positive_decoded_boxes,
+                                        self.scores: positive_class_probabilities}
+                    indices = self.sess.run(self.nms, feed_dict=input_dictionary)
+                    selected_boxes = positive_decoded_boxes[indices]
+                    probabilities = positive_class_probabilities[indices][:, None]
+                    labels = class_arg * np.ones((len(indices), 1))
+                    c_pred = np.concatenate((labels, probabilities, selected_boxes),
+                                            axis=1)
+                    results[-1].extend(c_pred)
+            if len(results[-1]) > 0:
+                results[-1] = np.array(results[-1])
+                argsort = np.argsort(results[-1][:, 1])[::-1]
+                results[-1] = results[-1][argsort]
+                results[-1] = results[-1][:keep_top_k]
+        return results
