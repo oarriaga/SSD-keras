@@ -11,6 +11,7 @@ from utils.utils import get_class_names
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+from keras.preprocessing import image as image_processor
 
 
 class Tester(object):
@@ -46,34 +47,41 @@ class Tester(object):
         ground_truths = XML_parser.get_data()
         print('Number of images:', len(ground_truths.keys()))
 
+    def test_image_loading(self):
+        test_image_path = 'test_resources/fish-bike.jpg'
+        keras_image = image_processor.load_img(test_image_path)
+        keras_image = image_processor.img_to_array(keras_image)
+        scipy_image = imread(test_image_path)
+        scipy_image = scipy_image.astype('float32')
+        value = np.all(keras_image == scipy_image)
+        print('Image test:', value)
+
     def test_model(self):
         inputs = []
         images = []
         file_paths = list_files_in_directory('test_resources/*.jpg')
         for file_path in file_paths:
             image_array = imread(file_path)
-            image_array = imresize(image_array, (300, 300))
             images.append(image_array)
-            inputs.append(image_array.copy())
-        # TODO VERY IMPORTANT CHECK THIS SHOULD BE LIKE THIS
-        # SPECIFICALLY THE dtype='float64'
-        inputs = np.asarray(inputs, dtype='float64')
-        print(inputs.shape)
+            image_array = imresize(image_array, (300, 300))
+            inputs.append(image_array)
+        inputs = np.asarray(inputs, dtype='float32')
         inputs = preprocess_input(inputs)
         predictions = self.model.predict(inputs, batch_size=1, verbose=1)
-        prior_box_manager = PriorBoxManager(self.prior_boxes)
+        prior_box_manager = PriorBoxManager(self.prior_boxes,
+                            box_scale_factors=[.1, .1, .2, .2])
         results = prior_box_manager.detection_out(predictions)
-        for image_arg, image_array in enumerate(images):
+        for i, img in enumerate(images):
             # Parse the outputs.
-            det_label = results[image_arg][:, 0]
-            det_conf = results[image_arg][:, 1]
-            det_xmin = results[image_arg][:, 2]
-            det_ymin = results[image_arg][:, 3]
-            det_xmax = results[image_arg][:, 4]
-            det_ymax = results[image_arg][:, 5]
+            det_label = results[i][:, 0]
+            det_conf = results[i][:, 1]
+            det_xmin = results[i][:, 2]
+            det_ymin = results[i][:, 3]
+            det_xmax = results[i][:, 4]
+            det_ymax = results[i][:, 5]
 
             # Get detections with confidence higher than 0.6.
-            top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.3]
+            top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.9]
 
             top_conf = det_conf[top_indices]
             top_label_indices = det_label[top_indices].tolist()
@@ -84,32 +92,35 @@ class Tester(object):
 
             colors = plt.cm.hsv(np.linspace(0, 1, 21)).tolist()
 
-            plt.imshow(image_array / 255.)
+            plt.imshow(img / 255.)
             currentAxis = plt.gca()
 
             for i in range(top_conf.shape[0]):
-                xmin = int(round(top_xmin[image_arg] * image_array.shape[1]))
-                ymin = int(round(top_ymin[image_arg] * image_array.shape[0]))
-                xmax = int(round(top_xmax[image_arg] * image_array.shape[1]))
-                ymax = int(round(top_ymax[image_arg] * image_array.shape[0]))
+                xmin = int(round(top_xmin[i] * img.shape[1]))
+                ymin = int(round(top_ymin[i] * img.shape[0]))
+                xmax = int(round(top_xmax[i] * img.shape[1]))
+                ymax = int(round(top_ymax[i] * img.shape[0]))
                 score = top_conf[i]
                 label = int(top_label_indices[i])
+                #label_name = voc_classes[label - 1]
                 #label_name = self.class_names[label - 1]
                 label_name = self.class_names[label]
                 display_txt = '{:0.2f}, {}'.format(score, label_name)
                 coords = (xmin, ymin), xmax-xmin+1, ymax-ymin+1
                 color = colors[label]
-                currentAxis.add_patch(plt.Rectangle(*coords, fill=False,
-                                            edgecolor=color, linewidth=2))
+                currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor=color, linewidth=2))
                 currentAxis.text(xmin, ymin, display_txt, bbox={'facecolor':color, 'alpha':0.5})
             plt.show()
 
 
+
+
 if __name__ == "__main__":
-    weights_path = '../trained_models/SSD300.11-1.96.hdf5'
+    weights_path = '../trained_models/weights.10-1.90.hdf5'
     model = SSD300()
     model.load_weights(weights_path)
     tester = Tester(model)
     tester.test_prior_boxes()
     tester.test_XML_parser()
+    tester.test_image_loading()
     tester.test_model()
