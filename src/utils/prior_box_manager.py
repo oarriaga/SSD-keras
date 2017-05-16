@@ -14,12 +14,13 @@ class PriorBoxManager(object):
         self.overlap_threshold = overlap_threshold
         self.background_id = background_id
         self.box_scale_factors = box_scale_factors
+        self.assigned_prior_boxes = []
         # to be removed eventually (all this nms with tf) 
         self.boxes = tf.placeholder(dtype='float32', shape=(None, 4))
         self.scores = tf.placeholder(dtype='float32', shape=(None,))
         self.nms = tf.image.non_max_suppression(self.boxes, self.scores,
-                                                max_output_size=400,
-                                                iou_threshold=0.45)
+                                                max_output_size=100,
+                                                iou_threshold=0.1)
         self.sess = tf.Session(config=tf.ConfigProto(device_count={'GPU': 0}))
 
     def _flatten_prior_boxes(self, prior_boxes):
@@ -107,22 +108,27 @@ class PriorBoxManager(object):
             assign_mask[ious.argmax()] = True
         if return_iou:
             encoded_boxes[:, -1][assign_mask] = ious[assign_mask]
-        assigned_priors = self.prior_boxes[assign_mask]
-        assigned_encoded_priors = self._encode_box(assigned_priors,
+        assigned_prior_boxes = self.prior_boxes[assign_mask]
+        self.assigned_prior_boxes.append(assigned_prior_boxes)
+        assigned_encoded_priors = self._encode_box(assigned_prior_boxes,
                                                    ground_truth_box)
         encoded_boxes[assign_mask, 0:4] = assigned_encoded_priors
         return encoded_boxes.ravel()
 
     def assign_boxes(self, ground_truth_data):
+        self.assigned_prior_boxes = []
         assignments = np.zeros((self.num_priors, 4 + self.num_classes + 8))
         #assignments = np.zeros((self.num_priors, 4 + self.num_classes))
         assignments[:, 4 + self.background_id] = 1.0
         num_objects_in_image = len(ground_truth_data)
         if num_objects_in_image == 0:
             return assignments
+        #make this into a function
         encoded_boxes = np.apply_along_axis(self._assign_boxes_to_object,
                                             1, ground_truth_data[:, :4])
         # (num_objects_in_image, num_priors, encoded_coordinates + iou)
+        #self.assigned_prior_boxes = np.asarray(self.assigned_prior_boxes)
+        self.assigned_prior_boxes = np.concatenate(self.assigned_prior_boxes, 0)
         encoded_boxes = encoded_boxes.reshape(-1, self.num_priors, 5)
         # we will take the best boxes for every object in the image
         best_iou = encoded_boxes[:, :, -1].max(axis=0)
@@ -192,7 +198,7 @@ class PriorBoxManager(object):
         return decoded_boxes
 
 
-    def detection_out(self, predictions, background_label_id=0, keep_top_k=200,
+    def detection_out2(self, predictions, background_label_id=0, keep_top_k=100,
                       confidence_threshold=0.01):
         """Do non maximum suppression (nms) on prediction results.
 
@@ -210,8 +216,6 @@ class PriorBoxManager(object):
                 [label, confidence, xmin, ymin, xmax, ymax]
         """
         box_coordinates = predictions[:, :, :4]
-        #variances = predictions[:, :, -4:]
-        #mbox_priorbox = predictions[:, :, -8:-4]
         box_classes = predictions[:, :, 4:-8]
         num_samples = len(box_coordinates)
         results = []
@@ -242,3 +246,56 @@ class PriorBoxManager(object):
                 results[-1] = results[-1][argsort]
                 results[-1] = results[-1][:keep_top_k]
         return results
+
+    def detection_out(self, predictions, background_label_id=0, keep_top_k=100,
+                      confidence_threshold=0.01):
+        """Do non maximum suppression (nms) on prediction results.
+
+        # Arguments
+            predictions: Numpy array of predicted values.
+            num_classes: Number of classes for prediction.
+            background_label_id: Label of background class.
+            keep_top_k: Number of total bboxes to be kept per image
+                after nms step.
+            confidence_threshold: Only consider detections,
+                whose confidences are larger than a threshold.
+
+        # Return
+            results: List of predictions for every picture. Each prediction is:
+                [label, confidence, xmin, ymin, xmax, ymax]
+        """
+        mbox_loc = predictions[:, :, :4]
+        variances = predictions[:, :, -4:]
+        mbox_priorbox = predictions[:, :, -8:-4]
+        mbox_conf = predictions[:, :, 4:-8]
+        results = []
+        for i in range(len(mbox_loc)):
+            results.append([])
+            #decode_bbox = self.decode_boxes(mbox_loc[i],
+                                            #mbox_priorbox[i], variances[i])
+
+            decode_bbox = self.decode_boxes(mbox_loc[i])
+            for c in range(self.num_classes):
+                if c == background_label_id:
+                    continue
+                c_confs = mbox_conf[i, :, c]
+                c_confs_m = c_confs > confidence_threshold
+                if len(c_confs[c_confs_m]) > 0:
+                    boxes_to_process = decode_bbox[c_confs_m]
+                    confs_to_process = c_confs[c_confs_m]
+                    feed_dict = {self.boxes: boxes_to_process,
+                                 self.scores: confs_to_process}
+                    idx = self.sess.run(self.nms, feed_dict=feed_dict)
+                    good_boxes = boxes_to_process[idx]
+                    confs = confs_to_process[idx][:, None]
+                    labels = c * np.ones((len(idx), 1))
+                    c_pred = np.concatenate((labels, confs, good_boxes),
+                                            axis=1)
+                    results[-1].extend(c_pred)
+            if len(results[-1]) > 0:
+                results[-1] = np.array(results[-1])
+                argsort = np.argsort(results[-1][:, 1])[::-1]
+                results[-1] = results[-1][argsort]
+                results[-1] = results[-1][:keep_top_k]
+        return results
+
