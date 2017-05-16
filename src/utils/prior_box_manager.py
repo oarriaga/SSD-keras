@@ -20,7 +20,7 @@ class PriorBoxManager(object):
         self.nms = tf.image.non_max_suppression(self.boxes, self.scores,
                                                 max_output_size=400,
                                                 iou_threshold=0.45)
- 
+        self.sess = tf.Session(config=tf.ConfigProto(device_count={'GPU': 0}))
 
     def _flatten_prior_boxes(self, prior_boxes):
         prior_boxes = [layer_boxes.reshape(-1, 4)

@@ -3,7 +3,7 @@ from utils.prior_box_manager import PriorBoxManager
 from utils.utils import imread
 from utils.utils import imresize
 from keras.models import load_model
-#from models import SSD300
+from models import SSD300
 from utils.XML_parser import XMLParser
 from utils.utils import list_files_in_directory
 from utils.utils import preprocess_input
@@ -11,19 +11,20 @@ from utils.utils import get_class_names
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-from layers import Normalize
-from layers import PriorBox
 
 
 class Tester(object):
     def __init__(self, model,
-            XML_files_path='../datasets/VOCdevkit/VOC2007/Annotations/'):
+            XML_files_path='../datasets/VOCdevkit/VOC2007/Annotations/',
+            class_names=None):
         self.model = model
         self.XML_files_path = XML_files_path
         # you should load everything before performing the tests
         # if not the order will make them fail.
         self.prior_boxes = None
-        self.class_names = None
+        self.class_names = class_names
+        if self.class_names == None:
+            self.class_names = get_class_names()
 
 
     def test_prior_boxes(self,
@@ -38,10 +39,10 @@ class Tester(object):
                                         prior_box_difference.max(),
                                         prior_box_difference.min()))
 
-    def test_XML_parser(self, class_names=['bottle', 'sofa', 'chair']):
-        class_names = None
-        self.class_names = class_names
-        XML_parser = XMLParser(self.XML_files_path, class_names)
+    def test_XML_parser(self):
+        #class_names = None
+        #self.class_names = class_names
+        XML_parser = XMLParser(self.XML_files_path, self.class_names)
         ground_truths = XML_parser.get_data()
         print('Number of images:', len(ground_truths.keys()))
 
@@ -54,7 +55,10 @@ class Tester(object):
             image_array = imresize(image_array, (300, 300))
             images.append(image_array)
             inputs.append(image_array.copy())
-        inputs = np.asarray(image_array)
+        # TODO VERY IMPORTANT CHECK THIS SHOULD BE LIKE THIS
+        # SPECIFICALLY THE dtype='float64'
+        inputs = np.asarray(inputs, dtype='float64')
+        print(inputs.shape)
         inputs = preprocess_input(inputs)
         predictions = self.model.predict(inputs, batch_size=1, verbose=1)
         prior_box_manager = PriorBoxManager(self.prior_boxes)
@@ -69,7 +73,7 @@ class Tester(object):
             det_ymax = results[image_arg][:, 5]
 
             # Get detections with confidence higher than 0.6.
-            top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.6]
+            top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.3]
 
             top_conf = det_conf[top_indices]
             top_label_indices = det_label[top_indices].tolist()
@@ -102,11 +106,9 @@ class Tester(object):
 
 
 if __name__ == "__main__":
-    model_path = '../trained_models/SSD300.11-1.96.hdf5'
-    custom_layers = dict()
-    custom_layers['Normalize'] = Normalize
-    custom_layers['PriorBox'] = PriorBox
-    model = load_model(model_path, custom_layers)
+    weights_path = '../trained_models/SSD300.11-1.96.hdf5'
+    model = SSD300()
+    model.load_weights(weights_path)
     tester = Tester(model)
     tester.test_prior_boxes()
     tester.test_XML_parser()
