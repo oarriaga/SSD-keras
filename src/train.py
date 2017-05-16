@@ -62,7 +62,7 @@ model_checkpoint = ModelCheckpoint(model_names,
                                    monitor='val_loss',
                                    verbose=1,
                                    save_best_only=False,
-                                   save_weights_only=True)
+                                   save_weights_only=False)
 learning_rate_schedule = LearningRateScheduler(scheduler)
 
 model.fit_generator(image_generator.flow(mode='train'),
