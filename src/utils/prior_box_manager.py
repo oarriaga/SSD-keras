@@ -128,7 +128,7 @@ class PriorBoxManager(object):
                                             1, ground_truth_data[:, :4])
         # (num_objects_in_image, num_priors, encoded_coordinates + iou)
         #self.assigned_prior_boxes = np.asarray(self.assigned_prior_boxes)
-        self.assigned_prior_boxes = np.concatenate(self.assigned_prior_boxes, 0)
+        #self.assigned_prior_boxes = np.concatenate(self.assigned_prior_boxes, 0)
         encoded_boxes = encoded_boxes.reshape(-1, self.num_priors, 5)
         # we will take the best boxes for every object in the image
         best_iou = encoded_boxes[:, :, -1].max(axis=0)
