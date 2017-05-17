@@ -1,17 +1,17 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import pickle
+from scipy.misc import imread
+
+from keras.preprocessing import image as image_processor
+from models import SSD300
 from utils.prior_box_creator import PriorBoxCreator
 from utils.prior_box_manager import PriorBoxManager
-from utils.utils import imread
-from utils.utils import imresize
-from keras.models import load_model
-from models import SSD300
 from utils.XML_parser import XMLParser
 from utils.utils import list_files_in_directory
 from utils.utils import preprocess_input
 from utils.utils import get_class_names
-import pickle
-import numpy as np
-import matplotlib.pyplot as plt
-from keras.preprocessing import image as image_processor
+from utils.utils import load_image
 
 
 class Tester(object):
@@ -61,9 +61,8 @@ class Tester(object):
         images = []
         file_paths = list_files_in_directory('test_resources/*.jpg')
         for file_path in file_paths:
-            image_array = imread(file_path)
-            images.append(image_array)
-            image_array = imresize(image_array, (300, 300))
+            image_array = load_image(file_path, False, target_size=(300, 300))
+            images.append(imread(file_path))
             inputs.append(image_array)
         inputs = np.asarray(inputs, dtype='float32')
         inputs = preprocess_input(inputs)
@@ -81,7 +80,7 @@ class Tester(object):
             det_ymax = results[i][:, 5]
 
             # Get detections with confidence higher than 0.6.
-            top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.9]
+            top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.8]
 
             top_conf = det_conf[top_indices]
             top_label_indices = det_label[top_indices].tolist()
@@ -116,7 +115,7 @@ class Tester(object):
 
 
 if __name__ == "__main__":
-    weights_path = '../trained_models/weights.10-1.90.hdf5'
+    weights_path = '../trained_models/ssd300_weights.13-1.86.hdf5'
     model = SSD300()
     model.load_weights(weights_path)
     tester = Tester(model)
