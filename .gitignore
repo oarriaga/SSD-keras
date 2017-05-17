@@ -6,3 +6,4 @@ trained_models/model_checkpoints
 trained_models
 __pycache__
 src/visualization.ipynb
+
