@@ -1,11 +1,8 @@
-"""Some special pupropse layers for SSD."""
+import numpy as np
 
 import keras.backend as K
 from keras.engine.topology import InputSpec
 from keras.engine.topology import Layer
-import numpy as np
-import tensorflow as tf
-
 
 class Normalize(Layer):
     """Normalization layer as described in ParseNet paper.
@@ -176,6 +173,12 @@ class PriorBox(Layer):
             raise Exception('Must provide one or four variances.')
         prior_boxes = np.concatenate((prior_boxes, variances), axis=1)
         prior_boxes_tensor = K.expand_dims(K.variable(prior_boxes), 0)
+        pattern = [K.shape(x)[0], 1, 1]
+        prior_boxes_tensor = K.tile(prior_boxes_tensor, pattern)
+        return prior_boxes_tensor
+
+
+        """
         if K.backend() == 'tensorflow':
             pattern = [tf.shape(x)[0], 1, 1]
             prior_boxes_tensor = tf.tile(prior_boxes_tensor, pattern)
@@ -183,3 +186,4 @@ class PriorBox(Layer):
             #TODO
             pass
         return prior_boxes_tensor
+        """
