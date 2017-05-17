@@ -2,8 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 
-from utils.utils import read_image
-from utils.utils import resize_image
+from utils.utils import load_image
 from utils.utils import list_files_in_directory
 
 class BoxVisualizer(object):
@@ -40,9 +39,11 @@ class BoxVisualizer(object):
             image_path = self.random_instance.choice(self.image_paths)
         else:
             image_path = self.image_prefix + image_key
-        if image_array == None:
-            image_array = read_image(image_path)
-        image_array = resize_image(image_array, self.image_size)
+        if image_array is None:
+            #image_array = read_image(image_path)
+            #image_array = resize_image(image_array, self.image_size)
+            image_array = load_image(image_path, target_size=self.image_size)
+        image_array = image_array.astype('uint8')
         figure, axis = plt.subplots(1)
         axis.imshow(image_array)
         original_coordinates = self.denormalize_box(box_coordinates)
