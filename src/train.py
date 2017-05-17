@@ -13,13 +13,13 @@ from utils.utils import split_data
 from utils.utils import scheduler
 
 # constants
-batch_size = 7
+batch_size = 5
 num_epochs = 15
 num_classes = 21
 root_prefix = '../datasets/VOCdevkit/VOC2007/'
 ground_data_prefix = root_prefix + 'Annotations/'
 image_prefix = root_prefix + 'JPEGImages/'
-image_shape = (224, 224 ,3)
+image_shape = (300, 300 ,3)
 model = SSD300(image_shape, num_classes)
 
 model.load_weights('../trained_models/weights_SSD300.hdf5', by_name=True)
@@ -52,12 +52,12 @@ image_generator = ImageGenerator(ground_truth_data,
                                  image_shape[0:2],
                                  train_keys, validation_keys,
                                  image_prefix,
-                                 vertical_flip_probability=0,
+                                 vertical_flip_probability=0.5,
                                  horizontal_flip_probability=0.5)
 
 
 model_names = ('../trained_models/model_checkpoints/' +
-               'weights.{epoch:02d}-{val_loss:.2f}.hdf5')
+               'ssd300_weights.{epoch:02d}-{val_loss:.2f}.hdf5')
 model_checkpoint = ModelCheckpoint(model_names,
                                    monitor='val_loss',
                                    verbose=1,
