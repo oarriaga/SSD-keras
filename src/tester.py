@@ -80,7 +80,7 @@ class Tester(object):
             det_ymax = results[i][:, 5]
 
             # Get detections with confidence higher than 0.6.
-            top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.8]
+            top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.9]
 
             top_conf = det_conf[top_indices]
             top_label_indices = det_label[top_indices].tolist()
@@ -115,7 +115,7 @@ class Tester(object):
 
 
 if __name__ == "__main__":
-    weights_path = '../trained_models/ssd300_weights.13-1.86.hdf5'
+    weights_path = '../trained_models/ssd300_weights.16-1.60.hdf5'
     model = SSD300()
     model.load_weights(weights_path)
     tester = Tester(model)
