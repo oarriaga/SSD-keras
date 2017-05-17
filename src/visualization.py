@@ -8,14 +8,12 @@ from utils.prior_box_manager import PriorBoxManager
 from utils.box_visualizer import BoxVisualizer
 from utils.XML_parser import XMLParser
 from utils.utils import split_data
-from utils.utils import read_image
-from utils.utils import resize_image
 from utils.utils import plot_images
+from utils.utils import load_image
 
 # BUG fix the flatten function ti give a one to one map when flattened
 # TODO: Incorporate the plot images into the box_visualizer class
 # TODO: Does not work with giving only some classes
-
 
 root_prefix = '../datasets/VOCdevkit/VOC2007/'
 ground_data_prefix = root_prefix + 'Annotations/'
@@ -70,8 +68,7 @@ generated_input = generated_data[0]['input_1']
 generated_output = generated_data[1]['predictions']
 generated_image = np.squeeze(generated_input[0]).astype('uint8')
 validation_image_name = image_prefix + validation_keys[0]
-original_image = read_image(validation_image_name)
-original_image = resize_image(original_image, image_shape)
+original_image = load_image(validation_image_name, target_size=image_shape)
 plot_images(original_image, generated_image)
 
 # finally draw the assigned boxes given by the generator
