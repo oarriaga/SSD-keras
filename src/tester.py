@@ -115,7 +115,7 @@ class Tester(object):
 
 
 if __name__ == "__main__":
-    weights_path = '../trained_models/ssd300_weights.16-1.60.hdf5'
+    weights_path = '../trained_models/ssd300_weights.34-1.54.hdf5'
     model = SSD300()
     model.load_weights(weights_path)
     tester = Tester(model)
