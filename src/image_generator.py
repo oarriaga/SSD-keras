@@ -1,7 +1,8 @@
 import numpy as np
-from keras.applications.vgg16 import preprocess_input
 from random import shuffle
-from scipy.misc import imread, imresize
+
+from utils.utils import load_image
+from utils.utils import preprocess_images
 
 class ImageGenerator(object):
     """ Image generator with saturation, brightness, lighting, contrast,
@@ -113,9 +114,6 @@ class ImageGenerator(object):
 
         return image_array, box_corners
 
-    def preprocess_images(self, image_array):
-        return preprocess_input(image_array)
-
     def flow(self, mode='train'):
             while True:
                 if mode =='train':
@@ -131,9 +129,10 @@ class ImageGenerator(object):
                 targets = []
                 for key in keys:
                     image_path = self.path_prefix + key
-                    image_array = self._imread(image_path)
-                    image_array = self._imresize(image_array, self.image_size)
-                    image_array = image_array.astype('float32')
+                    image_array = load_image(image_path, False, self.image_size)
+                    #image_array = self._imread(image_path)
+                    #image_array = self._imresize(image_array, self.image_size)
+                    #image_array = image_array.astype('float32')
                     box_corners = self.ground_truth_data[key].copy()
                     if mode == 'train' or mode == 'demo':
                         image_array, box_corners = self.transform(image_array,
@@ -145,7 +144,7 @@ class ImageGenerator(object):
                         inputs = np.asarray(inputs)
                         targets = np.asarray(targets)
                         if mode == 'train' or mode == 'val':
-                            inputs = self.preprocess_images(inputs)
+                            inputs = preprocess_images(inputs)
                             yield self._wrap_in_dictionary2(inputs, targets)
                         if mode == 'demo':
                             yield self._wrap_in_dictionary2(inputs, targets)
@@ -160,11 +159,4 @@ class ImageGenerator(object):
         return [{'image_array':image_array},
                 {'encoded_box':targets[:,:,:4],
                 'classes':targets[:,:,4:]}]
-
-    def _imread(self, image_name):
-        return imread(image_name)
-
-    def _imresize(self, image_array, size):
-        return imresize(image_array, size)
-
 
