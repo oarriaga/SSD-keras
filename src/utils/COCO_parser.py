@@ -8,10 +8,11 @@ class COCOParser(object):
         if self.class_names == 'all':
             class_data = self.coco.loadCats(self.coco.getCatIds())
             self.class_names = [class_['name'] for class_ in class_data]
-            self.num_classes = len(self.class_names)
             coco_ids = [class_['id'] for class_ in class_data]
-            one_hot_ids = list(range(len(coco_ids)))
+            one_hot_ids = list(range(1, len(coco_ids) + 1))
             self.coco_id_to_class_arg = dict(zip(coco_ids, one_hot_ids))
+            self.class_names = ['background'] + self.class_names
+            self.num_classes = len(self.class_names)
         elif len(self.class_names) > 1:
             raise NotImplementedError('Only one or all classes supported')
         self.data = dict()
@@ -28,6 +29,8 @@ class COCOParser(object):
             annotation_ids = self.coco.getAnnIds(imgIds=image_data['id'])
             annotations = self.coco.loadAnns(annotation_ids)
             num_objects_in_image = len(annotations)
+            if num_objects_in_image == 0:
+                continue
             image_ground_truth = []
             for object_arg in range(num_objects_in_image):
                 coco_id = annotations[object_arg]['category_id']
