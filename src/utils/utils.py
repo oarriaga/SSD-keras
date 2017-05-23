@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import glob
 from keras.preprocessing import image as keras_image_preprocessor
 from keras.applications.vgg16 import preprocess_input
+import pickle
+
 
 def split_data(ground_truths, training_ratio=.8):
     ground_truth_keys = sorted(ground_truths.keys())
@@ -29,14 +31,17 @@ def plot_images(original_image, transformed_image):
     plt.imshow(transformed_image.astype('uint8'))
     plt.show()
 
-def get_class_names(dataset='VOC2007'):
-    if dataset == 'VOC2007':
+def get_class_names(dataset_name='VOC2007'):
+    if dataset_name == 'VOC2007':
         class_names = ['background','aeroplane', 'bicycle', 'bird', 'boat',
                        'bottle', 'bus', 'car', 'cat', 'chair', 'cow',
                        'diningtable', 'dog', 'horse', 'motorbike', 'person',
                        'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
+    elif dataset_name == 'COCO':
+        # this is not working since the path has to be relative 
+        class_names = pickle.load(open('coco_classes.p', 'rb'))
     else:
-        raise Exception('Invalid dataset', dataset)
+        raise Exception('Invalid dataset', dataset_name)
     return class_names
 
 def scheduler(epoch, decay=0.9, base_learning_rate=3e-4):

@@ -25,7 +25,8 @@ class Tester(object):
         self.prior_boxes = None
         self.class_names = class_names
         if self.class_names == None:
-            self.class_names = get_class_names()
+            self.class_names = get_class_names('VOC2007')
+            #self.class_names = pickle.load(open('utils/coco_classes.p', 'rb'))
 
 
     def test_prior_boxes(self,
@@ -80,7 +81,7 @@ class Tester(object):
             det_ymax = results[i][:, 5]
 
             # Get detections with confidence higher than 0.6.
-            top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.9]
+            top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.8]
 
             top_conf = det_conf[top_indices]
             top_label_indices = det_label[top_indices].tolist()
@@ -115,8 +116,10 @@ class Tester(object):
 
 
 if __name__ == "__main__":
-    weights_path = '../trained_models/ssd300_weights.34-1.54.hdf5'
-    model = SSD300()
+    #weights_path = '../trained_models/ssd300_weights.34-1.54.hdf5'
+    weights_path = '../trained_models/ssd300_weights.17-1.51.hdf5'
+    #weights_path = '../trained_models/SSD300_COCO_weights.08-0.35.hdf5'
+    model = SSD300(num_classes=21)
     model.load_weights(weights_path)
     tester = Tester(model)
     tester.test_prior_boxes()

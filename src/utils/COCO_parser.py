@@ -1,5 +1,6 @@
 from pycocotools.coco import COCO
 import numpy as np
+import pickle
 
 class COCOParser(object):
     def __init__(self, annotations_path, class_names='all'):
@@ -57,6 +58,8 @@ if __name__ == "__main__":
     data_path = '../../datasets/COCO/annotations/instances_train2014.json'
     data_loder = COCOParser(data_path)
     data = data_loder.get_data()
+    pickle.dump(data_loder.class_names, open( "coco_classes.p", "wb" ) )
+    data_loder.class_names
 
 
 
