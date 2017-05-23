@@ -200,44 +200,29 @@ class PriorBoxManager(object):
 
     def detection_out2(self, predictions, background_label_id=0, keep_top_k=100,
                       confidence_threshold=0.01):
-        """Do non maximum suppression (nms) on prediction results.
-
-        # Arguments
-            predictions: Numpy array of predicted values.
-            num_classes: Number of classes for prediction.
-            background_label_id: Label of background class.
-            keep_top_k: Number of total bboxes to be kept per image
-                after nms step.
-            confidence_threshold: Only consider detections,
-                whose confidences are larger than a threshold.
-
-        # Return
-            results: List of predictions for every picture. Each prediction is:
-                [label, confidence, xmin, ymin, xmax, ymax]
-        """
         box_coordinates = predictions[:, :, :4]
         box_classes = predictions[:, :, 4:-8]
-        num_samples = len(box_coordinates)
         results = []
-        for sample_arg in range(num_samples):
+        num_boxes = len(box_coordinates)
+        for box_arg in range(num_boxes):
             results.append([])
-            decoded_boxes = self.decode_boxes(box_coordinates[sample_arg])
+            decoded_box_coordinates = self.decode_boxes(box_coordinates[box_arg])
             for class_arg in range(self.num_classes):
                 if class_arg == background_label_id:
                     continue
-                class_probabilities = box_classes[sample_arg, :, class_arg]
-                class_probabilities_mask = class_probabilities > confidence_threshold
-                if len(class_probabilities[class_probabilities_mask]) > 0:
-                    positive_decoded_boxes = decoded_boxes[class_probabilities_mask]
-                    positive_class_probabilities = class_probabilities[class_probabilities_mask]
+                box_class_prob = box_classes[box_arg, :, class_arg]
+                box_class_prob_mask = box_class_prob > confidence_threshold
+                if len(box_class_prob[box_class_prob_mask]) > 0:
+                    boxes_to_process = decoded_box_coordinates[box_class_prob_mask]
+                    classes_to_process = box_class_prob[box_class_prob_mask]
 
-                    input_dictionary = {self.boxes: positive_decoded_boxes,
-                                        self.scores: positive_class_probabilities}
-                    indices = self.sess.run(self.nms, feed_dict=input_dictionary)
-                    selected_boxes = positive_decoded_boxes[indices]
-                    probabilities = positive_class_probabilities[indices][:, None]
-                    labels = class_arg * np.ones((len(indices), 1))
-                    c_pred = np.concatenate((labels, probabilities, selected_boxes),
+                    feed_dict = {self.boxes: boxes_to_process,
+                                 self.scores: classes_to_process}
+                    selected_indices = self.sess.run(self.nms, feed_dict=feed_dict)
+                    good_boxes = boxes_to_process[selected_indices]
+                    confs = classes_to_process[selected_indices][:, None]
+                    labels = class_arg * np.ones((len(selected_indices), 1))
+                    c_pred = np.concatenate((labels, confs, good_boxes),
                                             axis=1)
                     results[-1].extend(c_pred)
             if len(results[-1]) > 0:
@@ -246,6 +231,7 @@ class PriorBoxManager(object):
                 results[-1] = results[-1][argsort]
                 results[-1] = results[-1][:keep_top_k]
         return results
+
 
     def detection_out(self, predictions, background_label_id=0, keep_top_k=100,
                       confidence_threshold=0.01):
