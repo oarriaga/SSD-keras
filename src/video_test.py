@@ -6,13 +6,13 @@ import cv2
 
 class VideoTest(object):
     def __init__(self, prior_boxes, box_scale_factors=[.1, .1, .2, .2],
-            background_index=0, lower_probability_bound=.9, class_names=None,
+            background_index=0, lower_probability_bound=.8, class_names=None,
             dataset_name='VOC2007'):
 
         self.prior_boxes = prior_boxes
         self.box_scale_factors = box_scale_factors
         self.background_index = 0
-        self.lower_probability_bound = .9
+        self.lower_probability_bound = lower_probability_bound
         self.class_names = class_names
         if self.class_names is None:
             self.class_names = get_class_names(dataset_name)
@@ -33,6 +33,39 @@ class VideoTest(object):
         mask = np.logical_and(background_mask, lower_bound_mask)
         selected_boxes = predictions[mask, :(4 + self.num_classes)]
         return selected_boxes
+
+    def apply_non_max_suppression_fast(self, boxes, overlapThresh=.3):
+        """ This function should be modified to include class comparison.
+        I believe that the current implementation might filter smaller
+        boxes within a big box even tough they are from different classes
+        """
+        if len(boxes) == 0:
+                return []
+        if boxes.dtype.kind == "i":
+                boxes = boxes.astype("float")
+        pick = []
+        x1 = boxes[:, 0]
+        y1 = boxes[:, 1]
+        x2 = boxes[:, 2]
+        y2 = boxes[:, 3]
+        area = (x2 - x1 + 1) * (y2 - y1 + 1)
+        idxs = np.argsort(y2)
+        while len(idxs) > 0:
+                last = len(idxs) - 1
+                i = idxs[last]
+                pick.append(i)
+                xx1 = np.maximum(x1[i], x1[idxs[:last]])
+                yy1 = np.maximum(y1[i], y1[idxs[:last]])
+                xx2 = np.minimum(x2[i], x2[idxs[:last]])
+                yy2 = np.minimum(y2[i], y2[idxs[:last]])
+                w = np.maximum(0, xx2 - xx1 + 1)
+                h = np.maximum(0, yy2 - yy1 + 1)
+                overlap = (w * h) / area[idxs[:last]]
+                idxs = np.delete(idxs, np.concatenate(([last],
+                        np.where(overlap > overlapThresh)[0])))
+        #return boxes[pick].astype("int")
+        return boxes[pick]
+
 
     def _decode_boxes(self, predicted_boxes):
         prior_x_min = self.prior_boxes[:, 0]
@@ -139,6 +172,8 @@ class VideoTest(object):
         axis.imshow(image_array)
         original_coordinates = self._denormalize_box(box_coordinates,
                                                             image_size)
+
+        #original_coordinates = self.apply_non_max_suppression_fast(original_coordinates)
         x_min = original_coordinates[:, 0]
         y_min = original_coordinates[:, 1]
         x_max = original_coordinates[:, 2]
@@ -168,6 +203,12 @@ class VideoTest(object):
     def draw_boxes_in_video(self, predictions, original_image_array):
         decoded_predictions = self._decode_boxes(predictions)
         selected_boxes = self._filter_boxes(decoded_predictions)
+        print(len(selected_boxes))
+        selected_boxes = self.apply_non_max_suppression_fast(selected_boxes)
+        if len(selected_boxes) == 0:
+            return
+        print(len(selected_boxes))
+        print(selected_boxes)
         self._draw_normalized_box_2(selected_boxes, original_image_array)
 
     def draw_boxes(self, predictions, original_image_array):
@@ -199,15 +240,14 @@ class VideoTest(object):
 
 if __name__ == "__main__":
     from models import SSD300
-    from utils.utils import load_image
     from utils.prior_box_creator import PriorBoxCreator
-    from scipy.misc import imread
 
     # loading model
     model = SSD300()
     box_creator = PriorBoxCreator(model)
     prior_boxes = box_creator.create_boxes()
-    weights_filename = '../trained_models/ssd300_weights.34-1.54.hdf5'
+    #weights_filename = '../trained_models/ssd300_weights.34-1.54.hdf5'
+    weights_filename = '../trained_models/weights_SSD300.hdf5'
     model.load_weights(weights_filename)
 
     #loading image
