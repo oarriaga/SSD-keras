@@ -6,7 +6,7 @@ import cv2
 
 class VideoTest(object):
     def __init__(self, prior_boxes, box_scale_factors=[.1, .1, .2, .2],
-            background_index=0, lower_probability_bound=.6, class_names=None,
+            background_index=0, lower_probability_bound=.5, class_names=None,
             dataset_name='VOC2007'):
 
         self.prior_boxes = prior_boxes
@@ -18,6 +18,7 @@ class VideoTest(object):
             self.class_names = get_class_names(dataset_name)
         self.num_classes = len(self.class_names)
         self.colors = plt.cm.hsv(np.linspace(0, 1, self.num_classes)).tolist()
+        self.colors = np.asarray(self.colors) * 255
         self.arg_to_class = dict(zip(list(range(self.num_classes)),
                                                 self.class_names))
         self.font = cv2.FONT_HERSHEY_SIMPLEX
