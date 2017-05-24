@@ -6,7 +6,7 @@ import cv2
 
 class VideoTest(object):
     def __init__(self, prior_boxes, box_scale_factors=[.1, .1, .2, .2],
-            background_index=0, lower_probability_bound=.8, class_names=None,
+            background_index=0, lower_probability_bound=.6, class_names=None,
             dataset_name='VOC2007'):
 
         self.prior_boxes = prior_boxes
@@ -41,35 +41,38 @@ class VideoTest(object):
         """
         if len(boxes) == 0:
                 return []
-        if boxes.dtype.kind == "i":
-                boxes = boxes.astype("float")
         pick = []
-        x1 = boxes[:, 0]
-        y1 = boxes[:, 1]
-        x2 = boxes[:, 2]
-        y2 = boxes[:, 3]
-        #area = (x2 - x1 + 1) * (y2 - y1 + 1)
-        area = (x2 - x1) * (y2 - y1)
-        idxs = np.argsort(y2)
+        x_min = boxes[:, 0]
+        y_min = boxes[:, 1]
+        x_max = boxes[:, 2]
+        y_max = boxes[:, 3]
+        classes = boxes[:, 4:]
+        area = (x_max - x_min) * (y_max - y_min)
+        idxs = np.argsort(y_max)
         while len(idxs) > 0:
                 last = len(idxs) - 1
                 i = idxs[last]
                 pick.append(i)
-                xx1 = np.maximum(x1[i], x1[idxs[:last]])
-                yy1 = np.maximum(y1[i], y1[idxs[:last]])
-                xx2 = np.minimum(x2[i], x2[idxs[:last]])
-                yy2 = np.minimum(y2[i], y2[idxs[:last]])
-                #w = np.maximum(0, xx2 - xx1 + 1)
-                #h = np.maximum(0, yy2 - yy1 + 1)
-                w = np.maximum(0, xx2 - xx1)
-                h = np.maximum(0, yy2 - yy1)
-                overlap = (w * h) / area[idxs[:last]]
+                xx1 = np.maximum(x_min[i], x_min[idxs[:last]])
+                yy1 = np.maximum(y_min[i], y_min[idxs[:last]])
+                xx2 = np.minimum(x_max[i], x_max[idxs[:last]])
+                yy2 = np.minimum(y_max[i], y_max[idxs[:last]])
+                width = np.maximum(0, xx2 - xx1)
+                height = np.maximum(0, yy2 - yy1)
+                overlap = (width * height) / area[idxs[:last]]
                 """ Here I can include another condition in the np.where
                 in order to delete if and only if the boxes are of the
                 same class.
                 """
+                current_class = np.argmax(classes[i])
+                box_classes = np.argmax(classes[idxs[:last]], axis=-1)
+                class_mask = current_class == box_classes
+                #print(overlap)
+                overlap_mask = overlap > overlapThresh
+                #print(overlap_mask)
+                delete_mask = np.logical_and(overlap_mask, class_mask)
                 idxs = np.delete(idxs, np.concatenate(([last],
-                        np.where(overlap > overlapThresh)[0])))
+                        np.where(delete_mask)[0])))
         #return boxes[pick].astype("int")
         return boxes[pick]
 
@@ -170,25 +173,29 @@ class VideoTest(object):
                       bbox={'facecolor':color, 'alpha':0.5, 'pad':10})
         plt.show()
 
-    def _draw_normalized_box_2(self, box_coordinates, original_image_array):
+    def _draw_normalized_box_2(self, box_data, original_image_array):
         image_array = np.squeeze(original_image_array)
         image_array = image_array.astype('uint8')
         image_size = image_array.shape[0:2]
         image_size = (image_size[1], image_size[0])
-        figure, axis = plt.subplots(1)
-        axis.imshow(image_array)
+        box_classes = box_data[:, 4:]
+        box_coordinates = box_data[:, 0:4]
         original_coordinates = self._denormalize_box(box_coordinates,
                                                             image_size)
-
-        #original_coordinates = self.apply_non_max_suppression_fast(original_coordinates)
-        x_min = original_coordinates[:, 0]
-        y_min = original_coordinates[:, 1]
-        x_max = original_coordinates[:, 2]
-        y_max = original_coordinates[:, 3]
+        box_data = np.concatenate([original_coordinates, box_classes], axis=-1)
+        box_data = self.apply_non_max_suppression_fast(box_data)
+        if len(box_data) == 0:
+            return
+        figure, axis = plt.subplots(1)
+        axis.imshow(image_array)
+        x_min = box_data[:, 0]
+        y_min = box_data[:, 1]
+        x_max = box_data[:, 2]
+        y_max = box_data[:, 3]
         width = x_max - x_min
         height = y_max - y_min
-        classes = box_coordinates[:, 4:]
-        num_boxes = len(box_coordinates)
+        classes = box_data[:, 4:]
+        num_boxes = len(box_data)
         for box_arg in range(num_boxes):
             x_min_box = int(x_min[box_arg])
             y_min_box = int(y_min[box_arg])
@@ -211,7 +218,7 @@ class VideoTest(object):
         decoded_predictions = self._decode_boxes(predictions)
         selected_boxes = self._filter_boxes(decoded_predictions)
         print(len(selected_boxes))
-        selected_boxes = self.apply_non_max_suppression_fast(selected_boxes)
+        #selected_boxes = self.apply_non_max_suppression_fast(selected_boxes)
         if len(selected_boxes) == 0:
             return
         print(len(selected_boxes))
@@ -249,25 +256,10 @@ if __name__ == "__main__":
     from models import SSD300
     from utils.prior_box_creator import PriorBoxCreator
 
-    # loading model
     model = SSD300()
     box_creator = PriorBoxCreator(model)
     prior_boxes = box_creator.create_boxes()
-    #weights_filename = '../trained_models/ssd300_weights.34-1.54.hdf5'
     weights_filename = '../trained_models/weights_SSD300.hdf5'
     model.load_weights(weights_filename)
-
-    #loading image
-    #image_filename = 'test_resources/fish-bike.jpg'
-    #original_image_array = imread(image_filename)
-    #image_array = load_image(image_filename, target_size=(300, 300))
-    #image_array = np.expand_dims(image_array, axis=0)
-    #image_array = preprocess_images(image_array)
-    #predictions = model.predict(image_array)
-    #predictions = np.squeeze(predictions)
-
-    # testing class
     video = VideoTest(prior_boxes)
-    #video.draw_boxes(predictions, original_image_array)
-
     video.start_video(model)
