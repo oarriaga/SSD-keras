@@ -64,6 +64,10 @@ class VideoTest(object):
                 w = np.maximum(0, xx2 - xx1)
                 h = np.maximum(0, yy2 - yy1)
                 overlap = (w * h) / area[idxs[:last]]
+                """ Here I can include another condition in the np.where
+                in order to delete if and only if the boxes are of the
+                same class.
+                """
                 idxs = np.delete(idxs, np.concatenate(([last],
                         np.where(overlap > overlapThresh)[0])))
         #return boxes[pick].astype("int")
