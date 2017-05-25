@@ -88,7 +88,9 @@ class PriorBoxManager(object):
 
         g_hat_center_x = (g_center_x - d_center_x) / (d_width * scale_center_x)
         g_hat_center_y = (g_center_y - d_center_y) / (d_height * scale_center_y)
+        #print(g_width  / d_width)
         g_hat_width  = np.log(g_width  / d_width) / scale_width
+        #print(g_height / d_height)
         g_hat_height = np.log(g_height / d_height) / scale_height
         encoded_boxes = np.concatenate([g_hat_center_x.reshape(-1, 1),
                                         g_hat_center_y.reshape(-1, 1),
