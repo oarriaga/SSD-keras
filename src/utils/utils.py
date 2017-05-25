@@ -39,7 +39,7 @@ def get_class_names(dataset_name='VOC2007'):
                        'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
     elif dataset_name == 'COCO':
         # this is not working since the path has to be relative 
-        class_names = pickle.load(open('coco_classes.p', 'rb'))
+        class_names = pickle.load(open('utils/coco_classes.p', 'rb'))
     else:
         raise Exception('Invalid dataset', dataset_name)
     return class_names
