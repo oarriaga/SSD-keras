@@ -27,6 +27,8 @@ class COCOParser(object):
         for image_id in image_ids:
             image_data = self.coco.loadImgs(image_id)[0]
             image_file_name = image_data['file_name']
+            width = float(image_data['width'])
+            height = float(image_data['height'])
             annotation_ids = self.coco.getAnnIds(imgIds=image_data['id'])
             annotations = self.coco.loadAnns(annotation_ids)
             num_objects_in_image = len(annotations)
@@ -38,10 +40,17 @@ class COCOParser(object):
                 class_arg = self.coco_id_to_class_arg[coco_id]
                 one_hot_class = self._to_one_hot(class_arg)
                 coco_coordinates = annotations[object_arg]['bbox']
-                x_min = coco_coordinates[0]
-                y_min = coco_coordinates[1]
-                x_max = x_min + coco_coordinates[2]
-                y_max = x_max + coco_coordinates[3]
+                #print('coco_coordinates:', coco_coordinates)
+                x_min = (coco_coordinates[0]) #/ width
+                y_min = (coco_coordinates[1]) #/ height
+                x_max = (x_min + coco_coordinates[2]) #/ width
+                y_max = (y_min + coco_coordinates[3]) #/ height
+                #print('transformed_coordinates:', [x_min, y_min, x_max, y_max])
+                x_min = x_min / width
+                y_min = y_min / height
+                x_max = x_max / width
+                y_max = y_max / height
+                #print('normalized_coordinates:', [x_min, y_min, x_max, y_max])
                 ground_truth = [x_min, y_min, x_max, y_max] + one_hot_class
                 image_ground_truth.append(ground_truth)
             image_ground_truth = np.asarray(image_ground_truth)
