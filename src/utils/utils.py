@@ -49,3 +49,6 @@ def scheduler(epoch, decay=0.9, base_learning_rate=3e-4):
 
 def preprocess_images(image_array):
     return preprocess_input(image_array)
+
+def get_arg_to_class(class_names):
+    return dict(zip(list(range(len(class_names))), class_names))
