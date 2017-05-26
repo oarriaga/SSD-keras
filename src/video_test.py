@@ -3,6 +3,7 @@ import numpy as np
 from utils.utils import get_class_names
 from utils.utils import preprocess_images
 import cv2
+import tensorflow as tf
 
 class VideoTest(object):
     def __init__(self, prior_boxes, box_scale_factors=[.1, .1, .2, .2],
@@ -22,6 +23,17 @@ class VideoTest(object):
         self.arg_to_class = dict(zip(list(range(self.num_classes)),
                                                 self.class_names))
         self.font = cv2.FONT_HERSHEY_SIMPLEX
+        #num_prior_boxes = len(prior_boxes)
+        self.boxes = tf.placeholder(dtype='float32', shape=(None, 4))
+        self.scores = tf.placeholder(dtype='float32', shape=(None))
+        self.top_k = 100
+        self.iou_threshold = .1
+        self.non_maximum_supression = tf.image.non_max_suppression(self.boxes,
+                                                    self.scores, 100,
+                                            iou_threshold=.2)
+        self.session = tf.Session(config=tf.ConfigProto(device_count={'GPU': 0}))
+
+
 
     def _filter_boxes(self, predictions):
         predictions = np.squeeze(predictions)
@@ -35,47 +47,126 @@ class VideoTest(object):
         selected_boxes = predictions[mask, :(4 + self.num_classes)]
         return selected_boxes
 
-    def apply_non_max_suppression_fast(self, boxes, overlapThresh=.3):
+    def _filter_boxes_2(self, predictions):
+        predictions = np.squeeze(predictions)
+        predictions = self._decode_boxes(predictions)
+        box_classes = predictions[:, 4:(4 + self.num_classes)]
+        best_classes = np.argmax(box_classes, axis=-1)
+        best_probabilities = np.max(box_classes, axis=-1)
+        background_mask = best_classes != self.background_index
+        lower_bound_mask = self.lower_probability_bound < best_probabilities
+        mask = np.logical_and(background_mask, lower_bound_mask)
+        selected_boxes = predictions[mask, :(4 + self.num_classes)]
+        return selected_boxes
+
+
+    def apply_non_max_suppression_tf(self, boxes, class_probabilities):
+        #print('box_shape:', boxes.shape)
+        #print('class_prob_shape:', class_probabilities.shape)
+        #self.boxes = tf.placeholder(dtype='float32', shape=boxes.shape)
+        #self.scores = tf.placeholder(dtype='float32', shape=class_probabilities.shape)
+        num_boxes = len(boxes)
+        self.boxes = tf.placeholder(dtype='float32', shape=(num_boxes, 4))
+        self.scores = tf.placeholder(dtype='float32', shape=(num_boxes))
+        feed_dict = {self.boxes: boxes, self.scores: class_probabilities}
+        self.non_maximum_supression = tf.image.non_max_suppression(self.boxes,
+                                                            self.scores, 100,
+                                                            iou_threshold=.1)
+        #print(feed_dict)
+        #print('Hola aqui estoy')
+        #self.boxes = tf.placeholder(dtype='float32', shape=(None, 4))
+        #self.scores = tf.placeholder(dtype='float32', shape=(None,))
+        indices = self.session.run(self.non_maximum_supression,
+                                            feed_dict=feed_dict)
+        return indices
+
+    def _calculate_intersection_over_unions(self, ground_truth_data, prior_boxes):
+        ground_truth_x_min = ground_truth_data[0]
+        ground_truth_y_min = ground_truth_data[1]
+        ground_truth_x_max = ground_truth_data[2]
+        ground_truth_y_max = ground_truth_data[3]
+        prior_boxes_x_min = prior_boxes[:, 0]
+        prior_boxes_y_min = prior_boxes[:, 1]
+        prior_boxes_x_max = prior_boxes[:, 2]
+        prior_boxes_y_max = prior_boxes[:, 3]
+        # calculating the intersection
+        intersections_x_min = np.maximum(prior_boxes_x_min, ground_truth_x_min)
+        intersections_y_min = np.maximum(prior_boxes_y_min, ground_truth_y_min)
+        intersections_x_max = np.minimum(prior_boxes_x_max, ground_truth_x_max)
+        intersections_y_max = np.minimum(prior_boxes_y_max, ground_truth_y_max)
+        intersected_widths = intersections_x_max - intersections_x_min
+        intersected_heights = intersections_y_max - intersections_y_min
+        intersected_widths = np.maximum(intersected_widths, 0)
+        intersected_heights = np.maximum(intersected_heights, 0)
+        intersections = intersected_widths * intersected_heights
+        # calculating the union
+        prior_box_widths = prior_boxes_x_max - prior_boxes_x_min
+        prior_box_heights = prior_boxes_y_max - prior_boxes_y_min
+        prior_box_areas = prior_box_widths * prior_box_heights
+        ground_truth_width = ground_truth_x_max - ground_truth_x_min
+        ground_truth_height = ground_truth_y_max - ground_truth_y_min
+        ground_truth_area = ground_truth_width * ground_truth_height
+        unions = prior_box_areas + ground_truth_area - intersections
+        intersection_over_unions = intersections / unions
+        return intersection_over_unions
+
+
+
+    def apply_non_max_suppression_fast(self, boxes, iou_threshold=.2):
         """ This function should be modified to include class comparison.
         I believe that the current implementation might filter smaller
         boxes within a big box even tough they are from different classes
         """
         if len(boxes) == 0:
                 return []
-        pick = []
+        selected_indices = []
         x_min = boxes[:, 0]
         y_min = boxes[:, 1]
         x_max = boxes[:, 2]
         y_max = boxes[:, 3]
         classes = boxes[:, 4:]
-        area = (x_max - x_min) * (y_max - y_min)
-        idxs = np.argsort(y_max)
-        while len(idxs) > 0:
-                last = len(idxs) - 1
-                i = idxs[last]
-                pick.append(i)
-                xx1 = np.maximum(x_min[i], x_min[idxs[:last]])
-                yy1 = np.maximum(y_min[i], y_min[idxs[:last]])
-                xx2 = np.minimum(x_max[i], x_max[idxs[:last]])
-                yy2 = np.minimum(y_max[i], y_max[idxs[:last]])
-                width = np.maximum(0, xx2 - xx1)
-                height = np.maximum(0, yy2 - yy1)
-                overlap = (width * height) / area[idxs[:last]]
+        sorted_box_indices = np.argsort(y_max)
+        while len(sorted_box_indices) > 0:
+                last = len(sorted_box_indices) - 1
+                i = sorted_box_indices[last]
+                selected_indices.append(i)
+                box = [x_min[i], y_min[i], x_max[i], y_max[i]]
+                box = np.asarray(box)
+                print(box.shape)
+                print(x_min[sorted_box_indices[:last]].shape)
+                print(y_max[sorted_box_indices[:last]].shape)
+                print(x_min[sorted_box_indices[:last]].shape)
+                print(y_max[sorted_box_indices[:last]].shape)
+                test_boxes = [x_min[sorted_box_indices[:last], None],
+                         y_min[sorted_box_indices[:last], None],
+                         x_max[sorted_box_indices[:last], None],
+                         y_max[sorted_box_indices[:last], None]]
+                #boxes = np.asarray(boxes)
+                test_boxes = np.concatenate(test_boxes, axis=-1)
+                print(boxes.shape)
+                iou = self._calculate_intersection_over_unions(box, test_boxes)
+                #xx1 = np.maximum(x_min[i], x_min[idxs[:last]])
+                #yy1 = np.maximum(y_min[i], y_min[idxs[:last]])
+                #xx2 = np.minimum(x_max[i], x_max[idxs[:last]])
+                #yy2 = np.minimum(y_max[i], y_max[idxs[:last]])
+                #width = np.maximum(0, xx2 - xx1)
+                #height = np.maximum(0, yy2 - yy1)
+                #overlap = (width * height) / area[idxs[:last]]
                 """ Here I can include another condition in the np.where
                 in order to delete if and only if the boxes are of the
                 same class.
                 """
                 current_class = np.argmax(classes[i])
-                box_classes = np.argmax(classes[idxs[:last]], axis=-1)
+                box_classes = np.argmax(classes[sorted_box_indices[:last]], axis=-1)
                 class_mask = current_class == box_classes
+                print(class_mask)
                 #print(overlap)
-                overlap_mask = overlap > overlapThresh
+                overlap_mask = iou > iou_threshold
                 #print(overlap_mask)
                 delete_mask = np.logical_and(overlap_mask, class_mask)
-                idxs = np.delete(idxs, np.concatenate(([last],
+                sorted_box_indices = np.delete(sorted_box_indices, np.concatenate(([last],
                         np.where(delete_mask)[0])))
-        #return boxes[pick].astype("int")
-        return boxes[pick]
+        return boxes[selected_indices]
 
 
     def _decode_boxes(self, predicted_boxes):
@@ -138,43 +229,7 @@ class VideoTest(object):
         return np.concatenate([x_min[:, None], y_min[:, None],
                                x_max[:, None], y_max[:, None]], axis=1)
 
-    def _draw_normalized_box(self, box_coordinates, original_image_array):
-        image_array = np.squeeze(original_image_array)
-        image_array = image_array.astype('uint8')
-        image_size = image_array.shape[0:2]
-        image_size = (image_size[1], image_size[0])
-        figure, axis = plt.subplots(1)
-        axis.imshow(image_array)
-        original_coordinates = self._denormalize_box(box_coordinates,
-                                                            image_size)
-        x_min = original_coordinates[:, 0]
-        y_min = original_coordinates[:, 1]
-        x_max = original_coordinates[:, 2]
-        y_max = original_coordinates[:, 3]
-        width = x_max - x_min
-        height = y_max - y_min
-        classes = box_coordinates[:, 4:]
-        num_boxes = len(box_coordinates)
-        for box_arg in range(num_boxes):
-            x_min_box = x_min[box_arg]
-            y_min_box = y_min[box_arg]
-            box_width = width[box_arg]
-            box_height = height[box_arg]
-            box_class = classes[box_arg]
-            label_arg = np.argmax(box_class)
-            score = box_class[label_arg]
-            class_name = self.arg_to_class[label_arg]
-            color = self.colors[label_arg]
-            rectangle = plt.Rectangle((x_min_box, y_min_box),
-                            box_width, box_height, fill=False,
-                            linewidth=2, edgecolor=color)
-            axis.add_patch(rectangle)
-            display_text = '{:0.2f}, {}'.format(score, class_name)
-            axis.text(x_min_box, y_min_box, display_text, style='italic',
-                      bbox={'facecolor':color, 'alpha':0.5, 'pad':10})
-        plt.show()
-
-    def _draw_normalized_box_2(self, box_data, original_image_array):
+    def _draw_normalized_box(self, box_data, original_image_array, tf_nms=False):
         image_array = np.squeeze(original_image_array)
         image_array = image_array.astype('uint8')
         image_size = image_array.shape[0:2]
@@ -184,7 +239,14 @@ class VideoTest(object):
         original_coordinates = self._denormalize_box(box_coordinates,
                                                             image_size)
         box_data = np.concatenate([original_coordinates, box_classes], axis=-1)
-        box_data = self.apply_non_max_suppression_fast(box_data)
+        if tf_nms:
+            #print(box_data.shape)
+            selected_indices = self.apply_non_max_suppression_tf(box_data[:, 0:4],
+                                                             np.max(box_data[:, 4:],axis=-1))
+            box_data = box_data[selected_indices]
+        else:
+            box_data = self.apply_non_max_suppression_fast(box_data)
+
         if len(box_data) == 0:
             return
         figure, axis = plt.subplots(1)
@@ -218,23 +280,17 @@ class VideoTest(object):
     def draw_boxes_in_video(self, predictions, original_image_array):
         decoded_predictions = self._decode_boxes(predictions)
         selected_boxes = self._filter_boxes(decoded_predictions)
-        print(len(selected_boxes))
-        #selected_boxes = self.apply_non_max_suppression_fast(selected_boxes)
         if len(selected_boxes) == 0:
             return
-        print(len(selected_boxes))
-        print(selected_boxes)
-        self._draw_normalized_box_2(selected_boxes, original_image_array)
-
-    def draw_boxes(self, predictions, original_image_array):
-        decoded_predictions = self._decode_boxes(predictions)
-        selected_boxes = self._filter_boxes(decoded_predictions)
+        #if len(decoded_predictions) == 0:
+            #return
         self._draw_normalized_box(selected_boxes, original_image_array)
 
     def start_video(self, model):
         camera = cv2.VideoCapture(0)
         while True:
             ret, frame = camera.read()
+            #print(frame.shape)
             image_array = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image_array = image_array.astype('float32')
             image_array = cv2.resize(image_array, (300, 300))
@@ -249,9 +305,6 @@ class VideoTest(object):
 
         camera.release()
         cv2.destroyAllWindows()
-
-
-
 
 if __name__ == "__main__":
     from models import SSD300
