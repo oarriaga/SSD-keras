@@ -256,11 +256,12 @@ class VideoTest(object):
 if __name__ == "__main__":
     from models import SSD300
     from utils.prior_box_creator import PriorBoxCreator
-
-    model = SSD300()
+    num_classes = 21
+    dataset_name = 'VOC2007'
+    model = SSD300(num_classes=num_classes)
     box_creator = PriorBoxCreator(model)
     prior_boxes = box_creator.create_boxes()
     weights_filename = '../trained_models/weights_SSD300.hdf5'
     model.load_weights(weights_filename)
-    video = VideoTest(prior_boxes)
+    video = VideoTest(prior_boxes, dataset_name=dataset_name)
     video.start_video(model)
