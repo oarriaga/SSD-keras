@@ -129,13 +129,13 @@ class ImageGenerator(object):
                 targets = []
                 for key in keys:
                     image_path = self.path_prefix + key
-                    print(key)
+                    #print(key)
                     image_array = load_image(image_path, False, self.image_size)
                     #image_array = self._imread(image_path)
                     #image_array = self._imresize(image_array, self.image_size)
                     #image_array = image_array.astype('float32')
                     box_corners = self.ground_truth_data[key].copy()
-                    print(box_corners.shape)
+                    #print(box_corners.shape)
                     if mode == 'train' or mode == 'demo':
                         image_array, box_corners = self.transform(image_array,
                                                                 box_corners)
