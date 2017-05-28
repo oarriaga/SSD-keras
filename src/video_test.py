@@ -7,7 +7,7 @@ import tensorflow as tf
 
 class VideoTest(object):
     def __init__(self, prior_boxes, box_scale_factors=[.1, .1, .2, .2],
-            background_index=0, lower_probability_bound=.5, class_names=None,
+            background_index=0, lower_probability_bound=.4, class_names=None,
             dataset_name='VOC2007'):
 
         self.prior_boxes = prior_boxes
@@ -132,18 +132,18 @@ class VideoTest(object):
                 selected_indices.append(i)
                 box = [x_min[i], y_min[i], x_max[i], y_max[i]]
                 box = np.asarray(box)
-                print(box.shape)
-                print(x_min[sorted_box_indices[:last]].shape)
-                print(y_max[sorted_box_indices[:last]].shape)
-                print(x_min[sorted_box_indices[:last]].shape)
-                print(y_max[sorted_box_indices[:last]].shape)
+                #print(box.shape)
+                #print(x_min[sorted_box_indices[:last]].shape)
+                #print(y_max[sorted_box_indices[:last]].shape)
+                #print(x_min[sorted_box_indices[:last]].shape)
+                #print(y_max[sorted_box_indices[:last]].shape)
                 test_boxes = [x_min[sorted_box_indices[:last], None],
                          y_min[sorted_box_indices[:last], None],
                          x_max[sorted_box_indices[:last], None],
                          y_max[sorted_box_indices[:last], None]]
                 #boxes = np.asarray(boxes)
                 test_boxes = np.concatenate(test_boxes, axis=-1)
-                print(boxes.shape)
+                #print(boxes.shape)
                 iou = self._calculate_intersection_over_unions(box, test_boxes)
                 #xx1 = np.maximum(x_min[i], x_min[idxs[:last]])
                 #yy1 = np.maximum(y_min[i], y_min[idxs[:last]])
@@ -159,7 +159,7 @@ class VideoTest(object):
                 current_class = np.argmax(classes[i])
                 box_classes = np.argmax(classes[sorted_box_indices[:last]], axis=-1)
                 class_mask = current_class == box_classes
-                print(class_mask)
+                #print(class_mask)
                 #print(overlap)
                 overlap_mask = iou > iou_threshold
                 #print(overlap_mask)
