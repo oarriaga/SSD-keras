@@ -1,9 +1,6 @@
 datasets/*
 src/.ipynb_checkpoints
-src/__pycache__
-src/utils/__pycache__
-trained_models/model_checkpoints
 trained_models
-__pycache__
+*.pyc
 src/visualization.ipynb
 

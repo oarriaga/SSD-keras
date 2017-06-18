@@ -11,11 +11,12 @@ from keras.layers import ZeroPadding2D
 from keras.layers import concatenate
 from keras.models import Model
 
-from layers import Normalize
-from layers import PriorBox
+from .layers import Normalize
+from .layers import PriorBox
 
 
-def SSD300(input_shape=(300, 300, 3), num_classes=21):
+def SSD300(input_shape=(300, 300, 3), num_classes=21, weights_path=None,
+                                                    frozen_layers=None):
     """SSD300 architecture.
 
     # Arguments
@@ -319,4 +320,13 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21):
                               axis=2,
                               name='predictions')
     model = Model(inputs=input_layer, outputs=predictions)
+
+    if weights_path is not None:
+        model.load_weights(weights_path, by_name=True)
+
+    if frozen_layers is not None:
+        for layer in model.layers:
+            if layer.name in frozen_layers:
+                layer.trainable = False
+
     return model
