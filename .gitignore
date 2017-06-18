@@ -2,5 +2,4 @@ datasets/*
 src/.ipynb_checkpoints
 trained_models
 *.pyc
-src/visualization.ipynb
 
