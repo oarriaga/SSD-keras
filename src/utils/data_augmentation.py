@@ -1,8 +1,9 @@
 import numpy as np
 from random import shuffle
 
-from utils.utils import load_image
-from utils.utils import preprocess_images
+from .utils import load_image
+from .utils import preprocess_images
+from .boxes import assign_prior_boxes
 
 class ImageGenerator(object):
     """ Image generator with saturation, brightness, lighting, contrast,
@@ -15,20 +16,24 @@ class ImageGenerator(object):
         - Finish support for not using bounding_boxes.
     """
     #change ground_truth_data to ground_truth_data
-    def __init__(self, ground_truth_data, box_manager, batch_size, image_size,
+    def __init__(self, ground_truth_data, prior_boxes, num_classes,
+                box_scale_factors,
+                batch_size, image_size,
                 train_keys, validation_keys, path_prefix=None,
-                 saturation_var=0.5,
-                 brightness_var=0.5,
-                 contrast_var=0.5,
-                 lighting_std=0.5,
-                 horizontal_flip_probability=0.5,
-                 vertical_flip_probability=0.5,
-                 do_crop=True,
-                 crop_area_range=[0.75, 1.0],
-                 aspect_ratio_range=[3./4., 4./3.]):
+                saturation_var=0.5,
+                brightness_var=0.5,
+                contrast_var=0.5,
+                lighting_std=0.5,
+                horizontal_flip_probability=0.5,
+                vertical_flip_probability=0.5,
+                do_crop=True,
+                crop_area_range=[0.75, 1.0],
+                aspect_ratio_range=[3./4., 4./3.]):
 
         self.ground_truth_data = ground_truth_data
-        self.box_manager = box_manager
+        self.prior_boxes = prior_boxes
+        self.num_classes = num_classes
+        self.box_scale_factors = box_scale_factors
         self.batch_size = batch_size
         self.path_prefix = path_prefix
         self.train_keys = train_keys
@@ -129,17 +134,15 @@ class ImageGenerator(object):
                 targets = []
                 for key in keys:
                     image_path = self.path_prefix + key
-                    #print(key)
                     image_array = load_image(image_path, False, self.image_size)
-                    #image_array = self._imread(image_path)
-                    #image_array = self._imresize(image_array, self.image_size)
-                    #image_array = image_array.astype('float32')
                     box_corners = self.ground_truth_data[key].copy()
-                    #print(box_corners.shape)
                     if mode == 'train' or mode == 'demo':
                         image_array, box_corners = self.transform(image_array,
                                                                 box_corners)
-                    box_corners = self.box_manager.assign_boxes(box_corners)
+                    box_corners = assign_prior_boxes(self.prior_boxes,
+                                                    box_corners,
+                                                    self.num_classes,
+                                                    self.box_scale_factors)
                     inputs.append(image_array)
                     targets.append(box_corners)
                     if len(targets) == self.batch_size:
@@ -147,18 +150,12 @@ class ImageGenerator(object):
                         targets = np.asarray(targets)
                         if mode == 'train' or mode == 'val':
                             inputs = preprocess_images(inputs)
-                            yield self._wrap_in_dictionary2(inputs, targets)
+                            yield self._wrap_in_dictionary(inputs, targets)
                         if mode == 'demo':
-                            yield self._wrap_in_dictionary2(inputs, targets)
+                            yield self._wrap_in_dictionary(inputs, targets)
                         inputs = []
                         targets = []
 
-    def _wrap_in_dictionary2(self, image_array, targets):
+    def _wrap_in_dictionary(self, image_array, targets):
         return [{'input_1':image_array},
                 {'predictions':targets}]
-
-    def _wrap_in_dictionary(self, image_array, targets):
-        return [{'image_array':image_array},
-                {'encoded_box':targets[:,:,:4],
-                'classes':targets[:,:,4:]}]
-
