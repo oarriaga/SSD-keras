@@ -420,6 +420,15 @@ def filter_boxes(predictions, num_classes, background_index=0,
     selected_boxes = predictions[mask, :(4 + num_classes)]
     return selected_boxes
 
+def preprocess_input(x):
+    # 'RGB'->'BGR'
+    x = x[:, ::-1, :, :]
+    # Zero-center by mean pixel
+    x[:, 0, :, :] -= 103.939
+    x[:, 1, :, :] -= 116.779
+    x[:, 2, :, :] -= 123.68
+    return x
+
 
 
 
