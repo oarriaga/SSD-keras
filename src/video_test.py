@@ -35,6 +35,8 @@ class VideoTest(object):
         camera = cv2.VideoCapture(0)
         while True:
             frame = camera.read()[1]
+            if frame is None:
+                continue
             image_array = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image_array = image_array.astype('float32')
             image_array = cv2.resize(image_array, (300, 300))
