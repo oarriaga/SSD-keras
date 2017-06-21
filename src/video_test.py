@@ -2,20 +2,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
-from utils.utils import get_class_names
-from utils.utils import preprocess_images
 from utils.boxes import decode_boxes
 from utils.boxes import filter_boxes
-from utils.visualizer import draw_normalized_box
+from utils.boxes import denormalize_box
+from utils.boxes import apply_non_max_suppression
+from utils.utils import get_class_names
+from utils.utils import preprocess_images
+from utils.visualizer import draw_boxes
 
 class VideoTest(object):
-    def __init__(self, prior_boxes, box_scale_factors=[.1, .1, .2, .2],
-            background_index=0, lower_probability_threshold=.4,
-            class_names=None, dataset_name='VOC2007'):
+    def __init__(self, prior_boxes, dataset_name='VOC2007',
+            box_scale_factors=[.1, .1, .2, .2],
+            background_index=0, lower_probability_threshold=.1,
+            iou_threshold=.2, class_names=None):
 
         self.prior_boxes = prior_boxes
         self.box_scale_factors = box_scale_factors
         self.background_index = background_index
+        self.iou_threshold = iou_threshold
         self.lower_probability_threshold = lower_probability_threshold
         self.class_names = class_names
         if self.class_names is None:
@@ -30,7 +34,7 @@ class VideoTest(object):
     def start_video(self, model):
         camera = cv2.VideoCapture(0)
         while True:
-            ret, frame = camera.read()
+            frame = camera.read()[1]
             image_array = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image_array = image_array.astype('float32')
             image_array = cv2.resize(image_array, (300, 300))
@@ -46,12 +50,15 @@ class VideoTest(object):
                         self.lower_probability_threshold)
             if len(selected_boxes) == 0:
                 continue
-            draw_normalized_box(selected_boxes, frame,
-                        self.arg_to_class, self.colors, self.font)
+            selected_boxes = denormalize_box(selected_boxes, frame.shape[0:2][::-1])
+            selected_boxes = apply_non_max_suppression(selected_boxes,
+                                                        self.iou_threshold)
+            draw_boxes(selected_boxes, frame, self.arg_to_class,
+                                        self.colors, self.font)
+
             cv2.imshow('webcam', frame)
             if cv2.waitKey(1)&0xFF == ord('q'):
                 break
-
         camera.release()
         cv2.destroyAllWindows()
 
@@ -64,5 +71,6 @@ if __name__ == "__main__":
     model = SSD300(num_classes=num_classes)
     prior_boxes = create_prior_boxes(model)
     model.load_weights(weights_filename)
-    video = VideoTest(prior_boxes, dataset_name=dataset_name)
+    video = VideoTest(prior_boxes, dataset_name)
     video.start_video(model)
+
