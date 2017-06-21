@@ -2,12 +2,30 @@ import matplotlib.pyplot as plt
 from keras.preprocessing import image as keras_image_preprocessor
 from keras.applications.vgg16 import preprocess_input
 import glob
+import numpy as np
+from utils.boxes import decode_boxes
+from utils.boxes import filter_boxes
+
 
 def preprocess_images(image_array):
     return preprocess_input(image_array)
 
+# remove this function
 def list_files_in_directory(path_name='*'):
     return glob.glob(path_name)
+
+def predict_boxes(model, image_array, prior_boxes,
+                    class_threshold=.1,
+                    box_scale_factors=[.1, .1, .2, .2],
+                    num_classes=21, background_id=0):
+    image_array = np.expand_dims(image_array, axis=0)
+    image_array = preprocess_images(image_array)
+    predictions = model.predict(image_array)
+    predictions = np.squeeze(predictions)
+    predictions = decode_boxes(predictions, prior_boxes,
+                                    box_scale_factors)
+    predictions = filter_boxes(predictions, num_classes,
+                                background_id, class_threshold)
 
 def load_image(image_path, grayscale=False ,target_size=None):
     image = keras_image_preprocessor.load_img(image_path,
