@@ -4,7 +4,8 @@ from .boxes import decode_boxes
 from .boxes import filter_boxes
 from .preprocessing import resize_image_array
 from .boxes import denormalize_box
-from .boxes import apply_non_max_suppression
+#from .boxes import apply_non_max_suppression
+from .tf_boxes import apply_non_max_suppression
 
 def predict(model, image_array, prior_boxes, original_image_shape,
             num_classes=21, lower_probability_threshold=.1,
