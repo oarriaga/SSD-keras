@@ -3,8 +3,8 @@ import numpy as np
 import cv2
 
 from utils.datasets import get_class_names
-from utils.visualizer import draw_boxes
 from utils.inference import predict
+from utils.visualizer import draw_video_boxes
 
 class VideoTest(object):
     def __init__(self, prior_boxes, dataset_name='VOC2007',
@@ -34,7 +34,6 @@ class VideoTest(object):
             if frame is None:
                 continue
             image_array = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            print(frame.shape)
             selected_boxes = predict(model, image_array, prior_boxes,
                                     frame.shape[0:2], self.num_classes,
                                     self.lower_probability_threshold,
@@ -43,7 +42,7 @@ class VideoTest(object):
                                     self.box_scale_factors)
             if selected_boxes is None:
                 continue
-            draw_boxes(selected_boxes, frame, self.arg_to_class,
+            draw_video_boxes(selected_boxes, frame, self.arg_to_class,
                                         self.colors, self.font)
 
             cv2.imshow('webcam', frame)
