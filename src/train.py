@@ -3,11 +3,12 @@ from keras.callbacks import LearningRateScheduler
 from keras.optimizers import Adam
 
 from utils.data_augmentation import ImageGenerator
-from utils.multibox_loss import MultiboxLoss
+from utils.train import MultiboxLoss
+from utils.train import scheduler
+from utils.train import split_data
 from models.ssd import SSD300
 from utils.boxes import create_prior_boxes
 from utils.datasets import DataManager
-from utils.utils import split_data, scheduler
 
 # parameters
 batch_size = 5
@@ -28,7 +29,6 @@ frozen_layers = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
                 'conv3_1', 'conv3_2', 'conv3_3', 'pool3']
 box_scale_factors = [.1, .1, .2, .2]
 
-
 # loading and splitting data
 data_manager = DataManager(dataset_name)
 ground_truth_data = data_manager.get_data()
@@ -41,7 +41,8 @@ model.compile(optimizer, loss=multibox_loss, metrics=['acc'])
 
 # setting parameters for data augmentation generator
 prior_boxes = create_prior_boxes(model)
-image_generator = ImageGenerator(ground_truth_data, prior_boxes,
+image_generator = ImageGenerator(ground_truth_data,
+                                 prior_boxes,
                                  num_classes,
                                  box_scale_factors,
                                  batch_size,
