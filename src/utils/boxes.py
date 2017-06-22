@@ -228,7 +228,8 @@ def assign_prior_boxes(prior_boxes, ground_truth_data, num_classes,
         which correspond to the regressed values of all
         assigned_prior_boxes to the ground_truth_box
     """
-    assignments = np.zeros((len(prior_boxes), 4 + num_classes + 8))
+    #assignments = np.zeros((len(prior_boxes), 4 + num_classes + 8))
+    assignments = np.zeros((len(prior_boxes), 4 + num_classes))
     assignments[:, 4 + background_id] = 1.0
     num_objects_in_image = len(ground_truth_data)
     if num_objects_in_image == 0:
@@ -249,8 +250,9 @@ def assign_prior_boxes(prior_boxes, ground_truth_data, num_classes,
                                             :4]
 
     assignments[:, 4][best_iou_mask] = 0
-    assignments[:, 5:-8][best_iou_mask] = ground_truth_data[best_iou_indices, 5:]
-    assignments[:, -8][best_iou_mask] = 1
+    #assignments[:, 5:-8][best_iou_mask] = ground_truth_data[best_iou_indices, 5:]
+    assignments[:, 5:][best_iou_mask] = ground_truth_data[best_iou_indices, 5:]
+    #assignments[:, -8][best_iou_mask] = 1
     return assignments
 
 def load_model_configurations(model):
@@ -419,17 +421,3 @@ def filter_boxes(predictions, num_classes, background_index=0,
     mask = np.logical_and(background_mask, lower_bound_mask)
     selected_boxes = predictions[mask, :(4 + num_classes)]
     return selected_boxes
-
-def preprocess_input(x):
-    # 'RGB'->'BGR'
-    x = x[:, ::-1, :, :]
-    # Zero-center by mean pixel
-    x[:, 0, :, :] -= 103.939
-    x[:, 1, :, :] -= 116.779
-    x[:, 2, :, :] -= 123.68
-    return x
-
-
-
-
-
