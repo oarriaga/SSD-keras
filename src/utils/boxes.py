@@ -364,7 +364,7 @@ def denormalize_box(box_data, original_image_shape):
     y_min = box_data[:, 1]
     x_max = box_data[:, 2]
     y_max = box_data[:, 3]
-    original_image_width, original_image_height = original_image_shape
+    original_image_height, original_image_width = original_image_shape
     x_min = x_min * original_image_width
     y_min = y_min * original_image_height
     x_max = x_max * original_image_width
