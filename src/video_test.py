@@ -2,13 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
-from utils.boxes import decode_boxes
-from utils.boxes import filter_boxes
-from utils.boxes import denormalize_box
-from utils.boxes import apply_non_max_suppression
-from utils.utils import get_class_names
-from utils.utils import preprocess_images
+from utils.datasets import get_class_names
 from utils.visualizer import draw_boxes
+from utils.inference import predict
 
 class VideoTest(object):
     def __init__(self, prior_boxes, dataset_name='VOC2007',
@@ -38,23 +34,15 @@ class VideoTest(object):
             if frame is None:
                 continue
             image_array = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            image_array = image_array.astype('float32')
-            image_array = cv2.resize(image_array, (300, 300))
-            image_array = np.expand_dims(image_array, axis=0)
-            image_array = preprocess_images(image_array)
-            predictions = model.predict(image_array)
-            predictions = np.squeeze(predictions)
-            decoded_predictions = decode_boxes(predictions,
-                                            self.prior_boxes,
-                                            self.box_scale_factors)
-            selected_boxes = filter_boxes(decoded_predictions,
-                        self.num_classes, self.background_index,
-                        self.lower_probability_threshold)
-            if len(selected_boxes) == 0:
+            print(frame.shape)
+            selected_boxes = predict(model, image_array, prior_boxes,
+                                    frame.shape[0:2], self.num_classes,
+                                    self.lower_probability_threshold,
+                                    self.iou_threshold,
+                                    self.background_index,
+                                    self.box_scale_factors)
+            if selected_boxes is None:
                 continue
-            selected_boxes = denormalize_box(selected_boxes, frame.shape[0:2][::-1])
-            selected_boxes = apply_non_max_suppression(selected_boxes,
-                                                        self.iou_threshold)
             draw_boxes(selected_boxes, frame, self.arg_to_class,
                                         self.colors, self.font)
 
