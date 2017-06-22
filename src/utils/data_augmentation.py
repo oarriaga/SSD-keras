@@ -1,8 +1,10 @@
 import numpy as np
 from random import shuffle
 
-from .utils import load_image
-from .utils import preprocess_images
+#from .utils import load_image
+#from .utils import preprocess_images
+from .preprocessing import load_image
+from .preprocessing import preprocess_images
 from .boxes import assign_prior_boxes
 
 class ImageGenerator(object):
@@ -134,7 +136,7 @@ class ImageGenerator(object):
                 targets = []
                 for key in keys:
                     image_path = self.path_prefix + key
-                    image_array = load_image(image_path, False, self.image_size)
+                    image_array = load_image(image_path, self.image_size)
                     box_corners = self.ground_truth_data[key].copy()
                     if mode == 'train' or mode == 'demo':
                         image_array, box_corners = self.transform(image_array,
