@@ -1,8 +1,12 @@
-import numpy as np
+import glob
 import os
 from xml.etree import ElementTree
-from .utils import get_class_names
-from pycocotools.coco import COCO
+
+import numpy as np
+try:
+    from pycocotools.coco import COCO
+except ImportError:
+    COCO = None
 
 class XMLParser(object):
     """ Preprocess the VOC2007 xml annotations data.
@@ -176,3 +180,45 @@ class DataManager(object):
     def _load_COCO(self):
         self.parser = COCOParser(self.dataset_path_prefix)
         self.ground_truth_data = self.parser.get_data()
+
+def get_class_names(dataset_name='VOC2007'):
+    if dataset_name == 'VOC2007':
+        class_names = ['background','aeroplane', 'bicycle', 'bird', 'boat',
+                       'bottle', 'bus', 'car', 'cat', 'chair', 'cow',
+                       'diningtable', 'dog', 'horse', 'motorbike', 'person',
+                       'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
+    elif dataset_name == 'COCO':
+        class_names = ['background', 'person', 'bicycle', 'car', 'motorcycle',
+                        'airplane', 'bus', 'train', 'truck', 'boat',
+                        'traffic light', 'fire hydrant', 'stop sign',
+                        'parking meter', 'bench', 'bird', 'cat', 'dog',
+                        'horse', 'sheep', 'cow', 'elephant', 'bear',
+                        'zebra', 'giraffe', 'backpack', 'umbrella',
+                        'handbag', 'tie', 'suitcase', 'frisbee', 'skis',
+                        'snowboard', 'sports ball', 'kite', 'baseball bat',
+                        'baseball glove', 'skateboard', 'surfboard',
+                        'tennis racket', 'bottle', 'wine glass',
+                        'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana',
+                        'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
+                        'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
+                        'potted plant', 'bed', 'dining table', 'toilet',
+                        'tv', 'laptop', 'mouse', 'remote', 'keyboard',
+                        'cell phone', 'microwave', 'oven', 'toaster',
+                        'sink', 'refrigerator', 'book', 'clock', 'vase',
+                        'scissors', 'teddy bear', 'hair drier', 'toothbrush']
+    else:
+        raise Exception('Invalid dataset', dataset_name)
+    return class_names
+
+def get_arg_to_class(class_names):
+    return dict(zip(list(range(len(class_names))), class_names))
+
+def list_files_in_directory(path_name='*'):
+    return glob.glob(path_name)
+
+
+
+
+
+
+
