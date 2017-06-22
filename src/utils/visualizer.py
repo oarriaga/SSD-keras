@@ -1,4 +1,9 @@
-import cv2
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+
+import matplotlib.pyplot as plt
 import numpy as np
 
 def draw_boxes(box_data, original_image_array, arg_to_class, colors, font):
@@ -26,3 +31,16 @@ def draw_boxes(box_data, original_image_array, arg_to_class, colors, font):
         cv2.putText(original_image_array, display_text,
                     (x_min_box, y_min_box - 30), font,
                     .7, color, 1, cv2.LINE_AA)
+
+def plot_images(image_1, image_2, title_1='original image',
+                            title_2='transformed image'):
+    plt.figure(1)
+    plt.subplot(121)
+    plt.title(title_1)
+    plt.imshow(image_1.astype('uint8'))
+    plt.subplot(122)
+    plt.title(title_2)
+    plt.imshow(image_2.astype('uint8'))
+    plt.show()
+
+
