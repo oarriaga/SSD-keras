@@ -143,17 +143,26 @@ class DataManager(object):
     """Class for loading VOC2007 and COCO datasets or
     """
     def __init__(self, dataset_name='VOC2007', class_names=None,
-                                    dataset_path_prefix=None):
+                                    dataset_path_prefix=None,
+                                    image_prefix=None):
 
         self.dataset_name = dataset_name
         self.dataset_path_prefix = dataset_path_prefix
+        self.image_prefix = image_prefix
         self.class_names = class_names
         self.ground_truth_data = None
         self.parser = None
-        if self.dataset_path_prefix != None:
-            self.dataset_path_prefix = dataset_path_prefix
-        elif self.dataset_name == 'VOC2007':
+        if self.dataset_path_prefix == None:
             self.dataset_path_prefix = '../datasets/VOCdevkit/VOC2007/Annotations/'
+        else:
+            self.dataset_path_prefix = dataset_path_prefix
+
+        if self.image_prefix == None:
+            self.image_prefix = '../datasets/VOCdevkit/VOC2007/JPEGImages/'
+        else:
+            self.image_prefix = image_prefix
+
+        if self.dataset_name == 'VOC2007':
             self._load_VOC2007()
         elif self.dataset_name == 'COCO':
             self.dataset_path_prefix = ('../datasets/COCO/annotations/' +
@@ -165,17 +174,18 @@ class DataManager(object):
             raise Exception('Incorrect dataset name:', self.dataset_name)
 
     def get_data(self):
-        print('Deprecated function use load_data')
+        print('Deprecated function use function: load_data instead')
         return self.ground_truth_data
 
     def load_data(self):
-        print('Deprecated function use load_data')
         return self.ground_truth_data
 
     def _load_VOC2007(self):
         self.parser = XMLParser(self.dataset_path_prefix, self.class_names)
         self.ground_truth_data = self.parser.get_data()
         self.class_names = self.parser.class_names
+        self.arg_to_class = self.parser.arg_to_class
+        self.class_to_arg = self.parser.class_to_arg
 
     def _load_COCO(self):
         self.parser = COCOParser(self.dataset_path_prefix)
