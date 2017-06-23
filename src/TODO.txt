@@ -1,0 +1,5 @@
+Make functions to call mAP score.
+Download VOC 2007 and 2012
+Pass a list to data manager so that it uses both
+Make data manager separate between training and test
+Extend data_augmentation to use random crops
