@@ -34,6 +34,7 @@ class XMLParser(object):
         self.class_to_arg = {value: key for key, value
                              in self.arg_to_class.items()}
         self.data = dict()
+        self.difficult_objects = dict()
         self._preprocess_XML()
 
     def get_data(self):
@@ -46,10 +47,12 @@ class XMLParser(object):
             root = tree.getroot()
             bounding_boxes = []
             one_hot_classes = []
+            difficulties = []
             size_tree = root.find('size')
             width = float(size_tree.find('width').text)
             height = float(size_tree.find('height').text)
             for object_tree in root.findall('object'):
+                difficulty = int(object_tree.find('difficult').text)
                 class_name = object_tree.find('name').text
                 if class_name in self.class_names:
                     one_hot_class = self._to_one_hot(class_name)
@@ -61,6 +64,7 @@ class XMLParser(object):
                         ymax = float(bounding_box.find('ymax').text) / height
                     bounding_box = [xmin, ymin, xmax, ymax]
                     bounding_boxes.append(bounding_box)
+                    difficulties.append(difficulty)
             if len(one_hot_classes) == 0:
                 continue
             image_name = root.find('filename').text
@@ -70,6 +74,7 @@ class XMLParser(object):
             if len(bounding_boxes.shape) == 1:
                 image_data = np.expand_dims(image_data, axis=0)
             self.data[image_name] = image_data
+            self.difficult_objects[image_name] = difficulties
 
     def _to_one_hot(self, class_name):
         one_hot_vector = [0] * self.num_classes
