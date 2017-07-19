@@ -4,7 +4,7 @@ from utils.datasets import DataManager
 from utils.datasets import get_class_names
 from utils.inference import predict
 from utils.preprocessing import load_image
-from utils.boxes import create_prior_boxes
+#from utils.boxes import create_prior_boxes
 from utils.preprocessing import image_to_array
 from utils.preprocessing import load_pil_image
 from utils.preprocessing import get_image_size
@@ -13,6 +13,7 @@ from utils.boxes import denormalize_box
 from models.ssd import SSD300
 #from utils.visualizer import draw_image_boxes
 from utils.datasets import get_arg_to_class
+import pickle
 
 def compute_precision_and_recall(scores, labels, num_gt):
     sorted_indices = np.argsort(scores)
@@ -45,9 +46,10 @@ def compute_average_precision(precision, recall):
 dataset_name = 'VOC2007'
 data_prefix = '../datasets/VOCtest/VOCdevkit/VOC2007/Annotations/'
 image_prefix = '../datasets/VOCtest/VOCdevkit/VOC2007/JPEGImages/'
-weights_path = '../trained_models/weights_SSD300.hdf5'
+weights_path = '../trained_models/SSD300_weights.hdf5'
 model = SSD300(weights_path=weights_path)
-prior_boxes = create_prior_boxes(model)
+#prior_boxes = create_prior_boxes(model)
+prior_boxes = pickle.load(open('../trained_models/prior_boxes_v2.pkl','rb'))
 input_shape = model.input_shape[1:3]
 class_threshold = .1
 iou_threshold = .5
@@ -69,7 +71,7 @@ for ground_truth_class_arg in range(1, 21):
     difficult_data_flags = data_manager.parser.difficult_objects
 
     image_names = sorted(list(ground_truth_data.keys()))
-    print('Number of images found:', len(image_names))
+    #print('Number of images found:', len(image_names))
     for image_name in image_names:
         ground_truth_sample = ground_truth_data[image_name]
         image_prefix = data_manager.image_prefix
@@ -85,7 +87,7 @@ for ground_truth_class_arg in range(1, 21):
         difficult_objects = np.asarray(difficult_objects, dtype=bool)
         num_ground_truth_boxes += np.sum(np.logical_not(difficult_objects))
         if predicted_data is None:
-            print('Zero predictions given for image:', image_name)
+            #print('Zero predictions given for image:', image_name)
             continue
         #plt.imshow(original_image_array.astype('uint8'))
         #plt.show()

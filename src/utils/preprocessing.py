@@ -12,14 +12,17 @@ def load_image(image_path, target_size=None, grayscale=False):
                                     target_size=target_size)
     return keras_image_preprocessor.img_to_array(image)
 
-def preprocess_images2(image_array, backend='tensorflow'):
-    if backend == 'tensorflow':
-        # 'RGB'->'BGR'
-        image_array = image_array[:, :, :, ::-1]
+def preprocess_images2(image_array):
+    # 'RGB'->'BGR'
+    image_array = image_array[:, :, :, ::-1]
+    #image_array = image_array[:, :, :, (2, 0, 1)]
     # Zero-center by mean pixel
-    image_array[:, 0, :, :] -= 103.939
-    image_array[:, 1, :, :] -= 116.779
-    image_array[:, 2, :, :] -= 123.68
+    image_array[:, :, :, 0] -= 103.939
+    image_array[:, :, :, 1] -= 116.779
+    image_array[:, :, :, 2] -= 123.68
+
+    image_array = image_array[:, :, :, ::-1]
+    #image_array = image_array[:, :, :, (2, 0, 1)]
     return image_array
 
 def load_image2(path, target_size=None):

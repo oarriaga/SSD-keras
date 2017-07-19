@@ -99,6 +99,22 @@ def regress_boxes(assigned_prior_boxes, ground_truth_box, box_scale_factors):
     return regressed_boxes
 
 def decode_boxes(predicted_boxes, prior_boxes, box_scale_factors):
+    loc_boxes = predicted_boxes[:, :4]
+    box_scale_factors=(.1 ,.2)
+    decoded_boxes = np.concatenate((
+        prior_boxes[:, :2] + loc_boxes[:, :2] * box_scale_factors[0] * prior_boxes[:, 2:],
+        prior_boxes[:, 2:] * np.exp(loc_boxes[:, 2:] * box_scale_factors[1])), 1)
+    decoded_boxes[:, :2] -= decoded_boxes[:, 2:] / 2
+    decoded_boxes[:, 2:] += decoded_boxes[:, :2]
+
+    decoded_boxes = np.clip(decoded_boxes, 0.0, 1.0)
+    if predicted_boxes.shape[1] > 4:
+        decoded_boxes = np.concatenate([decoded_boxes,
+                            predicted_boxes[:, 4:]], axis=-1)
+    return decoded_boxes
+
+
+def decode_boxes2(predicted_boxes, prior_boxes, box_scale_factors):
     """Decode from regressed coordinates in predicted_boxes
     to box_coordinates in prior_boxes by applying the inverse function of the
     regress_boxes function.
@@ -421,3 +437,4 @@ def filter_boxes(predictions, num_classes, background_index=0,
     mask = np.logical_and(background_mask, lower_bound_mask)
     selected_boxes = predictions[mask, :(4 + num_classes)]
     return selected_boxes
+
