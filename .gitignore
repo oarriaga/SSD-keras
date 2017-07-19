@@ -1,5 +1,6 @@
 datasets/*
 src/.ipynb_checkpoints
+src/new
 trained_models
 *.pyc
-
+*.hdf5
