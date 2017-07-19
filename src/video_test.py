@@ -53,13 +53,15 @@ class VideoTest(object):
 
 if __name__ == "__main__":
     from models.ssd import SSD300
-    from utils.boxes import create_prior_boxes
+    #from utils.boxes import create_prior_boxes
+    import pickle
     num_classes = 21
+    input_shape = (300, 300, 3)
     dataset_name = 'VOC2007'
-    weights_filename = '../trained_models/weights_SSD300.hdf5'
-    model = SSD300(num_classes=num_classes)
-    prior_boxes = create_prior_boxes(model)
-    model.load_weights(weights_filename)
+    weights_path = '../trained_models/SSD300_weights.hdf5'
+    model = SSD300(input_shape, num_classes, weights_path)
+    #prior_boxes = create_prior_boxes(model)
+    prior_boxes = pickle.load(open('../trained_models/prior_boxes_v2.pkl','rb'))
     video = VideoTest(prior_boxes, dataset_name)
     video.start_video(model)
 
