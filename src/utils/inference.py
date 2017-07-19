@@ -1,5 +1,5 @@
 import numpy as np
-from .preprocessing import preprocess_images2
+from .preprocessing import preprocess_images
 from .boxes import decode_boxes
 from .boxes import filter_boxes
 from .preprocessing import resize_image_array
@@ -17,7 +17,7 @@ def predict(model, image_array, prior_boxes, original_image_shape,
     input_size = model.input_shape[1:3]
     image_array = resize_image_array(image_array, input_size)
     image_array = np.expand_dims(image_array, axis=0)
-    image_array = preprocess_images2(image_array)
+    image_array = preprocess_images(image_array)
     predictions = model.predict(image_array)
     predictions = np.squeeze(predictions)
     decoded_predictions = decode_boxes(predictions, prior_boxes,
