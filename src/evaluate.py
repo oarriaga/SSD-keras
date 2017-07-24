@@ -50,8 +50,6 @@ weights_path = '../trained_models/SSD300_weights.hdf5'
 model = SSD300(weights_path=weights_path)
 # from utils.wtf import flip_l2_weights
 # model = flip_l2_weights(model)
-# prior_boxes = create_prior_boxes(model)
-# prior_boxes = pickle.load(open('../trained_models/prior_boxes_v2.pkl','rb'))
 prior_boxes = create_prior_boxes()
 input_shape = model.input_shape[1:3]
 class_threshold = .1
