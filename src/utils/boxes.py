@@ -1,4 +1,6 @@
+from itertools import product
 import numpy as np
+
 
 def calculate_intersection_over_union(box_data, prior_boxes):
     """Calculate intersection over union of box_data with respect to
@@ -43,6 +45,7 @@ def calculate_intersection_over_union(box_data, prior_boxes):
     intersection_over_union = intersections / unions
     return intersection_over_union
 
+
 def regress_boxes(assigned_prior_boxes, ground_truth_box, box_scale_factors):
     """Regress assigned_prior_boxes to ground_truth_box as mentioned in
     Faster-RCNN and Single-shot Multi-box Detector papers.
@@ -69,7 +72,7 @@ def regress_boxes(assigned_prior_boxes, ground_truth_box, box_scale_factors):
     d_y_max = d_box_coordinates[:, 3]
     d_center_x = 0.5 * (d_x_min + d_x_max)
     d_center_y = 0.5 * (d_y_min + d_y_max)
-    d_width =  d_x_max - d_x_min
+    d_width = d_x_max - d_x_min
     d_height = d_y_max - d_y_min
 
     g_box_coordinates = ground_truth_box
@@ -77,7 +80,7 @@ def regress_boxes(assigned_prior_boxes, ground_truth_box, box_scale_factors):
     g_y_min = g_box_coordinates[1]
     g_x_max = g_box_coordinates[2]
     g_y_max = g_box_coordinates[3]
-    g_width =  g_x_max - g_x_min
+    g_width = g_x_max - g_x_min
     g_height = g_y_max - g_y_min
     g_center_x = 0.5 * (g_x_min + g_x_max)
     g_center_y = 0.5 * (g_y_min + g_y_max)
@@ -89,28 +92,33 @@ def regress_boxes(assigned_prior_boxes, ground_truth_box, box_scale_factors):
 
     g_hat_center_x = (g_center_x - d_center_x) / (d_width * scale_center_x)
     g_hat_center_y = (g_center_y - d_center_y) / (d_height * scale_center_y)
-    g_hat_width  = np.log(g_width  / d_width) / scale_width
+    g_hat_width = np.log(g_width / d_width) / scale_width
     g_hat_height = np.log(g_height / d_height) / scale_height
     regressed_boxes = np.concatenate([g_hat_center_x.reshape(-1, 1),
-                                    g_hat_center_y.reshape(-1, 1),
-                                    g_hat_width.reshape(-1, 1),
-                                    g_hat_height.reshape(-1, 1)],
-                                    axis=1)
+                                     g_hat_center_y.reshape(-1, 1),
+                                     g_hat_width.reshape(-1, 1),
+                                     g_hat_height.reshape(-1, 1)],
+                                     axis=1)
     return regressed_boxes
+
 
 def decode_boxes(predicted_boxes, prior_boxes, box_scale_factors):
     loc_boxes = predicted_boxes[:, :4]
-    box_scale_factors=(.1 ,.2)
-    decoded_boxes = np.concatenate((
-        prior_boxes[:, :2] + loc_boxes[:, :2] * box_scale_factors[0] * prior_boxes[:, 2:],
-        prior_boxes[:, 2:] * np.exp(loc_boxes[:, 2:] * box_scale_factors[1])), 1)
+    box_scale_factors = (.1, .2)
+    decoded_boxes = np.concatenate((prior_boxes[:, :2] +
+                                    loc_boxes[:, :2] *
+                                    box_scale_factors[0] *
+                                    prior_boxes[:, 2:],
+                                    prior_boxes[:, 2:] *
+                                    np.exp(loc_boxes[:, 2:] *
+                                    box_scale_factors[1])), 1)
     decoded_boxes[:, :2] -= decoded_boxes[:, 2:] / 2
     decoded_boxes[:, 2:] += decoded_boxes[:, :2]
 
     decoded_boxes = np.clip(decoded_boxes, 0.0, 1.0)
     if predicted_boxes.shape[1] > 4:
         decoded_boxes = np.concatenate([decoded_boxes,
-                            predicted_boxes[:, 4:]], axis=-1)
+                                       predicted_boxes[:, 4:]], axis=-1)
     return decoded_boxes
 
 
@@ -178,18 +186,19 @@ def decode_boxes2(predicted_boxes, prior_boxes, box_scale_factors):
     decoded_y_max = decoded_center_y + (0.5 * decoded_height)
 
     decoded_boxes = np.concatenate((decoded_x_min[:, None],
-                                  decoded_y_min[:, None],
-                                  decoded_x_max[:, None],
-                                  decoded_y_max[:, None]), axis=-1)
+                                   decoded_y_min[:, None],
+                                   decoded_x_max[:, None],
+                                   decoded_y_max[:, None]), axis=-1)
     decoded_boxes = np.clip(decoded_boxes, 0.0, 1.0)
     if predicted_boxes.shape[1] > 4:
         decoded_boxes = np.concatenate([decoded_boxes,
-                            predicted_boxes[:, 4:]], axis=-1)
+                                       predicted_boxes[:, 4:]], axis=-1)
     return decoded_boxes
 
+
 def assign_prior_boxes_to_ground_truth(ground_truth_box, prior_boxes,
-                            box_scale_factors, regress=True,
-                            overlap_threshold=.5, return_iou=True):
+                                       box_scale_factors, regress=True,
+                                       overlap_threshold=.5, return_iou=True):
     """ Assigns and regresses prior boxes to a single ground_truth_box
     data sample.
     TODO: Change this function so that it does not regress the boxes
@@ -218,16 +227,18 @@ def assign_prior_boxes_to_ground_truth(ground_truth_box, prior_boxes,
     assigned_prior_boxes = prior_boxes[assign_mask]
     if regress:
         assigned_regressed_priors = regress_boxes(assigned_prior_boxes,
-                                ground_truth_box, box_scale_factors)
+                                                  ground_truth_box,
+                                                  box_scale_factors)
         regressed_boxes[assign_mask, 0:4] = assigned_regressed_priors
         return regressed_boxes.ravel()
     else:
         regressed_boxes[assign_mask, 0:4] = assigned_prior_boxes[:, 0:4]
         return regressed_boxes.ravel()
 
+
 def assign_prior_boxes(prior_boxes, ground_truth_data, num_classes,
-                        box_scale_factors, regress=True,
-                        overlap_threshold=.5, background_id=0):
+                       box_scale_factors, regress=True,
+                       overlap_threshold=.5, background_id=0):
     """ Assign and regress prior boxes to all ground truth samples.
     Arguments:
         prior_boxes: numpy array with shape (num_prior_boxes, 4)
@@ -244,7 +255,6 @@ def assign_prior_boxes(prior_boxes, ground_truth_data, num_classes,
         which correspond to the regressed values of all
         assigned_prior_boxes to the ground_truth_box
     """
-    #assignments = np.zeros((len(prior_boxes), 4 + num_classes + 8))
     assignments = np.zeros((len(prior_boxes), 4 + num_classes))
     assignments[:, 4 + background_id] = 1.0
     num_objects_in_image = len(ground_truth_data)
@@ -261,15 +271,15 @@ def assign_prior_boxes(prior_boxes, ground_truth_data, num_classes,
     best_iou_indices = best_iou_indices[best_iou_mask]
     num_assigned_boxes = len(best_iou_indices)
     encoded_boxes = encoded_boxes[:, best_iou_mask, :]
+    box_sequence = np.arange(num_assigned_boxes)
     assignments[best_iou_mask, :4] = encoded_boxes[best_iou_indices,
-                                            np.arange(num_assigned_boxes),
-                                            :4]
+                                                   box_sequence, :4]
 
     assignments[:, 4][best_iou_mask] = 0
-    #assignments[:, 5:-8][best_iou_mask] = ground_truth_data[best_iou_indices, 5:]
-    assignments[:, 5:][best_iou_mask] = ground_truth_data[best_iou_indices, 5:]
-    #assignments[:, -8][best_iou_mask] = 1
+    assignments[:, 5:][best_iou_mask] = ground_truth_data[best_iou_indices,
+                                                          5:]
     return assignments
+
 
 def load_model_configurations(model):
     """
@@ -294,76 +304,51 @@ def load_model_configurations(model):
             model_configurations.append(layer_data)
     return model_configurations
 
-def create_prior_boxes(model):
-    """
-    Arguments:
-        image_shape: The image shape (width, height) to the
-        input model.
-        model_configurations: The model configurations created by
-        load_model_configurations that indicate the parameters
-        inside the PriorBox layers.
 
-    Returns:
-        prior_boxes: A numpy array containing all prior boxes
-    """
-    image_width, image_height = model.input_shape[1:3]
-    model_configurations = load_model_configurations(model)
+def create_prior_boxes(configuration=None):
+    if configuration is None:
+        configuration = get_configuration_file()
+    image_size = configuration['image_size']
+    feature_map_sizes = configuration['feature_map_sizes']
+    min_sizes = configuration['min_sizes']
+    max_sizes = configuration['max_sizes']
+    steps = configuration['steps']
+    model_aspect_ratios = configuration['aspect_ratios']
+    mean = []
+    for feature_map_arg, feature_map_size in enumerate(feature_map_sizes):
+        step = steps[feature_map_arg]
+        min_size = min_sizes[feature_map_arg]
+        max_size = max_sizes[feature_map_arg]
+        aspect_ratios = model_aspect_ratios[feature_map_arg]
+        for y, x in product(range(feature_map_size), repeat=2):
+            f_k = image_size / step
+            center_x = (x + 0.5) / f_k
+            center_y = (y + 0.5) / f_k
+            s_k = min_size / image_size
+            mean = mean + [center_x, center_y, s_k, s_k]
+            s_k_prime = np.sqrt(s_k * (max_size / image_size))
+            mean = mean + [center_x, center_y, s_k_prime, s_k_prime]
+            for aspect_ratio in aspect_ratios:
+                mean = mean + [center_x, center_y, s_k * np.sqrt(aspect_ratio),
+                               s_k / np.sqrt(aspect_ratio)]
+                mean = mean + [center_x, center_y, s_k / np.sqrt(aspect_ratio),
+                               s_k * np.sqrt(aspect_ratio)]
 
-    boxes_parameters = []
-    for layer_config in model_configurations:
-        layer_width = layer_config["layer_width"]
-        layer_height = layer_config["layer_height"]
-        # RENAME: to num_aspect_ratios
-        num_priors = layer_config["num_prior"]
-        aspect_ratios = layer_config["aspect_ratios"]
-        min_size = layer_config["min_size"]
-        max_size = layer_config["max_size"]
+    output = np.asarray(mean).reshape((-1, 4))
+    output = np.clip(output, 0, 1)
+    return output
 
-        # .5 is to locate every step in the center of the bounding box
-        step_x = 0.5 * (float(image_width) / float(layer_width))
-        step_y = 0.5 * (float(image_height) / float(layer_height))
 
-        linspace_x = np.linspace(step_x, image_width - step_x, layer_width)
-        linspace_y = np.linspace(step_y, image_height - step_y, layer_height)
+def get_configuration_file():
+    configuration = {'feature_map_sizes': [38, 19, 10, 5, 3, 1],
+                     'image_size': 300,
+                     'steps': [8, 16, 32, 64, 100, 300],
+                     'min_sizes': [30, 60, 111, 162, 213, 264],
+                     'max_sizes': [60, 111, 162, 213, 264, 315],
+                     'aspect_ratios': [[2], [2, 3], [2, 3], [2, 3], [2], [2]],
+                     'variance': [0.1, 0.2]}
+    return configuration
 
-        centers_x, centers_y = np.meshgrid(linspace_x, linspace_y)
-        centers_x = centers_x.reshape(-1, 1)
-        centers_y = centers_y.reshape(-1, 1)
-
-        assert(num_priors == len(aspect_ratios))
-        prior_boxes = np.concatenate((centers_x, centers_y), axis=1)
-        prior_boxes = np.tile(prior_boxes, (1, 2 * num_priors))
-
-        box_widths = []
-        box_heights = []
-        for aspect_ratio in aspect_ratios:
-            if aspect_ratio == 1 and len(box_widths) == 0:
-                box_widths.append(min_size)
-                box_heights.append(min_size)
-            elif aspect_ratio == 1 and len(box_widths) > 0:
-                box_widths.append(np.sqrt(min_size * max_size))
-                box_heights.append(np.sqrt(min_size * max_size))
-            elif aspect_ratio != 1:
-                box_widths.append(min_size * np.sqrt(aspect_ratio))
-                box_heights.append(min_size / np.sqrt(aspect_ratio))
-        # we take half of the widths and heights since we are at the center
-        box_widths = 0.5 * np.array(box_widths)
-        box_heights = 0.5 * np.array(box_heights)
-
-        # Normalize to 0-1
-        prior_boxes[:, ::4] -= box_widths
-        prior_boxes[:, 1::4] -= box_heights
-        prior_boxes[:, 2::4] += box_widths
-        prior_boxes[:, 3::4] += box_heights
-        prior_boxes[:, ::2] /= image_width
-        prior_boxes[:, 1::2] /= image_height
-        prior_boxes = prior_boxes.reshape(-1, 4)
-
-        # clip to 0-1
-        layer_prior_boxes = np.minimum(np.maximum(prior_boxes, 0.0), 1.0)
-        boxes_parameters.append(layer_prior_boxes)
-
-    return np.concatenate(boxes_parameters, axis=0)
 
 def denormalize_box(box_data, original_image_shape):
     """
@@ -388,12 +373,14 @@ def denormalize_box(box_data, original_image_shape):
     x_max = x_max * original_image_width
     y_max = y_max * original_image_height
     denormalized_box_data = np.concatenate([x_min[:, None], y_min[:, None],
-                                    x_max[:, None], y_max[:, None]], axis=1)
+                                           x_max[:, None], y_max[:, None]],
+                                           axis=1)
 
     if box_data.shape[1] > 4:
         denormalized_box_data = np.concatenate([denormalized_box_data,
-                                            box_data[:, 4:]], axis=-1)
+                                               box_data[:, 4:]], axis=-1)
     return denormalized_box_data
+
 
 def apply_non_max_suppression(boxes, iou_threshold=.2):
     if len(boxes) == 0:
@@ -412,22 +399,26 @@ def apply_non_max_suppression(boxes, iou_threshold=.2):
             box = [x_min[i], y_min[i], x_max[i], y_max[i]]
             box = np.asarray(box)
             test_boxes = [x_min[sorted_box_indices[:last], None],
-                     y_min[sorted_box_indices[:last], None],
-                     x_max[sorted_box_indices[:last], None],
-                     y_max[sorted_box_indices[:last], None]]
+                          y_min[sorted_box_indices[:last], None],
+                          x_max[sorted_box_indices[:last], None],
+                          y_max[sorted_box_indices[:last], None]]
             test_boxes = np.concatenate(test_boxes, axis=-1)
             iou = calculate_intersection_over_union(box, test_boxes)
             current_class = np.argmax(classes[i])
-            box_classes = np.argmax(classes[sorted_box_indices[:last]], axis=-1)
+            box_classes = np.argmax(classes[sorted_box_indices[:last]],
+                                    axis=-1)
             class_mask = current_class == box_classes
             overlap_mask = iou > iou_threshold
             delete_mask = np.logical_and(overlap_mask, class_mask)
-            sorted_box_indices = np.delete(sorted_box_indices, np.concatenate(([last],
-                    np.where(delete_mask)[0])))
+            delete_mask = np.where(delete_mask)[0]
+            sorted_box_indices = np.delete(sorted_box_indices,
+                                           np.concatenate(([last],
+                                                          delete_mask)))
     return boxes[selected_indices]
 
+
 def filter_boxes(predictions, num_classes, background_index=0,
-                                    lower_probability_threshold=.4):
+                 lower_probability_threshold=.4):
     predictions = np.squeeze(predictions)
     box_classes = predictions[:, 4:(4 + num_classes)]
     best_classes = np.argmax(box_classes, axis=-1)
@@ -437,4 +428,3 @@ def filter_boxes(predictions, num_classes, background_index=0,
     mask = np.logical_and(background_mask, lower_bound_mask)
     selected_boxes = predictions[mask, :(4 + num_classes)]
     return selected_boxes
-
