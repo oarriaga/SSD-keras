@@ -1,17 +1,16 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from utils.datasets import DataManager
 from utils.datasets import get_class_names
 from utils.inference import predict
 from utils.preprocessing import load_image
+from utils.preprocessing import preprocess_images
 from utils.boxes import create_prior_boxes
-from utils.preprocessing import image_to_array
-from utils.preprocessing import load_pil_image
-from utils.preprocessing import get_image_size
 from utils.boxes import calculate_intersection_over_union
 from utils.boxes import denormalize_box
 from models.ssd import SSD300
-# from utils.visualizer import draw_image_boxes
+from utils.visualizer import draw_image_boxes
 from utils.datasets import get_arg_to_class
 
 
@@ -43,6 +42,7 @@ def compute_average_precision(precision, recall):
             (recall[indices] - recall[indices - 1]) * precision[indices])
     return average_precision
 
+
 dataset_name = 'VOC2007'
 data_prefix = '../datasets/VOCtest/VOCdevkit/VOC2007/Annotations/'
 image_prefix = '../datasets/VOCtest/VOCdevkit/VOC2007/JPEGImages/'
@@ -53,10 +53,11 @@ model = SSD300(weights_path=weights_path)
 prior_boxes = create_prior_boxes()
 input_shape = model.input_shape[1:3]
 class_threshold = .1
-iou_threshold = .5
+iou_threshold = .45
 
 
 average_precisions = []
+# range(1, 21)
 for ground_truth_class_arg in range(1, 21):
     labels = []
     scores = []
@@ -77,9 +78,8 @@ for ground_truth_class_arg in range(1, 21):
         ground_truth_sample = ground_truth_data[image_name]
         image_prefix = data_manager.image_prefix
         image_path = image_prefix + image_name
-        image_array = load_image(image_path, input_shape)
-        original_image_array = image_to_array(load_pil_image(image_path))
-        original_image_size = get_image_size(image_path)
+        image_array, original_image_size = load_image(image_path, input_shape)
+        image_array = preprocess_images(image_array)
         predicted_data = predict(model, image_array, prior_boxes,
                                  original_image_size,
                                  21, class_threshold, iou_threshold)
@@ -92,9 +92,10 @@ for ground_truth_class_arg in range(1, 21):
         if predicted_data is None:
             # print('Zero predictions given for image:', image_name)
             continue
-        # plt.imshow(original_image_array.astype('uint8'))
-        # plt.show()
-        # draw_image_boxes(predicted_data, original_image_array, class_decoder, normalized=False)
+        #plt.imshow(original_image_array.astype('uint8'))
+        #plt.show()
+        #draw_image_boxes(predicted_data, original_image_array, class_decoder, normalized=False)
+        #print(predicted_data.shape)
         num_predictions = len(predicted_data)
         for prediction_arg in range(num_predictions):
             predicted_box = predicted_data[prediction_arg]
@@ -112,6 +113,7 @@ for ground_truth_class_arg in range(1, 21):
                     # num_ground_truth_boxes = num_ground_truth_boxes - 1
                     continue
                 iou = ious[object_arg]
+                # i think this is bad you have to take the max
                 if iou >= iou_threshold and predicted_class_arg == ground_truth_class_arg:
                     # print('True positive:', box_arg)
                     scores.append(predicted_score)
@@ -135,5 +137,3 @@ for ground_truth_class_arg in range(1, 21):
 average_precisions = np.asarray(average_precisions)
 mean_average_precision = np.mean(average_precisions)
 print('mAP:', mean_average_precision)
-
-
