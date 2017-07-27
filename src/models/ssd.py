@@ -112,12 +112,14 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
                          padding='same')(conv5_3)
 
     # FC6 ------------------------------------------------
+    pool5z = ZeroPadding2D(padding=(6, 6), name='pool5z')(pool5)
+
     fc6 = Conv2D(1024, (3, 3),
                  name='fc6',
                  dilation_rate=(6, 6),
-                 padding='same',
+                 padding='valid',
                  activation='relu'
-                 )(pool5)
+                 )(pool5z)
 
     # FC7 ------------------------------------------------
     fc7 = Conv2D(1024, (1, 1),
