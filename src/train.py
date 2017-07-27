@@ -18,15 +18,15 @@ optimizer = Adam(lr=3e-4)
 root_prefix = '../datasets/VOCdevkit/VOC2007/'
 ground_data_prefix = root_prefix + 'Annotations/'
 image_prefix = root_prefix + 'JPEGImages/'
-image_shape = (300, 300 ,3)
+image_shape = (300, 300, 3)
 dataset_name = 'VOC2007'
 weights_path = '../trained_models/weights_SSD300.hdf5'
 trained_models_path = '../trained_models/model_checkpoints/'
 trained_models_filename = (trained_models_path +
-                        'ssd300_weights.{epoch:03d}-{val_loss:.3f}.hdf5')
+                           'ssd300_weights.{epoch:03d}-{val_loss:.3f}.hdf5')
 frozen_layers = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
-                'conv2_1', 'conv2_2', 'pool2',
-                'conv3_1', 'conv3_2', 'conv3_3', 'pool3']
+                 'conv2_1', 'conv2_2', 'pool2',
+                 'conv3_1', 'conv3_2', 'conv3_3', 'pool3']
 box_scale_factors = [.1, .1, .2, .2]
 
 # loading and splitting data
@@ -64,7 +64,7 @@ model_checkpoint = ModelCheckpoint(model_names,
 # training model with real-time data augmentation
 model.fit_generator(image_generator.flow(mode='train'),
                     steps_per_epoch=int(len(train_keys) / batch_size),
-                    epochs = num_epochs, verbose = 1,
+                    epochs=num_epochs, verbose=1,
                     callbacks=[model_checkpoint, learning_rate_schedule],
                     validation_data=image_generator.flow(mode='val'),
                     validation_steps=int(len(validation_keys) / batch_size))
