@@ -102,9 +102,8 @@ def regress_boxes(assigned_prior_boxes, ground_truth_box, box_scale_factors):
     return regressed_boxes
 
 
-def decode_boxes(predicted_boxes, prior_boxes, box_scale_factors):
+def decode_boxes(predicted_boxes, prior_boxes, box_scale_factors=(.1, .2)):
     loc_boxes = predicted_boxes[:, :4]
-    box_scale_factors = (.1, .2)
     decoded_boxes = np.concatenate((prior_boxes[:, :2] +
                                     loc_boxes[:, :2] *
                                     box_scale_factors[0] *
@@ -390,7 +389,7 @@ def apply_non_max_suppression(boxes, iou_threshold=.2):
     y_min = boxes[:, 1]
     x_max = boxes[:, 2]
     y_max = boxes[:, 3]
-    classes = boxes[:, 4:]
+    # classes = boxes[:, 4:]
     sorted_box_indices = np.argsort(y_max)
     while len(sorted_box_indices) > 0:
             last = len(sorted_box_indices) - 1
@@ -404,13 +403,14 @@ def apply_non_max_suppression(boxes, iou_threshold=.2):
                           y_max[sorted_box_indices[:last], None]]
             test_boxes = np.concatenate(test_boxes, axis=-1)
             iou = calculate_intersection_over_union(box, test_boxes)
-            current_class = np.argmax(classes[i])
-            box_classes = np.argmax(classes[sorted_box_indices[:last]],
-                                    axis=-1)
-            class_mask = current_class == box_classes
+            # current_class = np.argmax(classes[i])
+            # box_classes = np.argmax(classes[sorted_box_indices[:last]],
+                                    # axis=-1)
+            # class_mask = current_class == box_classes
             overlap_mask = iou > iou_threshold
-            delete_mask = np.logical_and(overlap_mask, class_mask)
-            delete_mask = np.where(delete_mask)[0]
+            # delete_mask = np.logical_and(overlap_mask, class_mask)
+            # delete_mask = np.where(delete_mask)[0]
+            delete_mask = np.where(overlap_mask)[0]
             sorted_box_indices = np.delete(sorted_box_indices,
                                            np.concatenate(([last],
                                                           delete_mask)))
