@@ -4,7 +4,7 @@ import numpy as np
 session = tf.Session(config=tf.ConfigProto(device_count={'GPU':0}))
 
 def apply_non_max_suppression(box_data, iou_treshold=.5,
-                                        max_output_size=100):
+                                        max_output_size=200):
     num_boxes = len(box_data)
     coordinates = tf.placeholder(dtype='float32', shape=(num_boxes, 4))
     scores = tf.placeholder(dtype='float32', shape=(num_boxes))
