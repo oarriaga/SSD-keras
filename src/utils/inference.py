@@ -2,8 +2,8 @@ import numpy as np
 from .boxes import decode_boxes
 from .boxes import filter_boxes
 from .boxes import denormalize_box
-from .boxes import apply_non_max_suppression
-# from .tf_boxes import apply_non_max_suppression
+# from .boxes import apply_non_max_suppression
+from .tf_boxes import apply_non_max_suppression
 
 
 def predict(model, image_array, prior_boxes, original_image_shape,
@@ -23,7 +23,7 @@ def predict(model, image_array, prior_boxes, original_image_shape,
         return None
     selected_boxes = denormalize_box(selected_boxes, original_image_shape)
     supressed_boxes = []
-    for class_arg in range(1, num_classes - 1):
+    for class_arg in range(1, num_classes):
         best_classes = np.argmax(selected_boxes[:, 4:], axis=1)
         class_mask = best_classes == class_arg
         class_boxes = selected_boxes[class_mask]
