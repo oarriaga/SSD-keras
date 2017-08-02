@@ -7,7 +7,7 @@ def preprocess_images(image_array):
     image_array[:, :, 0] = image_array[:, :, 0] - 123.0
     image_array[:, :, 1] = image_array[:, :, 1] - 117.0
     image_array[:, :, 2] = image_array[:, :, 2] - 104.0
-    # image_array = image_array[:, :, ::-1]
+    image_array = image_array[:, :, ::-1]
     return image_array
 
 
