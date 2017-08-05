@@ -42,7 +42,7 @@ def draw_image_boxes(box_data, original_image_array,
     if len(box_data) == 0:
         return None
     if normalized:
-        box_data = denormalize_box(box_data, original_image_array.shape[0:2][::-1])
+        box_data = denormalize_box(box_data, original_image_array.shape[0:2])
     original_image_array = original_image_array.astype('uint8')
     figure, axis = plt.subplots(1)
     axis.imshow(original_image_array)
