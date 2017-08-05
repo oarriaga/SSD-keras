@@ -1,0 +1,61 @@
+Class: aeroplane
+AP: 0.762998293855
+Number of ground_truth_boxes: 285
+Class: bicycle
+AP: 0.769718200765
+Number of ground_truth_boxes: 337
+Class: bird
+AP: 0.709661311111
+Number of ground_truth_boxes: 459
+Class: boat
+AP: 0.67884271015
+Number of ground_truth_boxes: 263
+Class: bottle
+AP: 0.343859144244
+Number of ground_truth_boxes: 469
+Class: bus
+AP: 0.845712527254
+Number of ground_truth_boxes: 213
+Class: car
+AP: 0.828184798114
+Number of ground_truth_boxes: 1201
+Class: cat
+AP: 0.872202177974
+Number of ground_truth_boxes: 358
+Class: chair
+AP: 0.491718158013
+Number of ground_truth_boxes: 756
+Class: cow
+AP: 0.782616388115
+Number of ground_truth_boxes: 244
+Class: diningtable
+AP: 0.788994117942
+Number of ground_truth_boxes: 206
+Class: dog
+AP: 0.867157972447
+Number of ground_truth_boxes: 489
+Class: horse
+AP: 0.852379990987
+Number of ground_truth_boxes: 348
+Class: motorbike
+AP: 0.758368415905
+Number of ground_truth_boxes: 325
+Class: person
+AP: 0.646541959306
+Number of ground_truth_boxes: 4528
+Class: pottedplant
+AP: 0.417579033679
+Number of ground_truth_boxes: 480
+Class: sheep
+AP: 0.750263650002
+Number of ground_truth_boxes: 242
+Class: sofa
+AP: 0.802389202871
+Number of ground_truth_boxes: 239
+Class: train
+AP: 0.893617021277
+Number of ground_truth_boxes: 282
+Class: tvmonitor
+AP: 0.719404
+Number of ground_truth_boxes: 308
+mAP: 0.7291
