@@ -417,14 +417,14 @@ def apply_non_max_suppression(boxes, iou_threshold=.2):
     return boxes[selected_indices]
 
 
-def filter_boxes(predictions, num_classes, background_index=0,
-                 lower_probability_threshold=.4):
+def filter_boxes(predictions, num_classes=21, background_index=0,
+                 class_threshold=.1):
     predictions = np.squeeze(predictions)
     box_classes = predictions[:, 4:(4 + num_classes)]
     best_classes = np.argmax(box_classes, axis=-1)
     best_probabilities = np.max(box_classes, axis=-1)
     background_mask = best_classes != background_index
-    lower_bound_mask = lower_probability_threshold < best_probabilities
-    mask = np.logical_and(background_mask, lower_bound_mask)
+    lower_bound_mask = class_threshold < best_probabilities
+    mask = np.logical_or(background_mask, lower_bound_mask)
     selected_boxes = predictions[mask, :(4 + num_classes)]
     return selected_boxes
