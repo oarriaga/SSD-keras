@@ -4,9 +4,9 @@ import cv2
 
 def preprocess_images(image_array):
     image_array = image_array.astype(np.float32)
-    image_array[:, :, 0] = image_array[:, :, 0] - 123.0
-    image_array[:, :, 1] = image_array[:, :, 1] - 117.0
-    image_array[:, :, 2] = image_array[:, :, 2] - 104.0
+    image_array[:, :, 0] = image_array[:, :, 0] - 123.68
+    image_array[:, :, 1] = image_array[:, :, 1] - 116.779
+    image_array[:, :, 2] = image_array[:, :, 2] - 103.939
     image_array = image_array[:, :, ::-1]
     return image_array
 
