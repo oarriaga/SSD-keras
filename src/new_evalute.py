@@ -91,11 +91,13 @@ for ground_truth_class_arg in range(1, num_classes):
                 predicted_probabilities = predicted_sample[4:]
                 predicted_sample_arg = np.argmax(predicted_probabilities)
                 predicted_score = np.max(predicted_probabilities)
-                scores.append(predicted_score)
                 if ((max_iou > iou_threshold) and
                    (predicted_sample_arg == ground_truth_class_arg)):
+                    scores.append(predicted_score)
                     labels.append(True)
-                else:
+                if ((max_iou > iou_threshold) and
+                   (predicted_sample_arg != ground_truth_class_arg)):
+                    scores.append(predicted_score)
                     labels.append(False)
 
     scores = np.asarray(scores)
