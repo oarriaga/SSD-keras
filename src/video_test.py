@@ -65,9 +65,6 @@ if __name__ == "__main__":
     dataset_name = 'VOC2007'
     weights_path = '../trained_models/SSD300_weights.hdf5'
     model = SSD300(input_shape, num_classes, weights_path)
-    # from utils.wtf import flip_l2_weights
-    # model = flip_l2_weights(model)
-    # prior_boxes = create_prior_boxes(model)
     prior_boxes = pickle.load(open('../trained_models/prior_boxes_v2.pkl',
                                    'rb'))
     video = VideoTest(prior_boxes, dataset_name)
