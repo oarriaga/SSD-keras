@@ -6,13 +6,13 @@
 
 from __future__ import print_function
 import torch
-# import torch.nn as nn
+import torch.nn as nn
 import torch.backends.cudnn as cudnn
-# import torchvision.transforms as transforms
+import torchvision.transforms as transforms
 from torch.autograd import Variable
 from data import VOCroot
 from data import VOC_CLASSES as labelmap
-# import torch.utils.data as data
+import torch.utils.data as data
 
 from data import AnnotationTransform, VOCDetection, BaseTransform
 from ssd import build_ssd
@@ -23,7 +23,7 @@ import time
 import argparse
 import numpy as np
 import pickle
-# import cv2
+import cv2
 
 if sys.version_info[0] == 2:
     import xml.etree.cElementTree as ET
