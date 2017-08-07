@@ -104,7 +104,7 @@ for ground_truth_class_arg in range(1, num_classes):
     labels = np.asarray(labels)
     precision, recall = compute_precision_and_recall(scores, labels,
                                                      num_ground_truth_boxes)
-    average_precision = compute_average_precision(precision, recall)
+    average_precision = compute_average_precision_2(precision, recall)
     average_precisions.append(average_precision)
     print('Class:', selected_classes[-1])
     print('Number of ground_truth_boxes:', num_ground_truth_boxes)

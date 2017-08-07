@@ -1,61 +1,61 @@
 Class: aeroplane
 Number of ground_truth_boxes: 591
-AP: 0.804235972202
+AP: 0.817607531723
 Class: bicycle
 Number of ground_truth_boxes: 690
-AP: 0.828742992271
+AP: 0.815717350267
 Class: bird
 Number of ground_truth_boxes: 945
-AP: 0.740538610587
+AP: 0.816600135573
 Class: boat
 Number of ground_truth_boxes: 553
-AP: 0.644226341179
+AP: 0.726832489544
 Class: bottle
 Number of ground_truth_boxes: 974
-AP: 0.175117265915
+AP: 0.453178400547
 Class: bus
 Number of ground_truth_boxes: 442
-AP: 0.873970625695
+AP: 0.816878822921
 Class: car
 Number of ground_truth_boxes: 2451
-AP: 0.766990211749
+AP: 0.817162499312
 Class: cat
 Number of ground_truth_boxes: 734
-AP: 0.891808944952
+AP: 0.906687964806
 Class: chair
 Number of ground_truth_boxes: 1554
-AP: 0.527057528197
+AP: 0.617222499377
 Class: cow
 Number of ground_truth_boxes: 503
-AP: 0.795274897287
+AP: 0.811132202998
 Class: diningtable
 Number of ground_truth_boxes: 421
-AP: 0.81846538778
+AP: 0.817660849179
 Class: dog
 Number of ground_truth_boxes: 999
-AP: 0.884739933975
+AP: 0.905592070154
 Class: horse
 Number of ground_truth_boxes: 710
-AP: 0.882543342987
+AP: 0.906555232374
 Class: motorbike
 Number of ground_truth_boxes: 664
-AP: 0.819673893167
+AP: 0.813433182399
+Class: person
 Number of ground_truth_boxes: 9218
-AP: 0.471251874852
+AP: 0.63461511471
 Class: pottedplant
 Number of ground_truth_boxes: 994
-AP: 0.327430287124
+AP: 0.544936052541
 Class: sheep
 Number of ground_truth_boxes: 499
-AP: 0.636245283835
+AP: 0.724914756669
 Class: sofa
 Number of ground_truth_boxes: 487
-AP: 0.88312816772
+AP: 0.901987968943
 Class: train
 Number of ground_truth_boxes: 579
-AP: 0.910471788575
+AP: 0.909090909091
 Class: tvmonitor
 Number of ground_truth_boxes: 632
-AP: 0.749161427315
-mAP: 0.721553738868
-
+AP: 0.817278197839
+mAP: 0.778754211548
