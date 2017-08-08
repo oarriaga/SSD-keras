@@ -1,0 +1,3 @@
+The complete evluation module has been taken directly from the tensorflow/models repository
+and it does not incorporate the current license in the repository of this project.
+https://github.com/tensorflow/models
