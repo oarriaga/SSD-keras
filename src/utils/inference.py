@@ -19,7 +19,7 @@ def predict(model, image_array, prior_boxes, original_image_shape,
                                   num_classes, background_index,
                                   class_threshold)
     if len(selected_boxes) == 0:
-        return None
+        return np.zeros(shape=(1, 4 + num_classes))
     selected_boxes = denormalize_box(selected_boxes, original_image_shape)
     supressed_boxes = []
     for class_arg in range(1, num_classes):
@@ -30,7 +30,5 @@ def predict(model, image_array, prior_boxes, original_image_shape,
             continue
         class_boxes = apply_non_max_suppression(class_boxes, iou_nms_threshold)
         supressed_boxes.append(class_boxes)
-    if len(supressed_boxes) == 0:
-        return None
     supressed_boxes = np.concatenate(supressed_boxes, axis=0)
     return supressed_boxes
