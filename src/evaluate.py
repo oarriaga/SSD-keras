@@ -11,7 +11,7 @@ from utils.boxes import calculate_intersection_over_union
 from utils.boxes import denormalize_box
 from models.ssd import SSD300
 from metrics import compute_average_precision
-from metrics import compute_average_precision_2
+# from metrics import compute_average_precision_2
 from metrics import compute_precision_and_recall
 from utils.visualizer import draw_image_boxes
 from utils.datasets import get_arg_to_class
@@ -101,7 +101,7 @@ for ground_truth_class_arg in range(1, num_classes):
     labels = np.asarray(labels)
     precision, recall = compute_precision_and_recall(scores, labels,
                                                      num_ground_truth_boxes)
-    average_precision = compute_average_precision_2(precision, recall)
+    average_precision = compute_average_precision(precision, recall)
     average_precisions.append(average_precision)
     print('Class:', selected_classes[-1])
     print('Number of ground_truth_boxes:', num_ground_truth_boxes)
