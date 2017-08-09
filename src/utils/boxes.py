@@ -418,7 +418,7 @@ def apply_non_max_suppression(boxes, iou_threshold=.2):
 
 
 def filter_boxes(predictions, num_classes=21, background_index=0,
-                 class_threshold=.1, return_best=True):
+                 class_threshold=.01):
     predictions = np.squeeze(predictions)
     box_classes = predictions[:, 4:(4 + num_classes)]
     best_classes = np.argmax(box_classes, axis=-1)
@@ -426,13 +426,13 @@ def filter_boxes(predictions, num_classes=21, background_index=0,
     background_mask = best_classes != background_index
     lower_bound_mask = best_probabilities > class_threshold
     mask = np.logical_and(background_mask, lower_bound_mask)
-    """
     all_false = np.all(np.logical_not(mask))
-    if all_false and return_best:
-        best_class_box = np.argmax(best_probabilities[background_mask])
-        selected_boxes = predictions[best_class_box, :(4 + num_classes)]
+    if all_false:
+        # best_class_box = np.argmax(best_probabilities * background_mask)
+        # selected_boxes = predictions[best_class_box, :(4 + num_classes)]
+        # selected_boxes = predictions[best_class_box, :]
         # zero_data = np.zeros(shape=(1, 4 + num_classes))
-        # return zero_data
-    """
-    selected_boxes = predictions[mask, :(4 + num_classes)]
+        return None
+    # selected_boxes = predictions[mask, :(4 + num_classes)]
+    selected_boxes = predictions[mask, :]
     return selected_boxes

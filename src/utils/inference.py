@@ -18,8 +18,8 @@ def predict(model, image_array, prior_boxes, original_image_shape,
     selected_boxes = filter_boxes(decoded_predictions,
                                   num_classes, background_index,
                                   class_threshold)
-    if len(selected_boxes) == 0:
-        return np.zeros(shape=(1, 4 + num_classes))
+    if selected_boxes is None:
+        return None
     selected_boxes = denormalize_box(selected_boxes, original_image_shape)
     supressed_boxes = []
     for class_arg in range(1, num_classes):
