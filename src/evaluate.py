@@ -78,7 +78,7 @@ for ground_truth_class_arg in range(1, num_classes):
             ground_truth_object = ground_truth_sample[ground_truth_object_arg]
             ious = calculate_intersection_over_union(ground_truth_object,
                                                      predicted_data)
-            detections = np.zeros_like(iou)
+            detections = np.zeros_like(ious)
             max_iou = np.max(ious)
             max_iou_arg = np.argmax(ious)
             difficult = difficult_objects[ground_truth_object_arg]
@@ -87,19 +87,13 @@ for ground_truth_class_arg in range(1, num_classes):
                 predicted_probabilities = predicted_sample[4:]
                 predicted_sample_arg = np.argmax(predicted_probabilities)
                 predicted_score = np.max(predicted_probabilities)
-                """
-                if ((max_iou > iou_threshold) and
-                   (predicted_sample_arg == ground_truth_class_arg)):
-                    scores.append(predicted_score)
-                    labels.append(True)
-                if ((max_iou > iou_threshold) and
-                   (predicted_sample_arg != ground_truth_class_arg)):
-                    scores.append(predicted_score)
-                    labels.append(False)
-                """
+
                 scores.append(predicted_score)
                 if max_iou > iou_threshold:
-                    labels.append(True)
+                    if predicted_sample_arg == ground_truth_class_arg:
+                        labels.append(True)
+                    else:
+                        labels.append(False)
                 else:
                     labels.append(False)
 
