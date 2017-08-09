@@ -19,9 +19,6 @@ import cv2
 
 
 dataset_name = 'VOC2007'
-# data_prefix = '../datasets/VOCtest/VOCdevkit/VOC2007/Annotations/'
-# image_prefix = '../datasets/VOCtest/VOCdevkit/VOC2007/JPEGImages/'
-
 data_prefix = '../datasets/VOCdevkit/VOC2007/Annotations/'
 image_prefix = '../datasets/VOCdevkit/VOC2007/JPEGImages/'
 
@@ -47,8 +44,6 @@ for ground_truth_class_arg in range(1, num_classes):
     data_manager = DataManager(dataset_name, selected_classes,
                                data_prefix, image_prefix)
     ground_truth_data = data_manager.load_data()
-    # maybe the flags are wrong. They are assigned to different objects
-    # How are order of the flags retained?
     difficult_data_flags = data_manager.parser.difficult_objects
 
     image_names = sorted(list(ground_truth_data.keys()))
