@@ -21,8 +21,8 @@ detection is supported by default.
 """
 import numpy as np
 
-import np_box_list
-import np_box_list_ops
+from tf_eval import np_box_list
+from tf_eval import np_box_list_ops
 
 
 class PerImageEvaluation(object):

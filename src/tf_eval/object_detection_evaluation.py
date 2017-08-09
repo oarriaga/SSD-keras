@@ -30,8 +30,10 @@ Note: This module operates on numpy boxes and box lists.
 
 import logging
 import numpy as np
-import metrics
-from per_image_evaluation import PerImageEvaluation
+from .metrics import compute_average_precision
+from .metrics import compute_cor_loc
+from .metrics import compute_precision_recall
+from .per_image_evaluation import PerImageEvaluation
 
 
 class ObjectDetectionEvaluation(object):
@@ -207,16 +209,16 @@ class ObjectDetectionEvaluation(object):
             scores = np.concatenate(self.scores_per_class[class_index])
             tp_fp_labels = np.concatenate(
                     self.tp_fp_labels_per_class[class_index])
-            precision, recall = metrics.compute_precision_recall(
+            precision, recall = compute_precision_recall(
                     scores, tp_fp_labels,
                     self.num_gt_instances_per_class[class_index])
             self.precisions_per_class.append(precision)
             self.recalls_per_class.append(recall)
-            average_precision = metrics.compute_average_precision(
+            average_precision = compute_average_precision(
                     precision, recall)
             self.average_precision_per_class[class_index] = average_precision
 
-        self.corloc_per_class = metrics.compute_cor_loc(
+        self.corloc_per_class = compute_cor_loc(
             self.num_gt_imgs_per_class,
             self.num_images_correctly_detected_per_class)
 

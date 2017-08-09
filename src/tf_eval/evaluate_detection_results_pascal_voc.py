@@ -29,7 +29,7 @@ Note: This module operates on numpy boxes and box lists.
 import copy
 import logging
 import numpy as np
-from object_detection_evaluation import ObjectDetectionEvaluation
+from .object_detection_evaluation import ObjectDetectionEvaluation
 
 
 def evaluate_detection_results_pascal_voc(result_lists,
