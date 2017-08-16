@@ -6,7 +6,7 @@
 
 from __future__ import print_function
 import torch
-# import torch.backends.cudnn as cudnn
+import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 # from data import VOCroot
 # from data import VOC_CLASSES as labelmap
@@ -20,6 +20,7 @@ from pytorch_tests.pytorch_networks import build_ssd
 # from ssd import build_ssd
 
 from utils.datasets import get_class_names
+# from utils.inference import predict
 
 import sys
 import os
@@ -59,10 +60,8 @@ parser.add_argument('--confidence_threshold', default=0.01, type=float,
                     help='Detection confidence threshold')
 parser.add_argument('--top_k', default=5, type=int,
                     help='Further restrict the number of predictions to parse')
-"""
 parser.add_argument('--cuda', default=True, type=str2bool,
                     help='Use cuda to train model')
-"""
 parser.add_argument('--voc_root', default=voc_root,
                     help='Location of VOC root directory')
 
@@ -71,12 +70,10 @@ args = parser.parse_args()
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
 
-"""
 if args.cuda and torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
 else:
     torch.set_default_tensor_type('torch.FloatTensor')
-"""
 devkit_path = '../datasets/VOCdevkit/VOC2007/'
 annopath = os.path.join(args.voc_root, 'VOC2007', 'Annotations', '%s.xml')
 imgpath = os.path.join(args.voc_root, 'VOC2007', 'JPEGImages', '%s.jpg')
@@ -393,14 +390,14 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
 
     for i in range(num_images):
         im, gt, h, w = dataset.pull_item(i)
+        # im = im.numpy()
 
         x = Variable(im.unsqueeze(0))
         # x = im
-        """
         if args.cuda:
             x = x.cuda()
-        """
         _t['im_detect'].tic()
+
         detections = net(x).data
         detect_time = _t['im_detect'].toc(average=False)
 
@@ -420,6 +417,9 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
             cls_dets = np.hstack((boxes.cpu().numpy(),
                                  scores[:, np.newaxis])).astype(np.float32,
                                                                 copy=False)
+            # print(type(cls_dets))
+            # print(len(cls_dets))
+            # print(cls_dets.shape)
             all_boxes[j][i] = cls_dets
 
         print('im_detect: {:d}/{:d} {:.3f}s'.format(i + 1,
@@ -448,13 +448,10 @@ if __name__ == '__main__':
     dataset = VOCDetection(args.voc_root, [('2007', set_type)],
                            BaseTransform(300, dataset_mean),
                            AnnotationTransform())
-    """
     if args.cuda:
         net = net.cuda()
         cudnn.benchmark = True
-    """
     # evaluation
-    """
     test_net(args.save_folder, net, args.cuda, dataset,
              BaseTransform(net.size, dataset_mean), args.top_k, 300,
              thresh=args.confidence_threshold)
@@ -463,3 +460,4 @@ if __name__ == '__main__':
     test_net(args.save_folder, net, cuda, dataset,
              BaseTransform(net.size, dataset_mean), args.top_k, 300,
              thresh=args.confidence_threshold)
+    """
