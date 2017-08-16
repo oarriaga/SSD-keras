@@ -65,17 +65,34 @@ pytorch_ssd = build_ssd('test', input_size, num_classes)
 pytorch_ssd.load_weights(trained_weights_path)
 
 # loading keras model
-"""
 weights_path = '../trained_models/SSD300_weights.hdf5'
 with tf.device('/cpu:0'):
     model = SSD300(weights_path=weights_path)
-"""
 
 image_path = '../images/boys.jpg'
 rgb_image, image_size = load_image(image_path, target_size=(300, 300))
 pytorch_image = preprocess_pytorch_input(rgb_image)
 pytorch_output = pytorch_ssd(pytorch_image)
-pytorch_output = pytorch_output.data.numpy()
+pytorch_detection = pytorch_output.data.numpy()
+for i in range(pytorch_detection.size(1)):
+    j = 0
+    while pytorch_detection[0, i, j, 0] >= 0.6:
+        score = detections[0,i,j,0]
+        label_name = labels[i-1]
+        display_txt = '%s: %.2f'%(label_name, score)
+        pt = (detections[0,i,j,1:]*scale).cpu().numpy()
+
+
+
+keras_image = preprocess_images(rgb_image)
+keras_image_input = np.expand_dims(keras_image, axis=0)
+keras_output = model.predict(keras_image_input)
+keras_detection = predict(model, keras_image, prior_boxes,
+                          image_size, num_classes,
+                          lower_probability_threshold,
+                          iou_threshold,
+                          background_index)
+
 
 """
 data_manager = DataManager(dataset_name, selected_classes,
