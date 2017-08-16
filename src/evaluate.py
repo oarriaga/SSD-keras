@@ -82,20 +82,24 @@ for ground_truth_class_arg in range(1, num_classes):
             max_iou = np.max(ious)
             max_iou_arg = np.argmax(ious)
             difficult = difficult_objects[ground_truth_object_arg]
-            if difficult == False:
-                predicted_sample = predicted_data[max_iou_arg]
-                predicted_probabilities = predicted_sample[4:]
-                predicted_sample_arg = np.argmax(predicted_probabilities)
-                predicted_score = np.max(predicted_probabilities)
 
-                scores.append(predicted_score)
-                if max_iou > iou_threshold:
+            predicted_sample = predicted_data[max_iou_arg]
+            predicted_probabilities = predicted_sample[4:]
+            predicted_sample_arg = np.argmax(predicted_probabilities)
+            predicted_score = np.max(predicted_probabilities)
+
+            if max_iou > iou_threshold:
+                if difficult == False:
                     if predicted_sample_arg == ground_truth_class_arg:
+                        scores.append(predicted_score)
                         labels.append(True)
+
                     else:
+                        scores.append(predicted_score)
                         labels.append(False)
-                else:
-                    labels.append(False)
+            else:
+                scores.append(predicted_score)
+                labels.append(False)
 
     scores = np.asarray(scores)
     labels = np.asarray(labels)
