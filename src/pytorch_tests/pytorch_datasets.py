@@ -47,11 +47,22 @@ class VOCDetection(data.Dataset):
         self._annopath = os.path.join('%s', 'Annotations', '%s.xml')
         self._imgpath = os.path.join('%s', 'JPEGImages', '%s.jpg')
         self.ids = list()
+        print(image_sets)
         for (year, name) in image_sets:
             rootpath = os.path.join(self.root, 'VOC' + year)
+
+            print(os.path.join(rootpath, 'ImageSets', 'Main', name + '.txt'))
             for line in open(os.path.join(rootpath, 'ImageSets',
                                           'Main', name + '.txt')):
                 self.ids.append((rootpath, line.strip()))
+                """
+                print('*'*30)
+                print(line)
+                print(line.strip())
+                a = line.strip()
+                print(len(line))
+                print(len(a))
+                """
 
     def __getitem__(self, index):
         im, gt, h, w = self.pull_item(index)

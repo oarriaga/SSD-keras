@@ -8,6 +8,7 @@ try:
 except ImportError:
     COCO = None
 
+
 class XMLParser(object):
     """ Preprocess the VOC2007 xml annotations data.
 
@@ -26,7 +27,7 @@ class XMLParser(object):
         self.path_prefix = data_path
         self.dataset_name = dataset_name
         self.class_names = class_names
-        if self.class_names == None:
+        if self.class_names is None:
             self.class_names = get_class_names(self.dataset_name)
         self.num_classes = len(self.class_names)
         keys = np.arange(self.num_classes)
@@ -82,6 +83,7 @@ class XMLParser(object):
         one_hot_vector[class_arg] = 1
         return one_hot_vector
 
+
 class COCOParser(object):
     def __init__(self, annotations_path, class_names='all'):
         self.coco = COCO(annotations_path)
@@ -120,17 +122,19 @@ class COCOParser(object):
                 class_arg = self.coco_id_to_class_arg[coco_id]
                 one_hot_class = self._to_one_hot(class_arg)
                 coco_coordinates = annotations[object_arg]['bbox']
-                #print('coco_coordinates:', coco_coordinates)
-                x_min = (coco_coordinates[0]) #/ width
-                y_min = (coco_coordinates[1]) #/ height
-                x_max = (x_min + coco_coordinates[2]) #/ width
-                y_max = (y_min + coco_coordinates[3]) #/ height
-                #print('transformed_coordinates:', [x_min, y_min, x_max, y_max])
+                # print('coco_coordinates:', coco_coordinates)
+                x_min = (coco_coordinates[0])  # / width
+                y_min = (coco_coordinates[1])  # / height
+                x_max = (x_min + coco_coordinates[2])  # / width
+                y_max = (y_min + coco_coordinates[3])  # / height
+                # print('transformed_coordinates:',
+                # [x_min, y_min, x_max, y_max])
                 x_min = x_min / width
                 y_min = y_min / height
                 x_max = x_max / width
                 y_max = y_max / height
-                #print('normalized_coordinates:', [x_min, y_min, x_max, y_max])
+                # print('normalized_coordinates:',
+                # [x_min, y_min, x_max, y_max])
                 ground_truth = [x_min, y_min, x_max, y_max] + one_hot_class
                 image_ground_truth.append(ground_truth)
             image_ground_truth = np.asarray(image_ground_truth)
@@ -157,12 +161,13 @@ class DataManager(object):
         self.class_names = class_names
         self.ground_truth_data = None
         self.parser = None
-        if self.dataset_path_prefix == None:
-            self.dataset_path_prefix = '../datasets/VOCdevkit/VOC2007/Annotations/'
+        if self.dataset_path_prefix is None:
+            self.dataset_path_prefix = '../datasets/\
+                                        VOCdevkit/VOC2007/Annotations/'
         else:
             self.dataset_path_prefix = dataset_path_prefix
 
-        if self.image_prefix == None:
+        if self.image_prefix is None:
             self.image_prefix = '../datasets/VOCdevkit/VOC2007/JPEGImages/'
         else:
             self.image_prefix = image_prefix
@@ -171,7 +176,7 @@ class DataManager(object):
             self._load_VOC2007()
         elif self.dataset_name == 'COCO':
             self.dataset_path_prefix = ('../datasets/COCO/annotations/' +
-                                                'instances_train2014.json')
+                                        'instances_train2014.json')
             self._load_COCO()
         elif self.dataset_name == 'all':
             raise NotImplementedError
@@ -196,44 +201,40 @@ class DataManager(object):
         self.parser = COCOParser(self.dataset_path_prefix)
         self.ground_truth_data = self.parser.get_data()
 
+
 def get_class_names(dataset_name='VOC2007'):
     if dataset_name == 'VOC2007':
-        class_names = ['background','aeroplane', 'bicycle', 'bird', 'boat',
+        class_names = ['background', 'aeroplane', 'bicycle', 'bird', 'boat',
                        'bottle', 'bus', 'car', 'cat', 'chair', 'cow',
                        'diningtable', 'dog', 'horse', 'motorbike', 'person',
                        'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
     elif dataset_name == 'COCO':
         class_names = ['background', 'person', 'bicycle', 'car', 'motorcycle',
-                        'airplane', 'bus', 'train', 'truck', 'boat',
-                        'traffic light', 'fire hydrant', 'stop sign',
-                        'parking meter', 'bench', 'bird', 'cat', 'dog',
-                        'horse', 'sheep', 'cow', 'elephant', 'bear',
-                        'zebra', 'giraffe', 'backpack', 'umbrella',
-                        'handbag', 'tie', 'suitcase', 'frisbee', 'skis',
-                        'snowboard', 'sports ball', 'kite', 'baseball bat',
-                        'baseball glove', 'skateboard', 'surfboard',
-                        'tennis racket', 'bottle', 'wine glass',
-                        'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana',
-                        'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
-                        'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
-                        'potted plant', 'bed', 'dining table', 'toilet',
-                        'tv', 'laptop', 'mouse', 'remote', 'keyboard',
-                        'cell phone', 'microwave', 'oven', 'toaster',
-                        'sink', 'refrigerator', 'book', 'clock', 'vase',
-                        'scissors', 'teddy bear', 'hair drier', 'toothbrush']
+                       'airplane', 'bus', 'train', 'truck', 'boat',
+                       'traffic light', 'fire hydrant', 'stop sign',
+                       'parking meter', 'bench', 'bird', 'cat', 'dog',
+                       'horse', 'sheep', 'cow', 'elephant', 'bear',
+                       'zebra', 'giraffe', 'backpack', 'umbrella',
+                       'handbag', 'tie', 'suitcase', 'frisbee', 'skis',
+                       'snowboard', 'sports ball', 'kite', 'baseball bat',
+                       'baseball glove', 'skateboard', 'surfboard',
+                       'tennis racket', 'bottle', 'wine glass',
+                       'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana',
+                       'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
+                       'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
+                       'potted plant', 'bed', 'dining table', 'toilet',
+                       'tv', 'laptop', 'mouse', 'remote', 'keyboard',
+                       'cell phone', 'microwave', 'oven', 'toaster',
+                       'sink', 'refrigerator', 'book', 'clock', 'vase',
+                       'scissors', 'teddy bear', 'hair drier', 'toothbrush']
     else:
         raise Exception('Invalid dataset', dataset_name)
     return class_names
 
+
 def get_arg_to_class(class_names):
     return dict(zip(list(range(len(class_names))), class_names))
 
+
 def list_files_in_directory(path_name='*'):
     return glob.glob(path_name)
-
-
-
-
-
-
-

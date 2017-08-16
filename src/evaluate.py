@@ -1,11 +1,14 @@
 import numpy as np
 # import matplotlib.pyplot as plt
 
-from utils.datasets import DataManager
-from utils.datasets import get_class_names
+# from utils.datasets import DataManager
+# from utils.datasets import get_class_names
+from datasets import DataManager
+from datasets import get_class_names
+from preprocessing import substract_mean
+from preprocessing import load_image
+
 from utils.inference import predict
-from utils.preprocessing import load_image
-from utils.preprocessing import preprocess_images
 from utils.boxes import create_prior_boxes
 from utils.boxes import calculate_intersection_over_union
 from utils.boxes import denormalize_box
@@ -13,13 +16,12 @@ from models.ssd import SSD300
 from metrics import compute_average_precision
 # from metrics import compute_average_precision_2
 from metrics import compute_precision_and_recall
-from utils.visualizer import draw_image_boxes
+# from utils.visualizer import draw_image_boxes
 from utils.datasets import get_arg_to_class
 import cv2
 
 
 dataset_name = 'VOC2007'
-data_prefix = '../datasets/VOCdevkit/VOC2007/Annotations/'
 image_prefix = '../datasets/VOCdevkit/VOC2007/JPEGImages/'
 
 weights_path = '../trained_models/SSD300_weights.hdf5'
@@ -41,19 +43,19 @@ for ground_truth_class_arg in range(1, num_classes):
     num_ground_truth_boxes = 0
     class_decoder = get_arg_to_class(class_names)
     num_classes = len(class_names)
-    data_manager = DataManager(dataset_name, selected_classes,
-                               data_prefix, image_prefix)
+    data_manager = DataManager(dataset_name, split='test',
+                               class_names=selected_classes)
     ground_truth_data = data_manager.load_data()
     difficult_data_flags = data_manager.parser.difficult_objects
 
     image_names = sorted(list(ground_truth_data.keys()))
     for image_name in image_names:
         ground_truth_sample = ground_truth_data[image_name]
-        image_prefix = data_manager.image_prefix
+        image_prefix = data_manager.parser.images_path
         image_path = image_prefix + image_name
         original_image_array = cv2.imread(image_path)
         image_array, original_image_size = load_image(image_path, input_shape)
-        image_array = preprocess_images(image_array)
+        image_array = substract_mean(image_array)
         predicted_data = predict(model, image_array, prior_boxes,
                                  original_image_size, num_classes,
                                  class_threshold, iou_nms_threshold)
