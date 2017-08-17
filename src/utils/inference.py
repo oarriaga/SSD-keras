@@ -65,13 +65,26 @@ def detect(predictions, prior_boxes, confidence_threshold=.01,
         return detected_boxes
 
 
-def infer(image_path, model, original_image_shape, dataset_name='VOC2007'):
-    target_size = model.input_shape[1:3]
-    image_array, original_image_shape = load_image(image_path, target_size)
+def _infer(image_array, model, original_image_shape):
+    box_data_size = model.output_shape[1]
     image_array = substract_mean(image_array)
     image_array = np.expand_dims(image_array, 0)
     predictions = model.predict(image_array)
     prior_boxes = create_prior_boxes()
     detections = detect(predictions, prior_boxes)
+    if detections is None:
+        return np.zeros(shape=(1, box_data_size))
     detections = denormalize_boxes(detections, original_image_shape)
+    return detections
+
+
+def infer_from_path(image_path, model):
+    target_size = model.input_shape[1:3]
+    image_array, original_image_shape = load_image(image_path, target_size)
+    detections = _infer(image_array, model, original_image_shape)
+    return detections
+
+
+def infer_from_array(image_array, model, original_image_shape):
+    detections = _infer(image_array, model, original_image_shape)
     return detections
