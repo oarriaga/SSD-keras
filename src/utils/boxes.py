@@ -381,40 +381,53 @@ def denormalize_box(box_data, original_image_shape):
     return denormalized_box_data
 
 
-def apply_non_max_suppression(boxes, iou_threshold=.2):
-    if len(boxes) == 0:
+def apply_non_max_suppression(box_data, overlap_threshold=.45):
+    if len(box_data) == 0:
             return []
     selected_indices = []
-    x_min = boxes[:, 0]
-    y_min = boxes[:, 1]
-    x_max = boxes[:, 2]
-    y_max = boxes[:, 3]
-    # classes = boxes[:, 4:]
-    sorted_box_indices = np.argsort(y_max)
+    x_min = box_data[:, 0]
+    y_min = box_data[:, 1]
+    x_max = box_data[:, 2]
+    y_max = box_data[:, 3]
+    areas = (x_max - x_min) * (y_max - y_min)
+    scores = box_data[:, 4:]
+    scores = np.max(scores, axis=1)
+    sorted_box_indices = np.argsort(scores)
     while len(sorted_box_indices) > 0:
             last = len(sorted_box_indices) - 1
-            i = sorted_box_indices[last]
-            selected_indices.append(i)
-            box = [x_min[i], y_min[i], x_max[i], y_max[i]]
-            box = np.asarray(box)
-            test_boxes = [x_min[sorted_box_indices[:last], None],
-                          y_min[sorted_box_indices[:last], None],
-                          x_max[sorted_box_indices[:last], None],
-                          y_max[sorted_box_indices[:last], None]]
-            test_boxes = np.concatenate(test_boxes, axis=-1)
-            iou = calculate_intersection_over_union(box, test_boxes)
-            # current_class = np.argmax(classes[i])
-            # box_classes = np.argmax(classes[sorted_box_indices[:last]],
-                                    # axis=-1)
-            # class_mask = current_class == box_classes
-            overlap_mask = iou > iou_threshold
-            # delete_mask = np.logical_and(overlap_mask, class_mask)
-            # delete_mask = np.where(delete_mask)[0]
+            best_box_arg = sorted_box_indices[last]
+            selected_indices.append(best_box_arg)
+
+            best_x_min = x_min[best_box_arg]
+            best_y_min = y_min[best_box_arg]
+            best_x_max = x_max[best_box_arg]
+            best_y_max = y_max[best_box_arg]
+
+            remaining_x_min = x_min[sorted_box_indices[:last]]
+            remaining_y_min = y_min[sorted_box_indices[:last]]
+            remaining_x_max = x_max[sorted_box_indices[:last]]
+            remaining_y_max = y_max[sorted_box_indices[:last]]
+
+            remaining_x_min = np.maximum(best_x_min, remaining_x_min)
+            remaining_y_min = np.maximum(best_y_min, remaining_y_min)
+            remaining_x_max = np.minimum(best_x_max, remaining_x_max)
+            remaining_y_max = np.minimum(best_y_max, remaining_y_max)
+
+            widths = remaining_x_max - remaining_x_min
+            widths = np.maximum(0, widths)
+
+            heights = remaining_y_max - remaining_y_min
+            heights = np.maximum(0, heights)
+
+            remaining_areas = areas[sorted_box_indices[:last]]
+            overlaps = (widths * heights) / remaining_areas
+            overlap_mask = overlaps > overlap_threshold
+
             delete_mask = np.where(overlap_mask)[0]
-            sorted_box_indices = np.delete(sorted_box_indices,
-                                           np.concatenate(([last],
-                                                          delete_mask)))
-    return boxes[selected_indices]
+            delete_mask = np.concatenate(([last], delete_mask))
+            sorted_box_indices = np.delete(sorted_box_indices, delete_mask)
+
+    return box_data[selected_indices]
 
 
 def filter_boxes(predictions, num_classes=21, background_index=0,
