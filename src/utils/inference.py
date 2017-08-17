@@ -1,9 +1,12 @@
 import numpy as np
 from .boxes import decode_boxes
 from .boxes import filter_boxes
-from .boxes import denormalize_box
-from .boxes import apply_non_max_suppression
-# from .tf_boxes import apply_non_max_suppression
+from .boxes import denormalize_boxes
+from .boxes import create_prior_boxes
+# from .boxes import apply_non_max_suppression
+from .tf_boxes import apply_non_max_suppression
+from preprocessing import load_image
+from preprocessing import substract_mean
 
 
 def predict(model, image_array, prior_boxes, original_image_shape,
@@ -20,7 +23,7 @@ def predict(model, image_array, prior_boxes, original_image_shape,
                                   class_threshold)
     if selected_boxes is None:
         return None
-    selected_boxes = denormalize_box(selected_boxes, original_image_shape)
+    selected_boxes = denormalize_boxes(selected_boxes, original_image_shape)
     supressed_boxes = []
     for class_arg in range(1, num_classes):
         best_classes = np.argmax(selected_boxes[:, 4:], axis=1)
@@ -60,3 +63,15 @@ def detect(predictions, prior_boxes, confidence_threshold=.01,
     else:
         detected_boxes = np.concatenate(detected_boxes, axis=0)
         return detected_boxes
+
+
+def infer(image_path, model, original_image_shape, dataset_name='VOC2007'):
+    target_size = model.input_shape[1:3]
+    image_array, original_image_shape = load_image(image_path, target_size)
+    image_array = substract_mean(image_array)
+    image_array = np.expand_dims(image_array, 0)
+    predictions = model.predict(image_array)
+    prior_boxes = create_prior_boxes()
+    detections = detect(predictions, prior_boxes)
+    detections = denormalize_boxes(detections, original_image_shape)
+    return detections

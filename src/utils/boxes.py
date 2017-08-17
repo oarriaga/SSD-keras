@@ -349,7 +349,7 @@ def get_configuration_file():
     return configuration
 
 
-def denormalize_box(box_data, original_image_shape):
+def denormalize_boxes(box_data, original_image_shape):
     """
     Arguments:
         box_data: numpy array with shape (num_samples, 4) or
