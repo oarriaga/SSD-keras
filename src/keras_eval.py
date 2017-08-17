@@ -18,8 +18,9 @@ from pytorch_tests.pytorch_datasets import BaseTransform
 # from pytorch_tests.pytorch_networks import build_ssd
 
 from models import SSD300
-from utils.boxes import create_prior_boxes
-from utils.inference import predict
+# from utils.boxes import create_prior_boxes
+# from utils.inference import predict
+from utils.inference import infer_from_array
 # from ssd import build_ssd
 
 from utils.datasets import get_class_names
@@ -75,7 +76,8 @@ imgsetpath = os.path.join(args.voc_root, 'VOC2007',
 
 YEAR = '2007'
 # devkit_path = VOCroot + 'VOC' + YEAR
-dataset_mean = (123.68, 116.779, 103.939)
+# dataset_mean = (123.68, 116.779, 103.939)
+dataset_mean = (0, 0, 0)
 set_type = 'test'
 
 
@@ -390,13 +392,17 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
         # x = np.rollaxis(im, 0, 3)
         # x = np.expand_dims(x, 0)
         _t['im_detect'].tic()
+        detections = infer_from_array(x, net, (h, w))
+        """
         detections = predict(net, x, prior_boxes,
                              (h, w), num_classes,
                              class_threshold=thresh,
                              iou_nms_threshold=.45)
-
+        """
+        """
         if detections is None:
             detections = np.zeros((1, 25))
+        """
         # detections = net(x).data
         detect_time = _t['im_detect'].toc(average=False)
 
