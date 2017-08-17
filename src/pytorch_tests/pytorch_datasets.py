@@ -1,15 +1,30 @@
-from torch.utils import data
+# from torch.utils import data
 # import cv2
 from scipy.misc import imread
 from scipy.misc import imresize
 import os
 import numpy as np
 import sys
-import torch
+# import torch
 if sys.version_info[0] == 2:
     import xml.etree.cElementTree as ET
 else:
     import xml.etree.ElementTree as ET
+
+
+class Dataset(object):
+    """An abstract class representing a Dataset.
+
+    All other datasets should subclass it. All subclasses should override
+    ``__len__``, that provides the size of the dataset, and ``__getitem__``,
+    supporting integer indexing in range from 0 to len(self) exclusive.
+    """
+
+    def __getitem__(self, index):
+        raise NotImplementedError
+
+    def __len__(self):
+        raise NotImplementedError
 
 
 VOC_CLASSES = (  # always index 0
@@ -20,7 +35,7 @@ VOC_CLASSES = (  # always index 0
     'sheep', 'sofa', 'train', 'tvmonitor')
 
 
-class VOCDetection(data.Dataset):
+class VOCDetection(Dataset):
     """VOC Detection Dataset Object
 
     input is image, target is annotation
@@ -91,8 +106,10 @@ class VOCDetection(data.Dataset):
             img = img[:, :, (2, 1, 0)]
             # img = img.transpose(2, 0, 1)
             target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
-        return torch.from_numpy(img).permute(2, 0, 1), target, height, width
-        # return torch.from_numpy(img), target, height, width
+        # i commented this uncomment for the pytorch_eval
+        # return torch.from_numpy(img).permute(2, 0, 1), target, height, width
+        return img, target, height, width
+        # return torch.from_numpy(img), target, height, width # IDK WTF
 
     def pull_image(self, index):
         '''Returns the original image object at index in PIL form
@@ -126,6 +143,7 @@ class VOCDetection(data.Dataset):
         gt = self.target_transform(anno, 1, 1)
         return img_id[1], gt
 
+    """
     def pull_tensor(self, index):
         '''Returns the original image at an index in tensor form
 
@@ -138,6 +156,7 @@ class VOCDetection(data.Dataset):
             tensorized version of img, squeezed
         '''
         return torch.Tensor(self.pull_image(index)).unsqueeze_(0)
+    """
 
 
 class AnnotationTransform(object):

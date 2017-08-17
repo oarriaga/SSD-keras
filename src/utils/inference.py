@@ -37,9 +37,10 @@ def predict(model, image_array, prior_boxes, original_image_shape,
 def detect(predictions, prior_boxes, confidence_threshold=.01,
            iou_nms_threshold=.45, box_scale_factors=[.1, .1, .2, .2]):
 
+    predictions = np.squeeze(predictions)
     decoded_boxes = decode_boxes(predictions, prior_boxes)
     scores = np.max(decoded_boxes[:, 4:], axis=1)
-    num_classes = scores.shape[1]
+    num_classes = predictions.shape[1] - 4
     detected_boxes = []
     for class_arg in range(1, num_classes):
         best_classes = np.argmax(decoded_boxes[:, 4:], axis=1)
@@ -47,11 +48,15 @@ def detect(predictions, prior_boxes, confidence_threshold=.01,
         class_scores = scores[class_mask]
         if len(class_scores) == 0:
             continue
-        confidence_mask = class_scores > confidence_threshold
-        mask = np.logical_and(class_mask, confidence_mask)
-        selected_boxes = decode_boxes[mask].copy()
-        supressed_boxes = apply_non_max_suppression(selected_boxes,
-                                                    iou_nms_threshold)
-        detected_boxes.append(supressed_boxes)
-    detected_boxes = np.concatenate(supressed_boxes, axis=0)
-    return detected_boxes
+        else:
+            confidence_mask = scores > confidence_threshold
+            mask = np.logical_and(class_mask, confidence_mask)
+            selected_boxes = decoded_boxes[mask].copy()
+            supressed_boxes = apply_non_max_suppression(selected_boxes,
+                                                        iou_nms_threshold)
+            detected_boxes.append(supressed_boxes)
+    if len(detected_boxes) == 0:
+        return None
+    else:
+        detected_boxes = np.concatenate(detected_boxes, axis=0)
+        return detected_boxes
