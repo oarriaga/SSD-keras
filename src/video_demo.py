@@ -2,13 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
-from utils.datasets import get_class_names
-from utils.inference import predict
+from datasets import get_class_names
+from preprocessing import substract_mean
+from utils.inference import detect
 from utils.visualizer import draw_video_boxes
-from utils.preprocessing import preprocess_images
 
 
-class VideoTest(object):
+class VideoDemo(object):
     def __init__(self, prior_boxes, dataset_name='VOC2007',
                  box_scale_factors=[.1, .1, .2, .2],
                  background_index=0, lower_probability_threshold=.1,
@@ -37,15 +37,12 @@ class VideoTest(object):
                 continue
             image_array = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image_array = cv2.resize(image_array, (300, 300))
-            image_array = preprocess_images(image_array)
-            selected_boxes = predict(model, image_array, prior_boxes,
-                                     frame.shape[0:2], self.num_classes,
-                                     self.lower_probability_threshold,
-                                     self.iou_threshold,
-                                     self.background_index,
-                                     self.box_scale_factors)
-            if selected_boxes is not None:
-                draw_video_boxes(selected_boxes, frame, self.arg_to_class,
+            image_array = substract_mean(image_array)
+            image_array = np.expand_dims(image_array, 0)
+            predictions = model.predict(image_array)
+            detected_boxes = detect(predictions, self.prior_boxes)
+            if detected_boxes is not None:
+                draw_video_boxes(detected_boxes, frame, self.arg_to_class,
                                  self.colors, self.font)
 
             cv2.imshow('webcam', frame)
@@ -58,14 +55,11 @@ class VideoTest(object):
 if __name__ == "__main__":
 
     from models.ssd import SSD300
-    # from utils.boxes import create_prior_boxes
-    import pickle
-    num_classes = 21
-    input_shape = (300, 300, 3)
+    from utils.boxes import create_prior_boxes
+
     dataset_name = 'VOC2007'
     weights_path = '../trained_models/SSD300_weights.hdf5'
-    model = SSD300(input_shape, num_classes, weights_path)
-    prior_boxes = pickle.load(open('../trained_models/prior_boxes_v2.pkl',
-                                   'rb'))
-    video = VideoTest(prior_boxes, dataset_name)
+    model = SSD300(weights_path=weights_path)
+    prior_boxes = create_prior_boxes()
+    video = VideoDemo(prior_boxes, dataset_name)
     video.start_video(model)
