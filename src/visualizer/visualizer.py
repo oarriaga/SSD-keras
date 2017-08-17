@@ -1,7 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from utils.boxes import denormalize_box
+from utils.boxes import denormalize_boxes
 
 
 # with openCV
@@ -9,7 +9,7 @@ def draw_video_boxes(box_data, original_image_array,
                      arg_to_class, colors, font):
     if len(box_data) == 0:
         return
-    box_data = denormalize_box(box_data, original_image_array.shape[:2])
+    box_data = denormalize_boxes(box_data, original_image_array.shape[:2])
     x_min = box_data[:, 0]
     y_min = box_data[:, 1]
     x_max = box_data[:, 2]
@@ -36,12 +36,9 @@ def draw_video_boxes(box_data, original_image_array,
 
 # with matplotlib
 def draw_image_boxes(box_data, original_image_array,
-                     arg_to_class=None, colors=None,
-                     normalized=True):
+                     arg_to_class=None, colors=None):
     if len(box_data) == 0:
         return None
-    if normalized:
-        box_data = denormalize_box(box_data, original_image_array.shape[0:2])
     original_image_array = original_image_array.astype('uint8')
     figure, axis = plt.subplots(1)
     axis.imshow(original_image_array)
