@@ -1,17 +1,15 @@
-try:
-    import cv2
-except ImportError:
-    cv2 = None
-
+import cv2
 import matplotlib.pyplot as plt
-from matplotlib import colors as mcolors
 import numpy as np
 from utils.boxes import denormalize_box
 
+
 # with openCV
-def draw_video_boxes(box_data, original_image_array, arg_to_class, colors, font):
+def draw_video_boxes(box_data, original_image_array,
+                     arg_to_class, colors, font):
     if len(box_data) == 0:
         return
+    box_data = denormalize_box(box_data, original_image_array.shape[:2])
     x_min = box_data[:, 0]
     y_min = box_data[:, 1]
     x_max = box_data[:, 2]
@@ -30,15 +28,16 @@ def draw_video_boxes(box_data, original_image_array, arg_to_class, colors, font)
         color = colors[label_arg]
         display_text = '{:0.2f}, {}'.format(score, class_name)
         cv2.rectangle(original_image_array, (x_min_box, y_min_box),
-                                (x_max_box, y_max_box), color, 2)
+                      (x_max_box, y_max_box), color, 2)
         cv2.putText(original_image_array, display_text,
                     (x_min_box, y_min_box - 30), font,
                     .7, color, 1, cv2.LINE_AA)
 
+
 # with matplotlib
 def draw_image_boxes(box_data, original_image_array,
-                    arg_to_class=None, colors=None,
-                                    normalized=True):
+                     arg_to_class=None, colors=None,
+                     normalized=True):
     if len(box_data) == 0:
         return None
     if normalized:
@@ -76,14 +75,14 @@ def draw_image_boxes(box_data, original_image_array,
             x_text = x_min_box
             y_text = y_min_box
             axis.text(x_text, y_text, display_text,
-                    bbox={'facecolor':color, 'alpha':0.5, 'pad':10})
+                      bbox={'facecolor': color, 'alpha': 0.5, 'pad': 10})
         else:
             color = 'r'
 
         rectangle = plt.Rectangle((x_min_box, y_min_box),
-                                    box_width, box_height,
-                                    linewidth=1, edgecolor=color,
-                                    facecolor='none')
+                                   box_width, box_height,
+                                   linewidth=1, edgecolor=color,
+                                   facecolor='none')
         axis.add_patch(rectangle)
     plt.show()
 
