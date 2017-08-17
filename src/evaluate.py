@@ -55,6 +55,7 @@ for ground_truth_class_arg in range(1, num_classes):
         image_path = image_prefix + image_name
         original_image_array = cv2.imread(image_path)
         image_array, original_image_size = load_image(image_path, input_shape)
+        # original_image_size = original_image_size[::-1]
         image_array = substract_mean(image_array)
         predicted_data = predict(model, image_array, prior_boxes,
                                  original_image_size, num_classes,
