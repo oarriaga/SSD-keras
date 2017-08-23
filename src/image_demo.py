@@ -8,7 +8,8 @@ from visualizer import draw_image_boxes
 
 # parameters
 dataset_name = 'VOC2007'
-image_path = '../images/boys.jpg'
+# image_path = '../images/boys.jpg'
+image_path = '../images/voc_cars.jpg'
 weights_path = '../trained_models/SSD300_weights.hdf5'
 model = SSD300(weights_path=weights_path)
 class_names = get_class_names(dataset_name)
