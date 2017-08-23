@@ -4,6 +4,8 @@ import numpy as np
 def compute_precision_and_recall(scores, labels, num_gt):
     if len(scores) != len(labels):
         raise ValueError("scores and labels must be of the same size.")
+    scores = np.asarray(scores)
+    labels = np.asarray(labels)
     sorted_indices = np.argsort(scores)
     sorted_indices = sorted_indices[::-1]
     labels = labels.astype(int)

@@ -362,10 +362,10 @@ def denormalize_boxes(box_data, original_image_shape):
         or (num_samples, 4 + num_classes) containing the original box
         coordinates.
     """
-    x_min = box_data[:, 0]
-    y_min = box_data[:, 1]
-    x_max = box_data[:, 2]
-    y_max = box_data[:, 3]
+    x_min = box_data[:, 0].copy()
+    y_min = box_data[:, 1].copy()
+    x_max = box_data[:, 2].copy()
+    y_max = box_data[:, 3].copy()
     original_image_height, original_image_width = original_image_shape
     x_min = x_min * original_image_width
     y_min = y_min * original_image_height
