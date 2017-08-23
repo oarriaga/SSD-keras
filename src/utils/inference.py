@@ -2,7 +2,7 @@ import numpy as np
 from .boxes import decode_boxes
 from .boxes import filter_boxes
 from .boxes import denormalize_boxes
-from .boxes import create_prior_boxes
+# from .boxes import create_prior_boxes
 # from .boxes import apply_non_max_suppression
 from .tf_boxes import apply_non_max_suppression
 from preprocessing import load_image
@@ -42,7 +42,7 @@ def detect(predictions, prior_boxes, confidence_threshold=.01,
 
     predictions = np.squeeze(predictions)
     decoded_boxes = decode_boxes(predictions, prior_boxes)
-    scores = np.max(decoded_boxes[:, 4:], axis=1)
+    scores = np.max(decoded_boxes[:, 4:], axis=1).copy()
     num_classes = predictions.shape[1] - 4
     detected_boxes = []
     for class_arg in range(1, num_classes):
@@ -65,12 +65,12 @@ def detect(predictions, prior_boxes, confidence_threshold=.01,
         return detected_boxes
 
 
-def _infer(image_array, model, original_image_shape):
+def _infer(image_array, model, original_image_shape, prior_boxes):
     box_data_size = model.output_shape[1]
     image_array = substract_mean(image_array)
     image_array = np.expand_dims(image_array, 0)
     predictions = model.predict(image_array)
-    prior_boxes = create_prior_boxes()
+    # prior_boxes = create_prior_boxes()
     detections = detect(predictions, prior_boxes)
     if detections is None:
         return np.zeros(shape=(1, box_data_size))
@@ -78,13 +78,13 @@ def _infer(image_array, model, original_image_shape):
     return detections
 
 
-def infer_from_path(image_path, model):
+def infer_from_path(image_path, model, prior_boxes):
     target_size = model.input_shape[1:3]
     image_array, original_image_shape = load_image(image_path, target_size)
-    detections = _infer(image_array, model, original_image_shape)
+    detections = _infer(image_array, model, original_image_shape, prior_boxes)
     return detections
 
 
-def infer_from_array(image_array, model, original_image_shape):
-    detections = _infer(image_array, model, original_image_shape)
+def infer_from_array(image_array, model, original_image_shape, prior_boxes):
+    detections = _infer(image_array, model, original_image_shape, prior_boxes)
     return detections

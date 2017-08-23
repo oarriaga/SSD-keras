@@ -20,7 +20,8 @@ class VOCParser(object):
     """
 
     def __init__(self, dataset_name='VOC2007', split='train',
-                 class_names='all', dataset_path='../datasets/VOCdevkit/'):
+                 class_names='all', with_difficult_objects=False,
+                 dataset_path='../datasets/VOCdevkit/'):
 
         if dataset_name not in ['VOC2007', 'VOC2010']:
             raise Exception('Invalid dataset name.')
@@ -35,6 +36,7 @@ class VOCParser(object):
         self.split_prefix = self.dataset_path + 'ImageSets/Main/'
         self.annotations_path = self.dataset_path + 'Annotations/'
         self.images_path = self.dataset_path + 'JPEGImages/'
+        self.with_difficult_objects = with_difficult_objects
 
         self.class_names = class_names
         if self.class_names == 'all':
@@ -70,6 +72,8 @@ class VOCParser(object):
             height = float(size_tree.find('height').text)
             for object_tree in root.findall('object'):
                 difficulty = int(object_tree.find('difficult').text)
+                if difficulty == 1 and not(self.with_difficult_objects):
+                    continue
                 class_name = object_tree.find('name').text
                 if class_name in self.class_names:
                     one_hot_class = self._to_one_hot(class_name)
@@ -99,5 +103,5 @@ class VOCParser(object):
         one_hot_vector[class_arg] = 1
         return one_hot_vector
 
-    def get_data(self):
+    def load_data(self):
         return self.data
