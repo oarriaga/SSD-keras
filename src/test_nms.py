@@ -5,7 +5,6 @@ import torch
 
 def nms_numpy(boxes, scores, overlap=0.5, top_k=200):
     keep = np.zeros(shape=len(scores))
-    # keep = []
     if boxes is None or len(boxes) == 0:
         return keep
     x1 = boxes[:, 0]
@@ -20,38 +19,35 @@ def nms_numpy(boxes, scores, overlap=0.5, top_k=200):
     while len(idx) > 0:
         i = idx[-1]
         keep[count] = i
-        # keep.append(i)
         count += 1
         if len(idx) == 1:
             break
         idx = idx[:-1]
-        # print('idx_shape', idx.shape)
         xx1 = x1[idx]
-        yy1 = y2[idx]
+        yy1 = y1[idx]
         xx2 = x2[idx]
         yy2 = y2[idx]
 
-        xx1 = np.clip(xx1, a_min=x1[i], a_max=None)
-        yy1 = np.clip(yy1, a_min=y1[i], a_max=None)
-        # xx2 = np.clip(xx2, a_min=None, a_max=x2[i])
-        # yy2 = np.clip(yy2, a_min=None, a_max=y2[i])
-        xx2 = np.maximum(xx2, x2[i])
-        yy2 = np.maximum(yy2, y2[i])
+        xx1 = np.maximum(xx1, x1[i])
+        yy1 = np.maximum(yy1, y1[i])
+        xx2 = np.minimum(xx2, x2[i])
+        yy2 = np.minimum(yy2, y2[i])
 
         w = xx2 - xx1
         h = yy2 - yy1
-        print('numpy_w:', w)
-        print('numpy_h', h)
-        break
-        w = np.clip(w, a_min=0.0, a_max=None)
-        h = np.clip(h, a_min=0.0, a_max=None)
+
+        w = np.maximum(w, 0.0)
+        h = np.maximum(h, 0.0)
+
         inter = w*h
         rem_areas = area[idx]
         union = (rem_areas - inter) + area[i]
         IoU = inter/union
+        print(IoU)
+        break
         iou_mask = IoU <= overlap
         idx = idx[iou_mask]
-    # return np.asarray(keep, dtype=int), count
+        # print('numpy:', len(idx))
     return keep.astype(int), count
 
 
@@ -109,10 +105,11 @@ def nms_pytorch(boxes, scores, overlap=0.5, top_k=200):
         h.resize_as_(yy2)
         w = xx2 - xx1
         h = yy2 - yy1
+        # print(w)
+        # print(h)
 
-        print('torch_w', w)
-        print('torch_h', h)
-        break
+        # print('torch_w', w)
+        # print('torch_h', h)
         # check sizes of xx1 and xx2.. after each iteration
         w = torch.clamp(w, min=0.0)
         h = torch.clamp(h, min=0.0)
@@ -121,16 +118,24 @@ def nms_pytorch(boxes, scores, overlap=0.5, top_k=200):
         rem_areas = torch.index_select(area, 0, idx)  # load remaining areas)
         union = (rem_areas - inter) + area[i]
         IoU = inter/union  # store result in iou
+        print(IoU)
+        break
         # keep only elements with an IoU <= overlap
+        # print(IoU.le(overlap))
         idx = idx[IoU.le(overlap)]
+        # print('torch:', idx.size(0))
     return keep, count
 
 
 torch_boxes = pickle.load(open('torch_boxes.pkl', 'rb'))
+# print('torch_boxes:', torch_boxes)
 torch_scores = pickle.load(open('torch_scores.pkl', 'rb'))
+# print('torch_scores:', torch_scores.numpy())
 
 numpy_boxes = pickle.load(open('numpy_boxes.pkl', 'rb'))
+# print('numpy_boxes:', numpy_boxes)
 numpy_scores = pickle.load(open('numpy_scores.pkl', 'rb'))
+# print('numpy_scores:', numpy_scores)
 
 numpy_idx, numpy_count = nms_numpy(numpy_boxes, numpy_scores, overlap=.5)
 torch_idx, torch_count = nms_pytorch(torch_boxes, torch_scores, overlap=.5)

@@ -35,8 +35,7 @@ def preprocess_pytorch_input(image):
 
 
 def nms(boxes, scores, overlap=0.5, top_k=200):
-    # keep = np.zeros(shape=top_k)
-    keep = []
+    keep = np.zeros(shape=len(scores))
     if boxes is None or len(boxes) == 0:
         return keep
     x1 = boxes[:, 0]
@@ -48,37 +47,38 @@ def nms(boxes, scores, overlap=0.5, top_k=200):
     idx = idx[-top_k:]
 
     count = 0
-    while len(idx > 0):
+    while len(idx) > 0:
         i = idx[-1]
-        # keep[count] = i
-        keep.append(i)
+        keep[count] = i
         count += 1
         if len(idx) == 1:
             break
         idx = idx[:-1]
-        # print('idx_shape', idx.shape)
         xx1 = x1[idx]
-        yy1 = y2[idx]
+        yy1 = y1[idx]
         xx2 = x2[idx]
         yy2 = y2[idx]
 
-        xx1 = np.clip(xx1, a_min=x1[i], a_max=None)
-        yy1 = np.clip(yy1, a_min=y1[i], a_max=None)
-        xx2 = np.clip(xx2, a_min=None, a_max=x2[i])
-        yy2 = np.clip(yy2, a_min=None, a_max=y2[i])
+        xx1 = np.maximum(xx1, x1[i])
+        yy1 = np.maximum(yy1, y1[i])
+        xx2 = np.minimum(xx2, x2[i])
+        yy2 = np.minimum(yy2, y2[i])
 
         w = xx2 - xx1
         h = yy2 - yy1
 
-        w = np.clip(w, a_min=0.0, a_max=None)
-        h = np.clip(h, a_min=0.0, a_max=None)
+        w = np.maximum(w, 0.0)
+        h = np.maximum(h, 0.0)
+
         inter = w*h
         rem_areas = area[idx]
         union = (rem_areas - inter) + area[i]
         IoU = inter/union
+        # print(IoU)
         iou_mask = IoU <= overlap
         idx = idx[iou_mask]
-    return np.asarray(keep, dtype=int), count
+        # print('numpy:', len(idx))
+    return keep.astype(int), count
 
 
 def softmax(x, axis=1):
@@ -117,7 +117,7 @@ class Detect():
         decoded_boxes = unregress_boxes(regressed_boxes, prior_boxes,
                                         self.variance)
         for class_arg in range(1, self.num_classes):
-            conf_mask = class_predictions[:, class_arg] > (self.conf_thresh)
+            conf_mask = class_predictions[:, class_arg] >= (self.conf_thresh)
             scores = class_predictions[:, class_arg][conf_mask]
             if len(scores) == 0:
                 continue
@@ -137,8 +137,8 @@ class Detect():
             scores = np.expand_dims(scores, -1)
             # print('scores_shape:', scores[indices].shape)
             # print('boxes_shape:', boxes[indices].shape)
-            selections = np.concatenate((scores[indices],
-                                         boxes[indices]), axis=1)
+            selections = np.concatenate((scores[indices[:count]],
+                                        boxes[indices[:count]]), axis=1)
             # print('selections_shape', selections.shape)
             # print('count:', count)
             # self.output[0, class_arg, :count] = selections
@@ -150,7 +150,7 @@ class Detect():
 trained_weights_path = '../trained_models/ssd_300_VOC0712.pth'
 input_size = 300
 num_classes = 21
-iou_threshold = .5
+iou_threshold = .45
 lower_probability_threshold = .01
 background_index = 0
 dataset_name = 'VOC2007'
