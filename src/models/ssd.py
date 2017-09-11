@@ -11,8 +11,9 @@ from keras.models import Model
 
 from .layers import Normalize
 
+
 def SSD300(input_shape=(300, 300, 3), num_classes=21,
-            weights_path=None, frozen_layers=None):
+           weights_path=None, frozen_layers=None):
 
     input_layer = Input(shape=input_shape)
 

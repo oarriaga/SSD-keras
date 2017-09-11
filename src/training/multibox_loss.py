@@ -1,6 +1,7 @@
 import tensorflow as tf
 import keras.backend as K
 
+
 class MultiboxLoss(object):
     def __init__(self, num_classes, alpha=1.0, neg_pos_ratio=3.0,
                  background_id=0, negatives_for_hard=100.0):
@@ -15,7 +16,7 @@ class MultiboxLoss(object):
         square_loss = 0.5 * (y_true - y_pred)**2
         absolute_value_condition = K.less(absolute_value_loss, 1.0)
         l1_smooth_loss = tf.where(absolute_value_condition, square_loss,
-                                                    absolute_value_loss)
+                                  absolute_value_loss)
         return K.sum(l1_smooth_loss, axis=-1)
 
     def _softmax_loss(self, y_true, y_pred):
@@ -52,28 +53,29 @@ class MultiboxLoss(object):
         num_positive_mask = tf.greater(num_negatives, 0)
         has_a_positive = tf.to_float(tf.reduce_any(num_positive_mask))
         num_negatives = tf.concat([num_negatives,
-                        [(1 - has_a_positive) * self.negatives_for_hard]], 0)
+                                  [(1 - has_a_positive) *
+                                      self.negatives_for_hard]], 0)
         num_positive_mask = tf.greater(num_negatives, 0)
         num_neg_batch = tf.reduce_min(tf.boolean_mask(num_negatives,
-                                                num_positive_mask))
+                                      num_positive_mask))
         num_neg_batch = tf.to_int32(num_neg_batch)
 
         pred_class_values = K.max(y_pred_classification[:, :, 1:], axis=2)
         int_negatives_mask = y_true[:, :, 4 + self.background_id]
         pred_negative_class_values = pred_class_values * int_negatives_mask
         top_k_negative_indices = tf.nn.top_k(pred_negative_class_values,
-                                                    k=num_neg_batch)[1]
+                                             k=num_neg_batch)[1]
 
         batch_indices = K.expand_dims(K.arange(0, batch_size), 1)
         batch_indices = K.tile(batch_indices, (1, num_neg_batch))
         batch_indices = K.flatten(batch_indices) * K.cast(num_prior_boxes,
-                                                                'int32')
+                                                          'int32')
         full_indices = batch_indices + K.flatten(top_k_negative_indices)
 
         negative_classification_loss = K.gather(K.flatten(classification_loss),
-                                                                full_indices)
+                                                full_indices)
         negative_classification_loss = K.reshape(negative_classification_loss,
-                                                    [batch_size, num_neg_batch])
+                                                 [batch_size, num_neg_batch])
         negative_classification_loss = K.sum(negative_classification_loss, 1)
 
         # loss is sum of positives and negatives
@@ -83,18 +85,8 @@ class MultiboxLoss(object):
                                      K.cast(num_neg_batch, 'float'))
         total_loss = total_loss / num_prior_boxes_per_batch
         num_positives = tf.where(K.not_equal(num_positives, 0), num_positives,
-                                                   K.ones_like(num_positives))
+                                 K.ones_like(num_positives))
         positive_localization_loss = self.alpha * positive_classification_loss
         positive_localization_loss = positive_localization_loss / num_positives
         total_loss = total_loss + positive_localization_loss
         return total_loss
-
-def scheduler(epoch, decay=0.9, base_learning_rate=3e-4):
-    return base_learning_rate * decay**(epoch)
-
-def split_data(ground_truths, training_ratio=.8):
-    ground_truth_keys = sorted(ground_truths.keys())
-    num_train = int(round(training_ratio * len(ground_truth_keys)))
-    train_keys = ground_truth_keys[:num_train]
-    validation_keys = ground_truth_keys[num_train:]
-    return train_keys, validation_keys
