@@ -51,6 +51,7 @@ for class_name in class_names:
         already_detected = np.zeros(shape=len(gt_sample), dtype=bool)
         for detection in detections:
             ious = calculate_intersection_over_union(detection, gt_sample)
+            score = np.max(detection[4:])
             best_iou = np.max(ious)
             best_iou_arg = np.argmax(ious)
             if best_iou > iou_threshold:
@@ -71,7 +72,6 @@ for class_name in class_names:
     print('Class:', class_name)
     print('Number of ground_truth_boxes:', num_gt_boxes)
     print('AP:', average_precision)
-    print('*' * 30)
 
 mean_average_precision = np.mean(average_precisions)
 print('mAP:', mean_average_precision)

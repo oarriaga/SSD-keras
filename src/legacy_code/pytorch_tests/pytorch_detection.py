@@ -1,5 +1,4 @@
 import torch
-import pickle
 # import torch.nn as nn
 # import torch.backends.cudnn as cudnn
 from torch.autograd import Function
@@ -8,6 +7,7 @@ from torch.autograd import Function
 from .pytorch_box_utils import decode, nms
 # from data import v2 as cfg
 from .pytorch_parameters import v2 as cfg
+
 
 
 class Detect(Function):
@@ -63,9 +63,6 @@ class Detect(Function):
                 l_mask = c_mask.unsqueeze(1).expand_as(decoded_boxes)
                 boxes = decoded_boxes[l_mask].view(-1, 4)
                 # idx of highest scoring and non-overlapping boxes per class
-                pickle.dump(boxes, open('torch_boxes.pkl', 'wb'))
-                pickle.dump(scores, open('torch_scores.pkl', 'wb'))
-
                 ids, count = nms(boxes, scores, self.nms_thresh, self.top_k)
                 self.output[i, cl, :count] = \
                     torch.cat((scores[ids[:count]].unsqueeze(1),
