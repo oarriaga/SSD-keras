@@ -1,7 +1,7 @@
 import numpy as np
-# from scipy.misc import imread, imresize
-import cv2
-
+from scipy.misc import imread
+from scipy.misc import imresize
+# import cv2
 
 R_MEAN = 123
 G_MEAN = 117
@@ -18,25 +18,18 @@ def substract_mean(image_array):
 
 
 def load_image(image_path, target_size=None):
-    image_array = cv2.imread(image_path)
-    image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
+    # image_array = cv2.imread(image_path)
+    # image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
+    image_array = imread(image_path)
     height, width = image_array.shape[:2]
     if target_size is not None:
-        image_array = cv2.resize(image_array, target_size)
+        # image_array = cv2.resize(image_array, target_size)
+        image_array = imresize(image_array, target_size)
     return image_array, (height, width)
 
 
 def get_image_size(image_path):
-    image_array = cv2.imread(image_path)
-    height, width = image_array.shape[:2]
-    return (height, width)
-
-
-"""
-def load_image(image_path, target_size=None):
+    # image_array = cv2.imread(image_path)
     image_array = imread(image_path)
     height, width = image_array.shape[:2]
-    if target_size is not None:
-        image_array = imresize(image_array, target_size)
-    return image_array, (height, width)
-"""
+    return (height, width)
