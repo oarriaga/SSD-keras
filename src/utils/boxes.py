@@ -46,7 +46,8 @@ def calculate_intersection_over_union(box_data, prior_boxes):
     return intersection_over_union
 
 
-def regress_boxes(assigned_prior_boxes, ground_truth_box, box_scale_factors):
+def regress_boxes_old(assigned_prior_boxes, ground_truth_box,
+                      box_scale_factors):
     """Regress assigned_prior_boxes to ground_truth_box as mentioned in
     Faster-RCNN and Single-shot Multi-box Detector papers.
 
@@ -100,6 +101,50 @@ def regress_boxes(assigned_prior_boxes, ground_truth_box, box_scale_factors):
                                      g_hat_height.reshape(-1, 1)],
                                      axis=1)
     return regressed_boxes
+
+def regress_boxes(asigned_prior_boxes, ground_truth_box, box_scale_factors):
+    x_min_scale, y_min_scale, x_max_scale, y_max_scale = box_scale_factors
+    # distance between match center and prior's center
+    g_cxcy = (matched[:, :2] + matched[:, 2:])/2 - priors[:, :2]
+    # encode variance
+    g_cxcy /= (variances[0] * priors[:, 2:])
+    # match wh / prior wh
+    g_wh = (matched[:, 2:] - matched[:, :2]) / priors[:, 2:]
+    g_wh = torch.log(g_wh) / variances[1]
+    # return target for smooth_l1_loss
+    return torch.cat([g_cxcy, g_wh], 1)  # [num_priors,4]
+
+
+
+def unregress_boxes(predicted_box_data, prior_boxes,
+                    box_scale_factors=[.1, .1, .2, .2]):
+
+    x_min_scale, y_min_scale, x_max_scale, y_max_scale = box_scale_factors
+    x_min_predicted = predicted_box_data[:, 0]
+    y_min_predicted = predicted_box_data[:, 1]
+    x_max_predicted = predicted_box_data[:, 2]
+    y_max_predicted = predicted_box_data[:, 3]
+
+    x_min = x_min_predicted * x_min_scale * prior_boxes[:, 2]
+    x_min = x_min + prior_boxes[:, 0]
+
+    y_min = y_min_predicted * y_min_scale * prior_boxes[:, 3]
+    y_min = y_min + prior_boxes[:, 1]
+
+    x_max = prior_boxes[:, 2] * np.exp(x_max_predicted * x_max_scale)
+    y_max = prior_boxes[:, 3] * np.exp(y_max_predicted * y_max_scale)
+
+    unregressed_boxes = np.concatenate([x_min[:, None], y_min[:, None],
+                                        x_max[:, None], y_max[:, None]],
+                                       axis=1)
+
+    unregressed_boxes[:, :2] -= unregressed_boxes[:, 2:] / 2
+    unregressed_boxes[:, 2:] += unregressed_boxes[:, :2]
+    unregressed_boxes = np.clip(unregressed_boxes, 0.0, 1.0)
+    if predicted_box_data.shape[1] > 4:
+        unregressed_boxes = np.concatenate([unregressed_boxes,
+                                           predicted_box_data[:, 4:]], axis=-1)
+    return unregressed_boxes
 
 
 def decode_boxes(predicted_boxes, prior_boxes, box_scale_factors=(.1, .2)):
@@ -428,24 +473,3 @@ def apply_non_max_suppression(box_data, overlap_threshold=.45):
             sorted_box_indices = np.delete(sorted_box_indices, delete_mask)
 
     return box_data[selected_indices]
-
-
-def filter_boxes(predictions, num_classes=21, background_index=0,
-                 class_threshold=.01):
-    predictions = np.squeeze(predictions)
-    box_classes = predictions[:, 4:(4 + num_classes)]
-    best_classes = np.argmax(box_classes, axis=-1)
-    best_probabilities = np.max(box_classes, axis=-1)
-    background_mask = best_classes != background_index
-    lower_bound_mask = best_probabilities > class_threshold
-    mask = np.logical_and(background_mask, lower_bound_mask)
-    all_false = np.all(np.logical_not(mask))
-    if all_false:
-        # best_class_box = np.argmax(best_probabilities * background_mask)
-        # selected_boxes = predictions[best_class_box, :(4 + num_classes)]
-        # selected_boxes = predictions[best_class_box, :]
-        # zero_data = np.zeros(shape=(1, 4 + num_classes))
-        return None
-    # selected_boxes = predictions[mask, :(4 + num_classes)]
-    selected_boxes = predictions[mask, :]
-    return selected_boxes
