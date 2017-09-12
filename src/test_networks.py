@@ -101,7 +101,7 @@ def load_image(image_path, target_size=None):
 
 class Detect():
     def __init__(self, num_classes=21, bkg_label=0, top_k=200,
-                 conf_thresh=0.01, nms_thresh=.45):
+                 conf_thresh=0.099, nms_thresh=.45):
         self.num_classes = num_classes
         self.background_label = bkg_label
         self.top_k = top_k
@@ -139,6 +139,7 @@ class Detect():
             # print('boxes_shape:', boxes[indices].shape)
             selections = np.concatenate((scores[indices[:count]],
                                         boxes[indices[:count]]), axis=1)
+            pickle.dump(selections, open('numpy_selections.pkl', 'wb'))
             # print('selections_shape', selections.shape)
             # print('count:', count)
             # self.output[0, class_arg, :count] = selections
@@ -151,7 +152,7 @@ trained_weights_path = '../trained_models/ssd_300_VOC0712.pth'
 input_size = 300
 num_classes = 21
 iou_threshold = .45
-lower_probability_threshold = .01
+lower_probability_threshold = .1
 background_index = 0
 dataset_name = 'VOC2007'
 data_prefix = '../datasets/VOCdevkit/VOC2007/Annotations/'
@@ -194,5 +195,13 @@ for image_name in tqdm(image_names):
     keras_output = model.predict(keras_image_input)
     ko = detect.forward(keras_output, prior_boxes)
 
-    if a > 1:
+    numpy_selections = pickle.load(open('numpy_selections.pkl', 'rb'))
+    torch_selections = pickle.load(open('torch_selections.pkl', 'rb'))
+    torch_selections = torch_selections.numpy()
+    print('numpy', numpy_selections)
+    print('torch', torch_selections)
+    print(np.sum(np.abs(torch_selections - numpy_selections) > .1))
+
+
+    if a > 10:
         break

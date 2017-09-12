@@ -43,8 +43,8 @@ def nms_numpy(boxes, scores, overlap=0.5, top_k=200):
         rem_areas = area[idx]
         union = (rem_areas - inter) + area[i]
         IoU = inter/union
-        print(IoU)
-        break
+        # print(IoU)
+        # break
         iou_mask = IoU <= overlap
         idx = idx[iou_mask]
         # print('numpy:', len(idx))
@@ -118,8 +118,8 @@ def nms_pytorch(boxes, scores, overlap=0.5, top_k=200):
         rem_areas = torch.index_select(area, 0, idx)  # load remaining areas)
         union = (rem_areas - inter) + area[i]
         IoU = inter/union  # store result in iou
-        print(IoU)
-        break
+        # print(IoU)
+        # break
         # keep only elements with an IoU <= overlap
         # print(IoU.le(overlap))
         idx = idx[IoU.le(overlap)]
@@ -138,8 +138,17 @@ numpy_scores = pickle.load(open('numpy_scores.pkl', 'rb'))
 # print('numpy_scores:', numpy_scores)
 
 numpy_idx, numpy_count = nms_numpy(numpy_boxes, numpy_scores, overlap=.5)
+# numpy_idx, numpy_count = nms_numpy(torch_boxes.numpy(), torch_scores.numpy(), overlap=.5)
 torch_idx, torch_count = nms_pytorch(torch_boxes, torch_scores, overlap=.5)
 print('numpy_idx:', numpy_idx)
 print('numpy_count:', numpy_count)
 print('torch_idx:', torch_idx)
 print('torch_count:', torch_count)
+
+
+numpy_selections = pickle.load(open('numpy_selections.pkl', 'rb'))
+torch_selections = pickle.load(open('torch_selections.pkl', 'rb'))
+torch_selections = torch_selections.numpy()
+print('numpy', numpy_selections)
+print('torch', torch_selections)
+
