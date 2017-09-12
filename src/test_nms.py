@@ -145,10 +145,10 @@ print('numpy_count:', numpy_count)
 print('torch_idx:', torch_idx)
 print('torch_count:', torch_count)
 
-
+"""
 numpy_selections = pickle.load(open('numpy_selections.pkl', 'rb'))
 torch_selections = pickle.load(open('torch_selections.pkl', 'rb'))
 torch_selections = torch_selections.numpy()
 print('numpy', numpy_selections)
 print('torch', torch_selections)
-
+"""

@@ -50,6 +50,7 @@ class Detect(Function):
             self.output.expand_(num, self.num_classes, self.top_k, 5)
 
         # Decode predictions into bboxes.
+        class_selections = []
         for i in range(num):
             decoded_boxes = decode(loc_data[i], prior_data, self.variance)
             # For each class, perform nms
@@ -70,12 +71,27 @@ class Detect(Function):
                 selections = torch.cat((scores[ids[:count]].unsqueeze(1),
                                         boxes[ids[:count]]), 1)
 
-                pickle.dump(selections, open('torch_selections.pkl', 'wb'))
+                class_selections.append(selections.numpy())
+                # pickle.dump(selections, open('torch_selections.pkl', 'wb'))
+                """
                 self.output[i, cl, :count] = \
                     torch.cat((scores[ids[:count]].unsqueeze(1),
                                boxes[ids[:count]]), 1)
+                """
+                # print('torch_selections:', selections.numpy())
+                print('torch class', cl)
+                print('torch count', count)
+                self.output[i, cl, :count, :] = selections
+
+        pickle.dump(class_selections, open('torch_selections.pkl', 'wb'))
+        pickle.dump(self.output, open('torch_output.pkl', 'wb'))
+        return self.output
+        """
+        a = self.output
         flt = self.output.view(-1, 5)
         _, idx = flt[:, 0].sort(0)
         _, rank = idx.sort(0)
         flt[(rank >= self.top_k).unsqueeze(1).expand_as(flt)].fill_(0)
+        print(a == self.output)
+        """
         return self.output

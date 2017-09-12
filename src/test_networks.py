@@ -108,7 +108,7 @@ class Detect():
         self.nms_thresh = nms_thresh
         self.conf_thresh = conf_thresh
         self.variance = [.1, .1, .2, .2]
-        self.output = np.zeros((1, self.num_classes, self.top_k, 5))
+        # self.output = np.zeros((1, self.num_classes, self.top_k, 5))
 
     def forward(self, box_data, prior_boxes):
         box_data = np.squeeze(box_data)
@@ -116,6 +116,8 @@ class Detect():
         class_predictions = box_data[:, 4:]
         decoded_boxes = unregress_boxes(regressed_boxes, prior_boxes,
                                         self.variance)
+        output = np.zeros((1, self.num_classes, self.top_k, 5))
+        class_selections = []
         for class_arg in range(1, self.num_classes):
             conf_mask = class_predictions[:, class_arg] >= (self.conf_thresh)
             scores = class_predictions[:, class_arg][conf_mask]
@@ -139,12 +141,19 @@ class Detect():
             # print('boxes_shape:', boxes[indices].shape)
             selections = np.concatenate((scores[indices[:count]],
                                         boxes[indices[:count]]), axis=1)
-            pickle.dump(selections, open('numpy_selections.pkl', 'wb'))
+
+            class_selections.append(selections)
+            # pickle.dump(selections, open('numpy_selections.pkl', 'wb'))
             # print('selections_shape', selections.shape)
             # print('count:', count)
             # self.output[0, class_arg, :count] = selections
-            self.output[0, class_arg, :count] = selections
-        return self.output
+            # print('numpy_selections:', selections)
+            print('numpy class_arg:', class_arg)
+            print('numpy count', count)
+            # self.output[0, class_arg, :count, :] = selections
+            output[0, class_arg, :count, :] = selections
+        pickle.dump(class_selections, open('numpy_selections.pkl', 'wb'))
+        return output
 
 
 # parameters
@@ -188,6 +197,8 @@ for image_name in tqdm(image_names):
     pytorch_image = preprocess_pytorch_input(rgb_image)
     pytorch_output = pytorch_ssd(pytorch_image)
     po = pytorch_output.data.numpy()
+    po2 = pickle.load(open('torch_output.pkl', 'rb'))
+    po2 = po2.numpy()
 
     # keras_image = preprocess_images(rgb_image)
     keras_image = substract_mean(rgb_image)
@@ -197,11 +208,13 @@ for image_name in tqdm(image_names):
 
     numpy_selections = pickle.load(open('numpy_selections.pkl', 'rb'))
     torch_selections = pickle.load(open('torch_selections.pkl', 'rb'))
-    torch_selections = torch_selections.numpy()
-    print('numpy', numpy_selections)
-    print('torch', torch_selections)
-    print(np.sum(np.abs(torch_selections - numpy_selections) > .1))
-
+    # torch_selections = torch_selections.numpy()
+    # print('numpy', numpy_selections)
+    # print('torch', torch_selections)
+    # print(np.sum(np.abs(torch_selections - numpy_selections) > .1))
+    numpy_selections = np.concatenate(numpy_selections)
+    torch_selections = np.concatenate(torch_selections)
+    print(np.sum(np.abs(po - ko) > .1))
 
     if a > 10:
         break
