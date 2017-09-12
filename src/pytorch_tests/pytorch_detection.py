@@ -67,6 +67,10 @@ class Detect(Function):
                 pickle.dump(scores, open('torch_scores.pkl', 'wb'))
 
                 ids, count = nms(boxes, scores, self.nms_thresh, self.top_k)
+                selections = torch.cat((scores[ids[:count]].unsqueeze(1),
+                                        boxes[ids[:count]]), 1)
+
+                pickle.dump(selections, open('torch_selections.pkl', 'wb'))
                 self.output[i, cl, :count] = \
                     torch.cat((scores[ids[:count]].unsqueeze(1),
                                boxes[ids[:count]]), 1)
