@@ -16,4 +16,4 @@ def apply_non_max_suppression(boxes, scores, nms_treshold=.45,
                                                           max_output_size,
                                                           nms_treshold)
     indices = session.run(non_maximum_supression, feed_dict=feed_dict)
-    return indices
+    return indices, len(indices)
