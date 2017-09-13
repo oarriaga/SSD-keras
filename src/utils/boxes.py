@@ -426,50 +426,57 @@ def denormalize_boxes(box_data, original_image_shape):
     return denormalized_box_data
 
 
-def apply_non_max_suppression(box_data, overlap_threshold=.45):
-    if len(box_data) == 0:
-            return []
-    selected_indices = []
-    x_min = box_data[:, 0]
-    y_min = box_data[:, 1]
-    x_max = box_data[:, 2]
-    y_max = box_data[:, 3]
+def apply_non_max_suppression(boxes, scores, iou_thresh=.45, top_k=200):
+    selected_indices = np.zeros(shape=len(scores))
+    if boxes is None or len(boxes) == 0:
+            return selected_indices
+    x_min = boxes[:, 0]
+    y_min = boxes[:, 1]
+    x_max = boxes[:, 2]
+    y_max = boxes[:, 3]
     areas = (x_max - x_min) * (y_max - y_min)
-    scores = box_data[:, 4:]
-    scores = np.max(scores, axis=1)
-    sorted_box_indices = np.argsort(scores)
-    while len(sorted_box_indices) > 0:
-            last = len(sorted_box_indices) - 1
-            best_box_arg = sorted_box_indices[last]
-            selected_indices.append(best_box_arg)
+    remaining_sorted_box_indices = np.argsort(scores)
+    remaining_sorted_box_indices = remaining_sorted_box_indices[-top_k:]
 
-            best_x_min = x_min[best_box_arg]
-            best_y_min = y_min[best_box_arg]
-            best_x_max = x_max[best_box_arg]
-            best_y_max = y_max[best_box_arg]
+    num_selected_boxes = 0
+    while len(remaining_sorted_box_indices) > 0:
+            best_score_index = remaining_sorted_box_indices[-1]
+            selected_indices[num_selected_boxes] = best_score_index
+            num_selected_boxes = num_selected_boxes + 1
+            if len(remaining_sorted_box_indices) == 1:
+                break
 
-            remaining_x_min = x_min[sorted_box_indices[:last]]
-            remaining_y_min = y_min[sorted_box_indices[:last]]
-            remaining_x_max = x_max[sorted_box_indices[:last]]
-            remaining_y_max = y_max[sorted_box_indices[:last]]
+            remaining_sorted_box_indices = remaining_sorted_box_indices[:-1]
 
-            remaining_x_min = np.maximum(best_x_min, remaining_x_min)
-            remaining_y_min = np.maximum(best_y_min, remaining_y_min)
-            remaining_x_max = np.minimum(best_x_max, remaining_x_max)
-            remaining_y_max = np.minimum(best_y_max, remaining_y_max)
+            best_x_min = x_min[best_score_index]
+            best_y_min = y_min[best_score_index]
+            best_x_max = x_max[best_score_index]
+            best_y_max = y_max[best_score_index]
 
-            widths = remaining_x_max - remaining_x_min
-            widths = np.maximum(0, widths)
+            remaining_x_min = x_min[remaining_sorted_box_indices]
+            remaining_y_min = y_min[remaining_sorted_box_indices]
+            remaining_x_max = x_max[remaining_sorted_box_indices]
+            remaining_y_max = y_max[remaining_sorted_box_indices]
 
-            heights = remaining_y_max - remaining_y_min
-            heights = np.maximum(0, heights)
+            inner_x_min = np.maximum(remaining_x_min, best_x_min)
+            inner_y_min = np.maximum(remaining_y_min, best_y_min)
+            inner_x_max = np.minimum(remaining_x_max, best_x_max)
+            inner_y_max = np.minimum(remaining_y_max, best_y_max)
 
-            remaining_areas = areas[sorted_box_indices[:last]]
-            overlaps = (widths * heights) / remaining_areas
-            overlap_mask = overlaps > overlap_threshold
+            inner_box_widths = inner_x_max - inner_x_min
+            inner_box_heights = inner_y_max - inner_y_min
 
-            delete_mask = np.where(overlap_mask)[0]
-            delete_mask = np.concatenate(([last], delete_mask))
-            sorted_box_indices = np.delete(sorted_box_indices, delete_mask)
+            inner_box_widths = np.maximum(inner_box_widths, 0.0)
+            inner_box_heights = np.maximum(inner_box_heights, 0.0)
 
-    return box_data[selected_indices]
+            intersections = inner_box_widths * inner_box_heights
+            remaining_box_areas = areas[remaining_sorted_box_indices]
+            best_area = areas[best_score_index]
+            unions = remaining_box_areas + best_area - intersections
+
+            intersec_over_union = intersections / unions
+            intersec_over_union_mask = intersec_over_union <= iou_thresh
+            remaining_sorted_box_indices = remaining_sorted_box_indices[
+                                                intersec_over_union_mask]
+
+    return selected_indices.astype(int), num_selected_boxes
