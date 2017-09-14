@@ -12,9 +12,8 @@ from __future__ import print_function
 # from torch.autograd import Variable
 # from data import VOCroot
 from pytorch_tests.pytorch_parameters import VOC_CLASSES as labelmap
-from utils.boxes import unregress_boxes
 from utils.boxes import create_prior_boxes
-from utils.boxes import apply_non_max_suppression
+from utils.inference import detect
 # from data import VOC_CLASSES as labelmap
 # import torch.utils.data as data
 
@@ -297,7 +296,7 @@ def voc_eval(detpath,
 
         # sort by confidence
         sorted_ind = np.argsort(-confidence)
-        sorted_scores = np.sort(-confidence)
+        # sorted_scores = np.sort(-confidence)
         BB = BB[sorted_ind, :]
         image_ids = [image_ids[x] for x in sorted_ind]
 
@@ -367,7 +366,7 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
     _t = {'im_detect': Timer(), 'misc': Timer()}
     output_dir = get_output_dir('ssd300_120000', set_type)
     det_file = os.path.join(output_dir, 'detections.pkl')
-    detect = Detect(21, 0, 200, 0.01, .45)
+    # detect = Detect(21, 0, 200, 0.01, .45)
     for i in range(num_images):
         im, gt, h, w = dataset.pull_item(i)
         keras_image = np.squeeze(im)
@@ -375,7 +374,8 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
         # keras_image = substract_mean(x)
         keras_image_input = np.expand_dims(keras_image, axis=0)
         keras_output = net.predict(keras_image_input)
-        detections = detect.forward(keras_output, prior_boxes)
+        detections = detect(keras_output, prior_boxes)
+        # detections = detect.forward(keras_output, prior_boxes)
 
         # x = Variable(im.unsqueeze(0))
         """
@@ -409,10 +409,6 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
             boxes[:, 3] *= h
             # scores = dets[:, 0].cpu().numpy()
             scores = dets[:, 0]
-            """
-            cls_dets = np.hstack((boxes.cpu().numpy(), scores[:, np.newaxis])) \
-                .astype(np.float32, copy=False)
-            """
             cls_dets = np.hstack((boxes, scores[:, np.newaxis])).astype(
                         np.float32, copy=False)
             all_boxes[j][i] = cls_dets
@@ -430,108 +426,6 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
 def evaluate_detections(box_list, output_dir, dataset):
     write_voc_results_file(box_list, dataset)
     do_python_eval(output_dir)
-
-
-def nms(boxes, scores, overlap=0.5, top_k=200):
-    keep = np.zeros(shape=len(scores))
-    if boxes is None or len(boxes) == 0:
-        return keep
-    x1 = boxes[:, 0]
-    y1 = boxes[:, 1]
-    x2 = boxes[:, 2]
-    y2 = boxes[:, 3]
-    area = (x2 - x1) * (y2 - y1)
-    idx = np.argsort(scores)
-    idx = idx[-top_k:]
-
-    count = 0
-    while len(idx) > 0:
-        i = idx[-1]
-        keep[count] = i
-        count += 1
-        if len(idx) == 1:
-            break
-        idx = idx[:-1]
-        xx1 = x1[idx]
-        yy1 = y1[idx]
-        xx2 = x2[idx]
-        yy2 = y2[idx]
-
-        xx1 = np.maximum(xx1, x1[i])
-        yy1 = np.maximum(yy1, y1[i])
-        xx2 = np.minimum(xx2, x2[i])
-        yy2 = np.minimum(yy2, y2[i])
-
-        w = xx2 - xx1
-        h = yy2 - yy1
-
-        w = np.maximum(w, 0.0)
-        h = np.maximum(h, 0.0)
-
-        inter = w*h
-        rem_areas = area[idx]
-        union = (rem_areas - inter) + area[i]
-        IoU = inter/union
-        print(IoU)
-        # print(IoU)
-        iou_mask = IoU <= overlap
-        idx = idx[iou_mask]
-        # print('numpy:', len(idx))
-    return keep.astype(int), count
-
-
-class Detect():
-    def __init__(self, num_classes=21, bkg_label=0, top_k=200,
-                 conf_thresh=0.099, nms_thresh=.45):
-        self.num_classes = num_classes
-        self.background_label = bkg_label
-        self.top_k = top_k
-        self.nms_thresh = nms_thresh
-        self.conf_thresh = conf_thresh
-        self.variance = [.1, .1, .2, .2]
-        # self.output = np.zeros((1, self.num_classes, self.top_k, 5))
-
-    def forward(self, box_data, prior_boxes):
-        box_data = np.squeeze(box_data)
-        regressed_boxes = box_data[:, :4]
-        class_predictions = box_data[:, 4:]
-        decoded_boxes = unregress_boxes(regressed_boxes, prior_boxes,
-                                        self.variance)
-        output = np.zeros((1, self.num_classes, self.top_k, 5))
-        class_selections = []
-        for class_arg in range(1, self.num_classes):
-            conf_mask = class_predictions[:, class_arg] >= (self.conf_thresh)
-            scores = class_predictions[:, class_arg][conf_mask]
-            if len(scores) == 0:
-                continue
-            boxes = decoded_boxes[conf_mask]
-            # pickle.dump(boxes, open('numpy_boxes.pkl', 'wb'))
-            # pickle.dump(scores, open('numpy_scores.pkl', 'wb'))
-
-            # indices, count = nms(boxes, scores, self.nms_thresh, self.top_k)
-            indices, count = apply_non_max_suppression(boxes, scores,
-                                                       self.nms_thresh,
-                                                       self.top_k)
-            # print('indices:', indices)
-            # print('indices_shape:', indices.shape)
-            scores = np.expand_dims(scores, -1)
-            # print('scores_shape:', scores[indices].shape)
-            # print('boxes_shape:', boxes[indices].shape)
-            selections = np.concatenate((scores[indices[:count]],
-                                        boxes[indices[:count]]), axis=1)
-
-            class_selections.append(selections)
-            # pickle.dump(selections, open('numpy_selections.pkl', 'wb'))
-            # print('selections_shape', selections.shape)
-            # print('count:', count)
-            # self.output[0, class_arg, :count] = selections
-            # print('numpy_selections:', selections)
-            # print('numpy class_arg:', class_arg)
-            # print('numpy count', count)
-            # self.output[0, class_arg, :count, :] = selections
-            output[0, class_arg, :count, :] = selections
-        # pickle.dump(class_selections, open('numpy_selections.pkl', 'wb'))
-        return output
 
 
 if __name__ == '__main__':
