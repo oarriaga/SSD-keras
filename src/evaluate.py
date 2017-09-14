@@ -5,12 +5,12 @@
 """
 
 from __future__ import print_function
-from pytorch_tests.pytorch_parameters import VOC_CLASSES as labelmap
+from utils.pytorch_parameters import VOC_CLASSES as labelmap
 from utils.boxes import create_prior_boxes
 from utils.inference import detect
-from pytorch_tests.pytorch_datasets import VOCDetection
-from pytorch_tests.pytorch_datasets import AnnotationTransform
-from pytorch_tests.pytorch_datasets import BaseTransform
+from utils.pytorch_datasets import VOCDetection
+from utils.pytorch_datasets import AnnotationTransform
+from utils.pytorch_datasets import BaseTransform
 
 from models import SSD300
 
