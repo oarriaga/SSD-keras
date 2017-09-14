@@ -60,7 +60,7 @@ def detect(box_data, prior_boxes, conf_thresh=0.01, nms_thresh=.45,
 
 
 def plot_detections(detections, original_image_array, arg_to_class, colors,
-                    conf_thresh=0.6, font=cv2.FONT_HERSHEY_SIMPLEX):
+                    conf_thresh=0.01, font=cv2.FONT_HERSHEY_SIMPLEX):
     detections = np.squeeze(detections)
     num_classes = detections.shape[0]
     height, width = original_image_array.shape[0:2]
