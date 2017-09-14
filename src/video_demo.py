@@ -5,7 +5,8 @@ import cv2
 from datasets import get_class_names
 from preprocessing import substract_mean
 from utils.inference import detect
-from visualizer import draw_video_boxes
+from utils.inference import plot_detections
+# from visualizer import draw_video_boxes
 
 
 class VideoDemo(object):
@@ -40,11 +41,9 @@ class VideoDemo(object):
             image_array = substract_mean(image_array)
             image_array = np.expand_dims(image_array, 0)
             predictions = model.predict(image_array)
-            detected_boxes = detect(predictions, self.prior_boxes)
-            if detected_boxes is not None:
-                draw_video_boxes(detected_boxes, frame, self.arg_to_class,
-                                 self.colors, self.font)
-
+            detections = detect(predictions, self.prior_boxes)
+            plot_detections(detections, frame, self.arg_to_class,
+                            self.colors, 0.6)
             cv2.imshow('webcam', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
