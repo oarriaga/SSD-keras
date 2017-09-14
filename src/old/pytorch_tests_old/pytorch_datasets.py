@@ -1,7 +1,7 @@
 # from torch.utils import data
-import cv2
-# from scipy.misc import imread
-# from scipy.misc import imresize
+# import cv2
+from scipy.misc import imread
+from scipy.misc import imresize
 import os
 import numpy as np
 import sys
@@ -91,9 +91,8 @@ class VOCDetection(Dataset):
         img_id = self.ids[index]
 
         target = ET.parse(self._annopath % img_id).getroot()
-        img = cv2.imread(self._imgpath % img_id)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        # img = imread(self._imgpath % img_id)
+        # img = cv2.imread(self._imgpath % img_id)
+        img = imread(self._imgpath % img_id)
         height, width, channels = img.shape
 
         if self.target_transform is not None:
@@ -124,10 +123,8 @@ class VOCDetection(Dataset):
             PIL img
         '''
         img_id = self.ids[index]
-        img = cv2.imread(self._imgpath % img_id, cv2.IMREAD_COLOR)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        return img
-        # return imread(self._imgpath % img_id)
+        # return cv2.imread(self._imgpath % img_id, cv2.IMREAD_COLOR)
+        return imread(self._imgpath % img_id)
 
     def pull_anno(self, index):
         '''Returns the original annotation of image at index
@@ -214,8 +211,7 @@ class AnnotationTransform(object):
 
 
 def base_transform(image, size, mean):
-    # x = imresize(image, (size, size)).astype(np.float32)
-    x = cv2.resize(image, (size, size)).astype(np.float32)
+    x = imresize(image, (size, size)).astype(np.float32)
     x -= mean
     x = x.astype(np.float32)
     return x
