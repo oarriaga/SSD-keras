@@ -3,6 +3,7 @@ import keras.backend as K
 from keras.engine.topology import InputSpec
 from keras.engine.topology import Layer
 
+
 class Normalize(Layer):
     """Normalization layer as described in ParseNet paper.
 
@@ -175,7 +176,6 @@ class PriorBox(Layer):
         pattern = [K.shape(x)[0], 1, 1]
         prior_boxes_tensor = K.tile(prior_boxes_tensor, pattern)
         return prior_boxes_tensor
-
 
         """
         if K.backend() == 'tensorflow':
