@@ -3,8 +3,8 @@ import numpy as np
 from .boxes import unregress_boxes
 from .boxes import denormalize_boxes
 from .boxes import apply_non_max_suppression
-from preprocessing import load_image
-from preprocessing import substract_mean
+from .preprocessing import load_image
+from .preprocessing import substract_mean
 import cv2
 
 
