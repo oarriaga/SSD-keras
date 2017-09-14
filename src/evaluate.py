@@ -5,24 +5,12 @@
 """
 
 from __future__ import print_function
-# import torch
-# import torch.nn as nn
-# import torch.backends.cudnn as cudnn
-# import torchvision.transforms as transforms
-# from torch.autograd import Variable
-# from data import VOCroot
 from pytorch_tests.pytorch_parameters import VOC_CLASSES as labelmap
 from utils.boxes import create_prior_boxes
 from utils.inference import detect
-# from data import VOC_CLASSES as labelmap
-# import torch.utils.data as data
-
-# from data import AnnotationTransform, VOCDetection, BaseTransform
 from pytorch_tests.pytorch_datasets import VOCDetection
 from pytorch_tests.pytorch_datasets import AnnotationTransform
 from pytorch_tests.pytorch_datasets import BaseTransform
-#
-# from ssd import build_ssd
 
 from models import SSD300
 
@@ -32,7 +20,6 @@ import time
 import argparse
 import numpy as np
 import pickle
-# import cv2
 
 if sys.version_info[0] == 2:
     import xml.etree.cElementTree as ET
@@ -67,12 +54,7 @@ args = parser.parse_args()
 
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
-"""
-if args.cuda and torch.cuda.is_available():
-    torch.set_default_tensor_type('torch.cuda.FloatTensor')
-else:
-    torch.set_default_tensor_type('torch.FloatTensor')
-"""
+
 devkit_path = '../datasets/VOCdevkit/VOC2007/'
 annopath = os.path.join(args.voc_root, 'VOC2007', 'Annotations', '%s.xml')
 imgpath = os.path.join(args.voc_root, 'VOC2007', 'JPEGImages', '%s.jpg')
@@ -80,12 +62,7 @@ imgsetpath = os.path.join(args.voc_root, 'VOC2007',
                           'ImageSets', 'Main', '{:s}.txt')
 
 
-# annopath = os.path.join(args.voc_root, 'VOC2007', 'Annotations', '%s.xml')
-# imgpath = os.path.join(args.voc_root, 'VOC2007', 'JPEGImages', '%s.jpg')
-# imgsetpath = os.path.join(args.voc_root,
-# 'VOC2007', 'ImageSets', 'Main', '{:s}.txt')
 YEAR = '2007'
-# devkit_path = VOCroot + 'VOC' + YEAR
 dataset_mean = (104, 117, 123)
 set_type = 'test'
 
@@ -377,11 +354,6 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
         detections = detect(keras_output, prior_boxes)
         # detections = detect.forward(keras_output, prior_boxes)
 
-        # x = Variable(im.unsqueeze(0))
-        """
-        if args.cuda:
-            x = x.cuda()
-        """
         _t['im_detect'].tic()
         # detections = net(x).data
         detect_time = _t['im_detect'].toc(average=False)
@@ -395,12 +367,6 @@ def test_net(save_folder, net, cuda, dataset, transform, top_k,
             dets = dets[mask]
             if len(dets) == 0:
                 continue
-            """
-            mask = dets[:, 0].gt(0.).expand(5, dets.size(0)).t()
-            dets = torch.masked_select(dets, mask).view(-1, 5)
-            if dets.dim() == 0:
-                continue
-            """
 
             boxes = dets[:, 1:]
             boxes[:, 0] *= w
@@ -429,19 +395,10 @@ def evaluate_detections(box_list, output_dir, dataset):
 
 
 if __name__ == '__main__':
-    # load net
-    # net = build_ssd('test', 300, 21)    # initialize SSD
-    # net.load_state_dict(torch.load(args.trained_model))
-    # net.eval()
     weights_path = '../trained_models/SSD300_weights.hdf5'
     net = SSD300(weights_path=weights_path)
     print('Finished loading model!')
-    # load data
-    """
-    dataset = VOCDetection(args.voc_root, [('2007', set_type)],
-                           BaseTransform(300, dataset_mean),
-                           AnnotationTransform())
-    """
+
     R_MEAN = 123
     G_MEAN = 117
     B_MEAN = 104
@@ -449,12 +406,7 @@ if __name__ == '__main__':
     dataset = VOCDetection(args.voc_root, [('2007', set_type)],
                            BaseTransform(300, (R_MEAN, G_MEAN, B_MEAN)),
                            AnnotationTransform())
-    """
-    if args.cuda:
-        net = net.cuda()
-        cudnn.benchmark = True
-    evaluation
-    """
+
     test_net(args.save_folder, net, args.cuda, dataset,
              BaseTransform(300, dataset_mean), args.top_k, 300,
              thresh=args.confidence_threshold)
