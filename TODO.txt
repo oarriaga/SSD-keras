@@ -1,5 +1,0 @@
-Pass a list to data manager so that it uses both VOC2007 and VOC2012
-Make data manager separate between training and test
-Extend data_augmentation to use random crops
-Change load_image function so that asks for original_image_size returns
-Change load_image function so that if shape is None it returns a value
