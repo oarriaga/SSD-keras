@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 
 from datasets import get_class_names
-from preprocessing import substract_mean
+from utils.preprocessing import substract_mean
 from utils.inference import detect
 from utils.inference import plot_detections
 # from visualizer import draw_video_boxes
