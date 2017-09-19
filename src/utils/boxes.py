@@ -427,6 +427,20 @@ def denormalize_boxes(box_data, original_image_shape):
 
 
 def apply_non_max_suppression(boxes, scores, iou_thresh=.45, top_k=200):
+    """ non maximum suppression in numpy
+
+    Arguments:
+        boxes : array of boox coordinates of shape (num_samples, 4)
+            where each columns corresponds to x_min, y_min, x_max, y_max
+        scores : array of scores given for each box in 'boxes'
+        iou_thresh : float intersection over union threshold for removing boxes
+        top_k : int Number of maximum objects per class
+
+    Returns:
+        selected_indices : array of integers Selected indices of kept boxes
+        num_selected_boxes : int Number of selected boxes
+    """
+
     selected_indices = np.zeros(shape=len(scores))
     if boxes is None or len(boxes) == 0:
             return selected_indices
