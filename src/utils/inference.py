@@ -1,5 +1,4 @@
 import numpy as np
-# from .boxes import decode_boxes
 from .boxes import unregress_boxes
 from .boxes import denormalize_boxes
 from .boxes import apply_non_max_suppression
