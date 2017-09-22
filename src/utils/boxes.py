@@ -102,6 +102,8 @@ def regress_boxes_old(assigned_prior_boxes, ground_truth_box,
                                      axis=1)
     return regressed_boxes
 
+
+"""
 def regress_boxes(asigned_prior_boxes, ground_truth_box, box_scale_factors):
     x_min_scale, y_min_scale, x_max_scale, y_max_scale = box_scale_factors
     # distance between match center and prior's center
@@ -113,7 +115,11 @@ def regress_boxes(asigned_prior_boxes, ground_truth_box, box_scale_factors):
     g_wh = torch.log(g_wh) / variances[1]
     # return target for smooth_l1_loss
     return torch.cat([g_cxcy, g_wh], 1)  # [num_priors,4]
+"""
 
+
+def regress_boxes():
+    pass
 
 
 def unregress_boxes(predicted_box_data, prior_boxes,
@@ -145,99 +151,6 @@ def unregress_boxes(predicted_box_data, prior_boxes,
         unregressed_boxes = np.concatenate([unregressed_boxes,
                                            predicted_box_data[:, 4:]], axis=-1)
     return unregressed_boxes
-
-
-def decode_boxes(predicted_boxes, prior_boxes, box_scale_factors=(.1, .2)):
-    loc_boxes = predicted_boxes[:, :4]
-    decoded_boxes = np.concatenate((prior_boxes[:, :2] +
-                                    loc_boxes[:, :2] *
-                                    box_scale_factors[0] *
-                                    prior_boxes[:, 2:],
-                                    prior_boxes[:, 2:] *
-                                    np.exp(loc_boxes[:, 2:] *
-                                    box_scale_factors[1])), 1)
-    decoded_boxes[:, :2] -= decoded_boxes[:, 2:] / 2
-    decoded_boxes[:, 2:] += decoded_boxes[:, :2]
-
-    decoded_boxes = np.clip(decoded_boxes, 0.0, 1.0)
-    if predicted_boxes.shape[1] > 4:
-        decoded_boxes = np.concatenate([decoded_boxes,
-                                       predicted_boxes[:, 4:]], axis=-1)
-    return decoded_boxes
-
-
-def decode_boxes2(predicted_boxes, prior_boxes, box_scale_factors):
-    """Decode from regressed coordinates in predicted_boxes
-    to box_coordinates in prior_boxes by applying the inverse function of the
-    regress_boxes function.
-
-    Arguments:
-        predicted_boxes: numpy array with shape (num_assigned_priors, 4)
-        indicating x_min, y_min, x_max and y_max for every prior box.
-        prior_boxes: numpy array with shape (4) indicating
-        x_min, y_min, x_max and y_max of the ground truth box.
-        box_scale_factors: numpy array with shape (num_boxes, 4)
-        Which represents a scaling of the localization gradient.
-        (https://github.com/weiliu89/caffe/issues/155)
-
-    Raises:
-        ValueError: if the number of predicted_boxes is not the same as
-        the number of prior boxes.
-
-    Returns:
-        decoded_boxes: numpy array with shape (num_predicted_boxes, 4) or
-        (num_prior_boxes, 4 + num_clases) which correspond
-        to the decoded box coordinates of all prior_boxes.
-    """
-
-    if len(predicted_boxes) != len(prior_boxes):
-        raise ValueError(
-                'Mismatch between predicted_boxes and prior_boxes length')
-
-    prior_x_min = prior_boxes[:, 0]
-    prior_y_min = prior_boxes[:, 1]
-    prior_x_max = prior_boxes[:, 2]
-    prior_y_max = prior_boxes[:, 3]
-
-    prior_width = prior_x_max - prior_x_min
-    prior_height = prior_y_max - prior_y_min
-    prior_center_x = 0.5 * (prior_x_max + prior_x_min)
-    prior_center_y = 0.5 * (prior_y_max + prior_y_min)
-
-    pred_center_x = predicted_boxes[:, 0]
-    pred_center_y = predicted_boxes[:, 1]
-    pred_width = predicted_boxes[:, 2]
-    pred_height = predicted_boxes[:, 3]
-
-    scale_center_x = box_scale_factors[0]
-    scale_center_y = box_scale_factors[1]
-    scale_width = box_scale_factors[2]
-    scale_height = box_scale_factors[3]
-
-    decoded_center_x = pred_center_x * prior_width * scale_center_x
-    decoded_center_x = decoded_center_x + prior_center_x
-    decoded_center_y = pred_center_y * prior_height * scale_center_y
-    decoded_center_y = decoded_center_y + prior_center_y
-
-    decoded_width = np.exp(pred_width * scale_width)
-    decoded_width = decoded_width * prior_width
-    decoded_height = np.exp(pred_height * scale_height)
-    decoded_height = decoded_height * prior_height
-
-    decoded_x_min = decoded_center_x - (0.5 * decoded_width)
-    decoded_y_min = decoded_center_y - (0.5 * decoded_height)
-    decoded_x_max = decoded_center_x + (0.5 * decoded_width)
-    decoded_y_max = decoded_center_y + (0.5 * decoded_height)
-
-    decoded_boxes = np.concatenate((decoded_x_min[:, None],
-                                   decoded_y_min[:, None],
-                                   decoded_x_max[:, None],
-                                   decoded_y_max[:, None]), axis=-1)
-    decoded_boxes = np.clip(decoded_boxes, 0.0, 1.0)
-    if predicted_boxes.shape[1] > 4:
-        decoded_boxes = np.concatenate([decoded_boxes,
-                                       predicted_boxes[:, 4:]], axis=-1)
-    return decoded_boxes
 
 
 def assign_prior_boxes_to_ground_truth(ground_truth_box, prior_boxes,
