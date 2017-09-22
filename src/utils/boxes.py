@@ -118,8 +118,39 @@ def regress_boxes(asigned_prior_boxes, ground_truth_box, box_scale_factors):
 """
 
 
-def regress_boxes():
-    pass
+def regress_boxes(box_data, prior_boxes, box_scale_factors):
+
+    x_min_scale, y_min_scale, x_max_scale, y_max_scale = box_scale_factors
+
+    x_min = box_data[:, 0]
+    y_min = box_data[:, 1]
+    x_max = box_data[:, 2]
+    y_max = box_data[:, 3]
+
+    x_min_prior = prior_boxes[:, 0]
+    y_min_prior = prior_boxes[:, 1]
+    x_max_prior = prior_boxes[:, 2]
+    y_max_prior = prior_boxes[:, 3]
+
+    encoded_center_x = ((x_min + x_max) / 2.) - x_min_prior
+    encoded_center_x = encoded_center_x / (x_min_scale * x_max_prior)
+    encoded_center_y = ((y_min + y_max) / 2.) - y_min_prior
+    encoded_center_y = encoded_center_y / (y_min_scale * y_max_prior)
+
+    encoded_width = (x_max - x_min) / x_max_prior
+    encoded_width = np.log(encoded_width) / x_max_scale
+    encoded_height = (y_max - y_min) / y_max_prior
+    encoded_height = np.log(encoded_height) / y_max_scale
+
+    regressed_boxes = [encoded_center_x, encoded_center_y,
+                       encoded_width, encoded_height]
+
+    regressed_boxes = np.concatenate(regressed_boxes, axis=1)
+
+    if box_data.shape[1] > 4:
+        regressed_boxes = np.concatenate([regressed_boxes,
+                                          box_data[:, 4:]], axis=-1)
+    return regressed_boxes
 
 
 def unregress_boxes(predicted_box_data, prior_boxes,
