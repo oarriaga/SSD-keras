@@ -197,13 +197,15 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
                                    name='conv4_3_norm_mbox_loc',
                                    padding='same')(conv4_3_norm)
 
-    conv4_3_norm_mbox_loc_flat = Flatten(name='conv4_3_norm_mbox_loc_flat')(conv4_3_norm_mbox_loc)
+    conv4_3_norm_mbox_loc_flat = Flatten(name='conv4_3_norm_mbox_loc_flat')(
+                                                        conv4_3_norm_mbox_loc)
 
     conv4_3_norm_mbox_conf = Conv2D(num_priors * num_classes, (3, 3),
                                     name=name,
                                     padding='same')(conv4_3_norm)
 
-    conv4_3_norm_mbox_conf_flat = Flatten(name='conv4_3_norm_mbox_conf_flat')(conv4_3_norm_mbox_conf)
+    conv4_3_norm_mbox_conf_flat = Flatten(name='conv4_3_norm_mbox_conf_flat')(
+                                                        conv4_3_norm_mbox_conf)
 
     # Prediction from fc7 ---------------------------------
     num_priors = 6
@@ -232,13 +234,15 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
                                padding='same',
                                name=name)(conv6_2)
 
-    conv6_2_mbox_conf_flat = Flatten(name='conv6_2_mbox_conf_flat')(conv6_2_mbox_conf)
+    conv6_2_mbox_conf_flat = Flatten(name='conv6_2_mbox_conf_flat')(
+                                                    conv6_2_mbox_conf)
 
     conv6_2_mbox_loc = Conv2D(num_priors * 4, (3, 3,),
                               name='conv6_2_mbox_loc',
                               padding='same')(conv6_2)
 
-    conv6_2_mbox_loc_flat = Flatten(name='conv6_2_mbox_loc_flat')(conv6_2_mbox_loc)
+    conv6_2_mbox_loc_flat = Flatten(name='conv6_2_mbox_loc_flat')(
+                                                    conv6_2_mbox_loc)
 
     # Prediction from conv7_2 --------------------------------
     num_priors = 6
@@ -249,13 +253,15 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
                                padding='same',
                                name=name)(conv7_2)
 
-    conv7_2_mbox_conf_flat = Flatten(name='conv7_2_mbox_conf_flat')(conv7_2_mbox_conf)
+    conv7_2_mbox_conf_flat = Flatten(name='conv7_2_mbox_conf_flat')(
+                                                    conv7_2_mbox_conf)
 
     conv7_2_mbox_loc = Conv2D(num_priors * 4, (3, 3),
                               padding='same',
                               name='conv7_2_mbox_loc')(conv7_2)
 
-    conv7_2_mbox_loc_flat = Flatten(name='conv7_2_mbox_loc_flat')(conv7_2_mbox_loc)
+    conv7_2_mbox_loc_flat = Flatten(name='conv7_2_mbox_loc_flat')(
+                                                    conv7_2_mbox_loc)
 
     # Prediction from conv8_2 -------------------------------
     num_priors = 4
@@ -266,13 +272,15 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
                                padding='same',
                                name=name)(conv8_2)
 
-    conv8_2_mbox_conf_flat = Flatten(name='conv8_2_mbox_conf_flat')(conv8_2_mbox_conf)
+    conv8_2_mbox_conf_flat = Flatten(name='conv8_2_mbox_conf_flat')(
+                                                    conv8_2_mbox_conf)
 
     conv8_2_mbox_loc = Conv2D(num_priors * 4, (3, 3),
                               padding='same',
                               name='conv8_2_mbox_loc')(conv8_2)
 
-    conv8_2_mbox_loc_flat = Flatten(name='conv8_2_mbox_loc_flat')(conv8_2_mbox_loc)
+    conv8_2_mbox_loc_flat = Flatten(name='conv8_2_mbox_loc_flat')(
+                                                    conv8_2_mbox_loc)
 
     # Prediction from pool6 --------------------------------------------
     """
@@ -281,7 +289,8 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
     if num_classes != 21:
         name += '_{}'.format(num_classes)
 
-    pool6_mbox_loc_flat = Dense(num_priors * 4, name='pool6_mbox_loc_flat')(pool6)
+    pool6_mbox_loc_flat = Dense(num_priors * 4,
+                                name='pool6_mbox_loc_flat')(pool6)
 
     pool6_mbox_conf_flat = Dense(num_priors * num_classes, name=name)(pool6)
     """
@@ -293,15 +302,15 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
                                padding='same',
                                name=name)(conv9_2)
 
-    pool6_mbox_conf_flat = Flatten(name='pool6_mbox_loc_flat')(conv9_2_mbox_conf)
+    pool6_mbox_conf_flat = Flatten(name='pool6_mbox_loc_flat')(
+                                                conv9_2_mbox_conf)
 
     conv9_2_mbox_loc = Conv2D(num_priors * 4, (3, 3),
                               padding='same',
                               name='pool6_mbox_loc')(conv9_2)
 
-    pool6_mbox_loc_flat = Flatten(name='pool6_2_mbox_loc_flat')(conv9_2_mbox_loc)
-
-
+    pool6_mbox_loc_flat = Flatten(name='pool6_2_mbox_loc_flat')(
+                                                conv9_2_mbox_loc)
 
     # Gather all predictions -------------------------------------------
     mbox_loc = concatenate([conv4_3_norm_mbox_loc_flat,
@@ -349,6 +358,7 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
 
     return model
 
+
 if __name__ == "__main__":
     from prior_box import PriorBox
     model = SSD300()
@@ -358,4 +368,3 @@ if __name__ == "__main__":
     prior_boxes = prior_boxes.numpy()
     print(prior_boxes.shape)
     model.summary()
-
