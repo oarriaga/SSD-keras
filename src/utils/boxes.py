@@ -238,30 +238,6 @@ def assign_prior_boxes(prior_boxes, ground_truth_data, num_classes,
     return assignments
 
 
-def load_model_configurations(model):
-    """
-    Arguments:
-        model: A SSD model with PriorBox layers that indicate the
-        parameters of the prior boxes to be created.
-
-    Returns:
-        model_configurations: A dictionary of the model parameters.
-    """
-    model_configurations = []
-    for layer in model.layers:
-        layer_type = layer.__class__.__name__
-        if layer_type == 'PriorBox':
-            layer_data = {}
-            layer_data['layer_width'] = layer.input_shape[1]
-            layer_data['layer_height'] = layer.input_shape[2]
-            layer_data['min_size'] = layer.min_size
-            layer_data['max_size'] = layer.max_size
-            layer_data['aspect_ratios'] = layer.aspect_ratios
-            layer_data['num_prior'] = len(layer.aspect_ratios)
-            model_configurations.append(layer_data)
-    return model_configurations
-
-
 def create_prior_boxes(configuration=None):
     if configuration is None:
         configuration = get_configuration_file()
@@ -320,6 +296,7 @@ def denormalize_boxes(box_data, original_image_shape):
         or (num_samples, 4 + num_classes) containing the original box
         coordinates.
     """
+    # TODO: check of the copy is necessary
     x_min = box_data[:, 0].copy()
     y_min = box_data[:, 1].copy()
     x_max = box_data[:, 2].copy()
