@@ -3,5 +3,5 @@ Fix regress_boxes function
 Clean pytorch utils
 Clean evaluation code
 Add training script
+Clean loss function
 Test training script
-
