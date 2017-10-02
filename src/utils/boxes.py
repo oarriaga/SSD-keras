@@ -225,7 +225,7 @@ def assign_prior_boxes_to_ground_truth(ground_truth_box, prior_boxes,
 
 
 def assign_prior_boxes(prior_boxes, ground_truth_data, num_classes,
-                       box_scale_factors, regress=True,
+                       box_scale_factors=[.1, .1, .2, .2], regress=True,
                        overlap_threshold=.5, background_id=0):
     """ Assign and regress prior boxes to all ground truth samples.
     Arguments:
@@ -312,6 +312,15 @@ def get_configuration_file():
                      'aspect_ratios': [[2], [2, 3], [2, 3], [2, 3], [2], [2]],
                      'variance': [0.1, 0.2]}
     return configuration
+
+
+def denormalize_box(box_coordinates, image_shape):
+    height, width = image_shape
+    x_min = int(box_coordinates[0] * width)
+    y_min = int(box_coordinates[1] * height)
+    x_max = int(box_coordinates[2] * width)
+    y_max = int(box_coordinates[3] * height)
+    return (x_min, y_min, x_max, y_max)
 
 
 def denormalize_boxes(box_data, original_image_shape):
