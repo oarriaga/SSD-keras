@@ -42,8 +42,8 @@ class VideoDemo(object):
             image_array = np.expand_dims(image_array, 0)
             predictions = model.predict(image_array)
             detections = detect(predictions, self.prior_boxes)
-            plot_detections(detections, frame, self.arg_to_class,
-                            self.colors, 0.6)
+            plot_detections(detections, frame, 0.6,
+                            self.arg_to_class, self.colors)
             cv2.imshow('webcam', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
