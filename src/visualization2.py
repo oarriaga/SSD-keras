@@ -6,6 +6,7 @@ from utils.preprocessing import load_image
 from utils.inference import plot_box_data
 from utils.inference import get_colors
 from utils.boxes import assign_prior_boxes
+from utils.boxes import to_point_form
 import matplotlib.pyplot as plt
 
 
@@ -40,6 +41,7 @@ image_path = '../images/fish-bike.jpg'
 # input_shape = model.input_shape[1:3]
 input_shape = (300, 300)
 image_array = load_image(image_path, input_shape)
+prior_boxes = to_point_form(prior_boxes)
 box_coordinates = prior_boxes[6010:6020, :]
 plot_box_data(box_coordinates, image_array)
 plt.imshow(image_array)
@@ -66,5 +68,3 @@ image_array = load_image(image_path, input_shape)
 plot_box_data(positive_boxes, image_array, arg_to_class, colors=colors)
 plt.imshow(image_array)
 plt.show()
-
-
