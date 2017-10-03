@@ -115,8 +115,6 @@ def plot_single_box_data(box_data, original_image_array, arg_to_class=None,
         class_score = class_scores[class_arg]
         coordinates = box_data[:4]
         color = colors[class_arg]
-        print(arg_to_class)
-        print(class_arg)
         class_name = arg_to_class[class_arg]
         display_text = '{:0.2f}, {}'.format(class_score, class_name)
         x_min, y_min, x_max, y_max = denormalize_box(coordinates, image_shape)

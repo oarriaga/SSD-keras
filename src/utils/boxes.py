@@ -184,6 +184,22 @@ def unregress_boxes(predicted_box_data, prior_boxes,
     return unregressed_boxes
 
 
+def to_point_form(boxes):
+
+    center_x = boxes[:, 0]
+    center_y = boxes[:, 1]
+    width = boxes[:, 2]
+    height = boxes[:, 3]
+
+    x_min = center_x - (width / 2.)
+    x_max = center_x + (width / 2.)
+    y_min = center_y - (height / 2.)
+    y_max = center_y + (height / 2.)
+
+    return np.concatenate([x_min[:, None], y_min[:, None],
+                           x_max[:, None], y_max[:, None]], axis=1)
+
+
 def assign_prior_boxes_to_ground_truth(ground_truth_box, prior_boxes,
                                        box_scale_factors, regress=True,
                                        overlap_threshold=.5, return_iou=True):
