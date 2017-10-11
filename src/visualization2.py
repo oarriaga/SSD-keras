@@ -7,6 +7,7 @@ from utils.inference import plot_box_data
 from utils.inference import get_colors
 from utils.boxes import assign_prior_boxes
 from utils.boxes import to_point_form
+from utils.boxes import unregress_boxes
 import matplotlib.pyplot as plt
 
 
@@ -42,7 +43,7 @@ image_path = '../images/fish-bike.jpg'
 input_shape = (300, 300)
 image_array = load_image(image_path, input_shape)
 prior_boxes = to_point_form(prior_boxes)
-box_coordinates = prior_boxes[6010:6020, :]
+box_coordinates = prior_boxes[7010:7015, :]
 plot_box_data(box_coordinates, image_array)
 plt.imshow(image_array)
 plt.show()
@@ -60,11 +61,35 @@ plot_box_data(box_data, image_array, arg_to_class, colors=colors)
 plt.imshow(image_array)
 plt.show()
 
+# assigned boxes
 assigned_boxes = assign_prior_boxes(prior_boxes, box_data, len(class_names),
                                     regress=False, overlap_threshold=.5)
 positive_mask = assigned_boxes[:, 4] != 1
 positive_boxes = assigned_boxes[positive_mask]
 image_array = load_image(image_path, input_shape)
 plot_box_data(positive_boxes, image_array, arg_to_class, colors=colors)
+plt.imshow(image_array)
+plt.show()
+
+# regressed boxes
+assigned_regressed_boxes = assign_prior_boxes(
+        prior_boxes, box_data, len(class_names),
+        regress=True, overlap_threshold=.5)
+positive_mask = assigned_regressed_boxes[:, 4] != 1
+regressed_positive_boxes = assigned_regressed_boxes[positive_mask]
+image_array = load_image(image_path, input_shape)
+plot_box_data(regressed_positive_boxes, image_array,
+              arg_to_class, colors=colors)
+plt.imshow(image_array)
+plt.show()
+
+
+# un-regressed boxes
+assigned_unregressed_boxes = unregress_boxes(assigned_regressed_boxes,
+                                             prior_boxes)
+unregressed_positive_boxes = assigned_unregressed_boxes[positive_mask]
+image_array = load_image(image_path, input_shape)
+plot_box_data(unregressed_positive_boxes, image_array,
+              arg_to_class, colors=colors)
 plt.imshow(image_array)
 plt.show()
