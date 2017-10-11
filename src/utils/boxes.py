@@ -118,38 +118,35 @@ def regress_boxes(asigned_prior_boxes, ground_truth_box, box_scale_factors):
 """
 
 
-def regress_boxes(box_data, prior_boxes, box_scale_factors):
+def regress_boxes(assigned_prior_boxes, ground_truth_box, box_scale_factors):
 
     x_min_scale, y_min_scale, x_max_scale, y_max_scale = box_scale_factors
 
-    x_min = box_data[:, 0]
-    y_min = box_data[:, 1]
-    x_max = box_data[:, 2]
-    y_max = box_data[:, 3]
+    x_min_priors = assigned_prior_boxes[:, 0]
+    y_min_priors = assigned_prior_boxes[:, 1]
+    x_max_priors = assigned_prior_boxes[:, 2]
+    y_max_priors = assigned_prior_boxes[:, 3]
 
-    x_min_prior = prior_boxes[:, 0]
-    y_min_prior = prior_boxes[:, 1]
-    x_max_prior = prior_boxes[:, 2]
-    y_max_prior = prior_boxes[:, 3]
+    x_min = ground_truth_box[0]
+    y_min = ground_truth_box[1]
+    x_max = ground_truth_box[2]
+    y_max = ground_truth_box[3]
 
-    encoded_center_x = ((x_min + x_max) / 2.) - x_min_prior
-    encoded_center_x = encoded_center_x / (x_min_scale * x_max_prior)
-    encoded_center_y = ((y_min + y_max) / 2.) - y_min_prior
-    encoded_center_y = encoded_center_y / (y_min_scale * y_max_prior)
+    encoded_center_x = ((x_min + x_max) / 2.) - x_min_priors
+    encoded_center_x = encoded_center_x / (x_min_scale * x_max_priors)
+    encoded_center_y = ((y_min + y_max) / 2.) - y_min_priors
+    encoded_center_y = encoded_center_y / (y_min_scale * y_max_priors)
 
-    encoded_width = (x_max - x_min) / x_max_prior
+    encoded_width = (x_max - x_min) / x_max_priors
     encoded_width = np.log(encoded_width) / x_max_scale
-    encoded_height = (y_max - y_min) / y_max_prior
+    encoded_height = (y_max - y_min) / y_max_priors
     encoded_height = np.log(encoded_height) / y_max_scale
 
-    regressed_boxes = [encoded_center_x, encoded_center_y,
-                       encoded_width, encoded_height]
+    regressed_boxes = np.concatenate([encoded_center_x[:, None],
+                                      encoded_center_y[:, None],
+                                      encoded_width[:, None],
+                                      encoded_height[:, None]], axis=1)
 
-    regressed_boxes = np.concatenate(regressed_boxes, axis=1)
-
-    if box_data.shape[1] > 4:
-        regressed_boxes = np.concatenate([regressed_boxes,
-                                          box_data[:, 4:]], axis=-1)
     return regressed_boxes
 
 
@@ -201,8 +198,9 @@ def to_point_form(boxes):
 
 
 def assign_prior_boxes_to_ground_truth(ground_truth_box, prior_boxes,
-                                       box_scale_factors, regress=True,
-                                       overlap_threshold=.5, return_iou=True):
+                                       box_scale_factors=[.1, .1, .2, .2],
+                                       regress=True, overlap_threshold=.5,
+                                       return_iou=True):
     """ Assigns and regresses prior boxes to a single ground_truth_box
     data sample.
     TODO: Change this function so that it does not regress the boxes
