@@ -360,11 +360,5 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
 
 
 if __name__ == "__main__":
-    from prior_box import PriorBox
     model = SSD300()
-    print(model.output_shape)
-    prior_box = PriorBox()
-    prior_boxes = prior_box.forward()
-    prior_boxes = prior_boxes.numpy()
-    print(prior_boxes.shape)
     model.summary()
