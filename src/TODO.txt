@@ -1,5 +1,3 @@
-Add visualization example
-Fix regress_boxes function
 Clean pytorch utils
 Clean evaluation code
 Add training script
