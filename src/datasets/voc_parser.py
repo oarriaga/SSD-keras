@@ -94,7 +94,7 @@ class VOCParser(object):
             image_data = np.hstack((bounding_boxes, one_hot_classes))
             if len(bounding_boxes.shape) == 1:
                 image_data = np.expand_dims(image_data, axis=0)
-            self.data[image_name] = image_data
+            self.data[self.images_path + image_name] = image_data
             self.difficult_objects[image_name] = difficulties
 
     def _to_one_hot(self, class_name):
