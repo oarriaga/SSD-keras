@@ -2,11 +2,14 @@ import glob
 
 
 def get_class_names(dataset_name='VOC2007'):
-    if set(dataset_name).issubset(['VOC2007', 'VOC2012']):
+
+    if (set(dataset_name).issubset(['VOC2007', 'VOC2012'])
+       or dataset_name == 'VOC2007'):
         class_names = ['background', 'aeroplane', 'bicycle', 'bird', 'boat',
                        'bottle', 'bus', 'car', 'cat', 'chair', 'cow',
                        'diningtable', 'dog', 'horse', 'motorbike', 'person',
                        'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
+
     elif dataset_name == 'COCO':
         class_names = ['background', 'person', 'bicycle', 'car', 'motorcycle',
                        'airplane', 'bus', 'train', 'truck', 'boat',
