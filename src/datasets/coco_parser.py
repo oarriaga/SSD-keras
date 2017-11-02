@@ -17,15 +17,15 @@ class COCOParser(object):
             self.coco_id_to_class_arg = dict(zip(coco_ids, one_hot_ids))
             self.class_names = ['background'] + self.class_names
             self.num_classes = len(self.class_names)
-        elif len(self.class_names) > 1:
-            raise NotImplementedError('Only one or all classes supported')
-        self.data = dict()
+        else:
+            """
+            https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocoDemo.ipynb
+            catIds = self.coco.getCatIds(catNms=self.class_names)
+            imgIds = self.coco.getImgIds(catIds=catIds)
+            imgIds = self.coco.getImgIds(imgIds=[324158])
+            """
 
-    def get_data(self):
-        self._get_data()
-        return self.data
-
-    def _get_data(self):
+    def load_data(self):
         image_ids = self.coco.getImgIds()
         for image_id in image_ids:
             image_data = self.coco.loadImgs(image_id)[0]
@@ -43,25 +43,19 @@ class COCOParser(object):
                 class_arg = self.coco_id_to_class_arg[coco_id]
                 one_hot_class = self._to_one_hot(class_arg)
                 coco_coordinates = annotations[object_arg]['bbox']
-                # print('coco_coordinates:', coco_coordinates)
-                x_min = (coco_coordinates[0])  # / width
-                y_min = (coco_coordinates[1])  # / height
-                x_max = (x_min + coco_coordinates[2])  # / width
-                y_max = (y_min + coco_coordinates[3])  # / height
-                # print('transformed_coordinates:',
-                # [x_min, y_min, x_max, y_max])
-                x_min = x_min / width
-                y_min = y_min / height
-                x_max = x_max / width
-                y_max = y_max / height
-                # print('normalized_coordinates:',
-                # [x_min, y_min, x_max, y_max])
+
+                x_min = coco_coordinates[0] / width
+                y_min = coco_coordinates[1] / height
+                x_max = x_min + coco_coordinates[2] / width
+                y_max = y_min + coco_coordinates[3] / height
+
                 ground_truth = [x_min, y_min, x_max, y_max] + one_hot_class
                 image_ground_truth.append(ground_truth)
             image_ground_truth = np.asarray(image_ground_truth)
             if len(image_ground_truth.shape) == 1:
                 image_ground_truth = np.expand_dims(image_ground_truth, 0)
             self.data[image_file_name] = image_ground_truth
+        return self.data
 
     def _to_one_hot(self, class_arg):
         one_hot_vector = [0] * self.num_classes

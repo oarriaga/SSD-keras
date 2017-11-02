@@ -20,13 +20,13 @@ class VOCParser(object):
     """
 
     def __init__(self, dataset_name='VOC2007', split='train',
-                 class_names='all', with_difficult_objects=False,
+                 class_names='all', with_difficult_objects=True,
                  dataset_path='../datasets/VOCdevkit/'):
 
-        if dataset_name not in ['VOC2007', 'VOC2010']:
+        if dataset_name not in ['VOC2007', 'VOC2012']:
             raise Exception('Invalid dataset name.')
 
-        if split not in ['train', 'val', 'test']:
+        if split not in ['train', 'val', 'trainval', 'test', 'all']:
             raise Exception('Invalid split name.')
 
         # creating data set prefix paths variables
