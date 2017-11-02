@@ -1,12 +1,10 @@
 import numpy as np
 from random import shuffle
-import cv2
 
 from .preprocessing import load_image
 from .preprocessing import B_MEAN, G_MEAN, R_MEAN
-# from .preprocessing import preprocess_images
 from .boxes import assign_prior_boxes
-from .pytorch_augmentations import SSDAugmentation
+from .augmentations import SSDAugmentation
 
 
 class ImageGenerator(object):
