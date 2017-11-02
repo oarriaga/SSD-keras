@@ -1,3 +1,9 @@
+Fix API with dataset manager to take a dictionary with dataset_name:split
+Fix Visualization to work with new key values being the complete path
+check how load only set of weights and not initialize the network with all pre-trained weights
+
+
+
 Clean pytorch utils
 Clean evaluation code
 Add training script
