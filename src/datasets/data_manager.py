@@ -1,5 +1,6 @@
 from .voc_parser import VOCParser
 from .data_utils import get_class_names
+from .data_utils import merge_two_dictionaries
 
 
 class DataManager(object):
@@ -16,19 +17,29 @@ class DataManager(object):
         self.dataset_path = dataset_path
         self.images_path = None
         self.arg_to_class = None
-        self.ground_truth_data = None
 
     def load_data(self):
         if self.dataset_name == 'VOC2007':
-            self._load_VOC2007()
-        return self.ground_truth_data
+            ground_truth_data = self._load_VOC(self.dataset_name, self.split)
+        if self.dataset_name == 'VOC2012':
+            ground_truth_data = self._load_VOC(self.dataset_name, self.split)
+        if isinstance(self.dataset_name, list):
+            if not isinstance(self.split, list):
+                raise Exception("'split' should also be a list")
+            if set(self.dataset_name).issubset(['VOC2007', 'VOC2012']):
+                data_0 = self._load_VOC(self.dataset_name[0], self.split[0])
+                data_1 = self._load_VOC(self.dataset_name[1], self.split[1])
+                ground_truth_data = merge_two_dictionaries(data_0, data_1)
 
-    def _load_VOC2007(self):
-        self.parser = VOCParser(self.dataset_name,
-                                self.split,
+        return ground_truth_data
+
+    def _load_VOC(self, dataset_name, split):
+        self.parser = VOCParser(dataset_name,
+                                split,
                                 self.class_names,
                                 self.with_difficult_objects,
                                 self.dataset_path)
         self.images_path = self.parser.images_path
         self.arg_to_class = self.parser.arg_to_class
-        self.ground_truth_data = self.parser.load_data()
+        ground_truth_data = self.parser.load_data()
+        return ground_truth_data
