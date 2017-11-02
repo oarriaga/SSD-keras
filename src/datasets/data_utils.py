@@ -4,7 +4,7 @@ import glob
 def get_class_names(dataset_name='VOC2007'):
 
     if (set(dataset_name).issubset(['VOC2007', 'VOC2012'])
-       or dataset_name == 'VOC2007'):
+       or dataset_name == 'VOC2007' or dataset_name == 'VOC2012'):
         class_names = ['background', 'aeroplane', 'bicycle', 'bird', 'boat',
                        'bottle', 'bus', 'car', 'cat', 'chair', 'cow',
                        'diningtable', 'dog', 'horse', 'motorbike', 'person',
