@@ -13,7 +13,7 @@ from .layers import Normalize
 
 
 def SSD300(input_shape=(300, 300, 3), num_classes=21,
-           weights_path=None, frozen_layers=None):
+           weights_path=None, frozen_layers=None, randomize_top=False):
 
     input_layer = Input(shape=input_shape)
 
@@ -349,7 +349,18 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
     model = Model(inputs=input_layer, outputs=predictions)
 
     if weights_path is not None:
-        model.load_weights(weights_path, by_name=True)
+        if (randomize_top and (frozen_layers is not None)):
+            original_names = [layer.name for layer in model.layers]
+            for layer_arg, layer in enumerate(model.layers):
+                if layer.name not in frozen_layers:
+                    layer.name = 'tmp_' + str(layer_arg)
+
+            model.load_weights(weights_path, by_name=True)
+
+            for layer_arg, layer in enumerate(model.layers):
+                layer.name = original_names[layer_arg]
+        else:
+            model.load_weights(weights_path, by_name=True)
 
     if frozen_layers is not None:
         for layer in model.layers:
