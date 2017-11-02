@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 # data manager
 # ------------------------------------------------------------------
 split = 'train'
-dataset_name = 'VOC2007'
+dataset_name = 'VOC2012'
 dataset_manager = DataManager(dataset_name, split)
 ground_truth_data = dataset_manager.load_data()
 class_names = dataset_manager.class_names
@@ -98,11 +98,11 @@ plt.show()
 
 # data augmentations
 # ------------------------------------------------------------------
-data_manager = DataManager('VOC2007', 'train')
+data_manager = DataManager(dataset_name, 'train')
 train_data = data_manager.load_data()
 arg_to_class = data_manager.arg_to_class
 colors = get_colors(25)
-val_data = DataManager('VOC2007', 'val').load_data()
+val_data = DataManager(dataset_name, 'val').load_data()
 image_prefix = dataset_manager.images_path
 generator = ImageGenerator(train_data, val_data, prior_boxes,
                            batch_size=21, path_prefix=image_prefix)

@@ -2,7 +2,7 @@ import glob
 
 
 def get_class_names(dataset_name='VOC2007'):
-    if dataset_name == 'VOC2007':
+    if set(dataset_name).issubset(['VOC2007', 'VOC2012']):
         class_names = ['background', 'aeroplane', 'bicycle', 'bird', 'boat',
                        'bottle', 'bus', 'car', 'cat', 'chair', 'cow',
                        'diningtable', 'dog', 'horse', 'motorbike', 'person',
@@ -37,3 +37,9 @@ def get_arg_to_class(class_names):
 
 def list_files_in_directory(path_name='*'):
     return glob.glob(path_name)
+
+
+def merge_two_dictionaries(dict_1, dict_2):
+    merged_dict = dict_1.copy()
+    merged_dict.update(dict_2)
+    return merged_dict
