@@ -1,6 +1,5 @@
 import random
 from datasets.data_manager import DataManager
-# from models.ssd import SSD300
 from utils.boxes import create_prior_boxes
 from utils.preprocessing import load_image
 from utils.inference import plot_box_data
@@ -54,7 +53,8 @@ plt.show()
 # ------------------------------------------------------------------
 image_name, box_data = random.sample(ground_truth_data.items(), 1)[0]
 print('Data sample: \n', box_data)
-image_path = dataset_manager.images_path + image_name
+# image_path = dataset_manager.images_path + image_name
+image_path = image_name
 arg_to_class = dataset_manager.arg_to_class
 colors = get_colors(len(class_names))
 image_array = load_image(image_path, input_shape)
@@ -103,9 +103,10 @@ train_data = data_manager.load_data()
 arg_to_class = data_manager.arg_to_class
 colors = get_colors(25)
 val_data = DataManager(dataset_name, 'val').load_data()
-image_prefix = dataset_manager.images_path
+# image_prefix = dataset_manager.images_path
 generator = ImageGenerator(train_data, val_data, prior_boxes,
-                           batch_size=21, path_prefix=image_prefix)
+                           batch_size=21)
+# , path_prefix=image_prefix)
 generated_data = next(generator.flow('train'))
 transformed_image_batch = generated_data[0]['input_1']
 generated_output = generated_data[1]['predictions']

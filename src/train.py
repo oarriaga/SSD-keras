@@ -22,8 +22,7 @@ frozen_layers = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
 
 model = SSD300(image_shape, num_classes, weights_path, frozen_layers)
 multibox_loss = MultiboxLoss(num_classes, neg_pos_ratio=2.0).compute_loss
-model.compile(Adam(lr=3e-4), loss=multibox_loss, metrics=['acc'])
-
+model.compile(Adam(lr=3e-4), loss=multibox_loss)
 
 prior_boxes = create_prior_boxes()
 generator = ImageGenerator(train_data, val_data, prior_boxes, batch_size)
