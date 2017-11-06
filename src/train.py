@@ -11,7 +11,7 @@ from keras.optimizers import Adam
 from utils.data_augmentation import ImageGenerator
 from utils.boxes import create_prior_boxes
 
-batch_size = 3
+batch_size = 5
 num_epochs = 2
 image_shape = (300, 300, 3)
 
@@ -54,4 +54,7 @@ model.fit_generator(generator.flow(mode='train'),
                     epochs=num_epochs, verbose=1,
                     callbacks=callbacks,
                     validation_data=generator.flow(mode='val'),
-                    validation_steps=int(len(val_data) / batch_size))
+                    validation_steps=int(len(val_data) / batch_size),
+                    use_multiprocessing=True,
+                    max_queue_size=5,
+                    workers=3)
