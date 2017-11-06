@@ -56,8 +56,8 @@ if __name__ == "__main__":
     from utils.boxes import create_prior_boxes
 
     dataset_name = 'VOC2007'
-    # weights_path = '../trained_models/SSD300_weights.hdf5'
-    weights_path = '../trained_models/weights.143-1.74.hdf5'
+    weights_path = '../trained_models/SSD300_weights.hdf5'
+    # weights_path = '../trained_models/weights.143-1.74.hdf5'
     model = SSD300(weights_path=weights_path)
     prior_boxes = create_prior_boxes()
     video = VideoDemo(prior_boxes, dataset_name)
