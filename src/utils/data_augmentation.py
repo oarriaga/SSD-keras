@@ -5,6 +5,7 @@ from .preprocessing import load_image
 from .preprocessing import B_MEAN, G_MEAN, R_MEAN
 from .boxes import assign_prior_boxes
 from .augmentations import SSDAugmentation
+from .multiprocessing_generator import threadsafe_generator
 
 
 class ImageGenerator(object):
@@ -20,6 +21,7 @@ class ImageGenerator(object):
         self.box_scale_factors = box_scale_factors
         self.batch_size = batch_size
 
+    @threadsafe_generator
     def flow(self, mode='train'):
         if mode == 'train':
             keys = list(self.train_data.keys())
