@@ -9,3 +9,4 @@ Clean evaluation code
 Add training script
 Clean loss function
 Test training script
+Add again image demo
