@@ -388,6 +388,46 @@ class PhotometricDistort(object):
 
 
 class SSDAugmentation(object):
+    def __init__(self, mode='train', size=300, mean=(104, 117, 123)):
+        self.mean = mean
+        self.size = size
+        self.mode = mode
+
+        if self.mode == 'train':
+            self.augment = Compose([
+                ConvertFromInts(),
+                ToAbsoluteCoords(),
+                PhotometricDistort(),
+                Expand(self.mean),
+                RandomSampleCrop(),
+                RandomMirror(),
+                ToPercentCoords(),
+                Resize(self.size),
+                SubtractMeans(self.mean)
+            ])
+
+        elif self.mode == 'val':
+            self.augment = Compose([
+                ConvertFromInts(),
+                # ToAbsoluteCoords(),
+                # PhotometricDistort(),
+                # Expand(self.mean),
+                # RandomSampleCrop(),
+                # RandomMirror(),
+                # ToPercentCoords(),
+                Resize(self.size),
+                SubtractMeans(self.mean)
+            ])
+
+        else:
+            raise Exception('Invalid mode:', self.mode)
+
+    def __call__(self, img, boxes, labels):
+        return self.augment(img, boxes, labels)
+
+
+"""
+class SSDAugmentation(object):
     def __init__(self, size=300, mean=(104, 117, 123)):
         self.mean = mean
         self.size = size
@@ -405,3 +445,6 @@ class SSDAugmentation(object):
 
     def __call__(self, img, boxes, labels):
         return self.augment(img, boxes, labels)
+"""
+
+
