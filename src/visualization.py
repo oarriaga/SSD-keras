@@ -7,7 +7,7 @@ from utils.inference import get_colors
 from utils.boxes import assign_prior_boxes
 from utils.boxes import to_point_form
 from utils.boxes import unregress_boxes
-from utils.data_augmentation import ImageGenerator
+from utils.generator import ImageGenerator
 import matplotlib.pyplot as plt
 
 
