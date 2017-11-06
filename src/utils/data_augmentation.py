@@ -19,21 +19,19 @@ class ImageGenerator(object):
         self.prior_boxes = prior_boxes
         self.box_scale_factors = box_scale_factors
         self.batch_size = batch_size
-        self.transform = SSDAugmentation(300, (B_MEAN, G_MEAN, R_MEAN))
 
     def flow(self, mode='train'):
         if mode == 'train':
-            train_keys = list(self.train_data.keys())
-            shuffle(train_keys)
-            keys = train_keys
+            keys = list(self.train_data.keys())
+            shuffle(keys)
             ground_truth_data = self.train_data
         elif mode == 'val':
-            val_keys = list(self.val_data.keys())
-            shuffle(val_keys)
-            keys = val_keys
+            keys = list(self.val_data.keys())
             ground_truth_data = self.val_data
         else:
             raise Exception('invalid mode: %s' % mode)
+
+        self.transform = SSDAugmentation(mode, 300, (B_MEAN, G_MEAN, R_MEAN))
 
         while True:
             inputs = []
@@ -42,14 +40,14 @@ class ImageGenerator(object):
                 image_array = load_image(image_path, RGB=False).copy()
                 box_data = ground_truth_data[image_path].copy()
 
-                if mode == 'train':
-                    data = (image_array, box_data[:, :4], box_data[:, 4:])
-                    image_array, box_corners, labels = self.transform(*data)
-                    box_data = np.concatenate([box_corners, labels], axis=1)
+                data = (image_array, box_data[:, :4], box_data[:, 4:])
+                image_array, box_corners, labels = self.transform(*data)
+                box_data = np.concatenate([box_corners, labels], axis=1)
 
                 box_data = assign_prior_boxes(self.prior_boxes, box_data,
                                               self.num_classes,
                                               self.box_scale_factors)
+
                 inputs.append(image_array)
                 targets.append(box_data)
                 if len(targets) == self.batch_size:
