@@ -8,7 +8,7 @@ from datasets import DataManager
 from models import MultiboxLoss
 from models import SSD300
 from keras.optimizers import Adam
-from utils.data_augmentation import ImageGenerator
+from utils.generator import ImageGenerator
 from utils.boxes import create_prior_boxes
 
 batch_size = 5
