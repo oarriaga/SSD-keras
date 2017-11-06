@@ -1,4 +1,7 @@
+Add visualization script for the data augmentation pipeline
+Add train, val mode to the data augmentation pipeline
 Fix API with dataset manager to take a dictionary with dataset_name:split
+Fix API to return validation data with its corresponding split as well
 check how load only set of weights and not initialize the network with all pre-trained weights
 
 Clean pytorch utils
