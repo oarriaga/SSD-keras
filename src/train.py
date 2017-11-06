@@ -48,7 +48,7 @@ early_stop = EarlyStopping(min_delta=1e-3, patience=25, verbose=1)
 log = CSVLogger(model_path + 'SSD_scratch.log')
 callbacks = [checkpoint, plateau, early_stop, log]
 
-
+# TODO fix mode to account also for val
 model.fit_generator(generator.flow(mode='train'),
                     steps_per_epoch=int(len(train_data) / batch_size),
                     epochs=num_epochs, verbose=1,

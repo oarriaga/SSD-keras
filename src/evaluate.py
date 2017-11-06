@@ -395,7 +395,8 @@ def evaluate_detections(box_list, output_dir, dataset):
 
 
 if __name__ == '__main__':
-    weights_path = '../trained_models/SSD300_weights.hdf5'
+    # weights_path = '../trained_models/SSD300_weights.hdf5'
+    weights_path = '../trained_models/weights.143-1.74.hdf5'
     net = SSD300(weights_path=weights_path)
     print('Finished loading model!')
 
