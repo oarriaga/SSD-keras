@@ -3,14 +3,15 @@ from utils.boxes import create_prior_boxes
 from utils.inference import plot_box_data
 from utils.inference import get_colors
 from utils.boxes import unregress_boxes
-from utils.data_augmentation import ImageGenerator
+from utils.boxes import to_point_form
+from utils.generator import ImageGenerator
 import matplotlib.pyplot as plt
 
 # parameters
 dataset_name = 'VOC2012'
 batch_size = 20
 colors = get_colors(25)
-prior_boxes = create_prior_boxes()
+prior_boxes = to_point_form(create_prior_boxes())
 
 # loading training data
 data_manager = DataManager(dataset_name, 'train')
