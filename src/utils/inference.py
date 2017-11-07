@@ -104,7 +104,7 @@ def plot_single_box_data(box_data, original_image_array, arg_to_class=None,
         class_name = arg_to_class[class_arg]
         display_text = '{:0.2f}, {}'.format(class_score, class_name)
         x_min, y_min, x_max, y_max = denormalize_box(coordinates, image_shape)
-        cv2.putText(original_image_array, display_text, (x_min, y_min - 30),
+        cv2.putText(original_image_array, display_text, (x_min, y_min - 10),
                     font, .7, color, 1, cv2.LINE_AA)
         thickness = 2
 
@@ -118,7 +118,7 @@ def plot_single_box_data(box_data, original_image_array, arg_to_class=None,
         class_name = arg_to_class[class_arg]
         display_text = '{:0.2f}, {}'.format(class_score, class_name)
         x_min, y_min, x_max, y_max = denormalize_box(coordinates, image_shape)
-        cv2.putText(original_image_array, display_text, (x_min, y_min - 30),
+        cv2.putText(original_image_array, display_text, (x_min, y_min - 10),
                     font, .4, color, 1, cv2.LINE_AA)
         thickness = 1
 
