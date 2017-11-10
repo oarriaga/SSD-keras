@@ -1,4 +1,4 @@
-def scheduler(epoch, decay=0.9, base_learning_rate=3e-4):
+def scheduler(epoch, decay=0.1, base_learning_rate=3e-3):
     return base_learning_rate * decay**(epoch)
 
 
