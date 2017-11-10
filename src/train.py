@@ -13,13 +13,14 @@ from keras.optimizers import SGD
 from utils.generator import ImageGenerator
 from utils.boxes import create_prior_boxes
 from utils.boxes import to_point_form
-from utils.training_utils import scheduler
+from utils.training_utils import Scheduler
 
 batch_size = 5
 num_epochs = 10000
 image_shape = (300, 300, 3)
 box_scale_factors = [.1, .1, .2, .2]
 negative_positive_ratio = 3
+scheduled_epochs = [80, 100, 120]
 
 dataset_manager = DataManager(['VOC2007', 'VOC2012'], ['trainval', 'trainval'])
 train_data = dataset_manager.load_data()
@@ -55,14 +56,18 @@ if not os.path.exists(model_path):
     os.makedirs(model_path)
 
 save_path = model_path + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5'
-checkpoint = ModelCheckpoint(save_path, verbose=1, save_best_only=True)
-plateau = ReduceLROnPlateau(factor=0.5, patience=10, verbose=1)
-early_stop = EarlyStopping(min_delta=1e-3, patience=25, verbose=1)
-log = CSVLogger(model_path + 'SSD_scratch.log')
-learning_rate_schedule = LearningRateScheduler(scheduler)
 
+checkpoint = ModelCheckpoint(save_path, verbose=1,
+                             save_best_only=False, period=5)
+
+log = CSVLogger(model_path + 'SSD_scratch.log')
+scheduler = Scheduler(scheduled_epochs, decay=0.1, base_learning_rate=base_lr)
+learning_rate_schedule = LearningRateScheduler(scheduler.schedule)
+
+# plateau = ReduceLROnPlateau(factor=0.5, patience=10, verbose=1)
+# early_stop = EarlyStopping(min_delta=1e-3, patience=25, verbose=1)
 # callbacks = [checkpoint, plateau, early_stop, log]
-callbacks = [checkpoint, learning_rate_schedule]
+callbacks = [checkpoint, learning_rate_schedule, log]
 
 model.fit_generator(generator.flow(mode='train'),
                     steps_per_epoch=int(len(train_data) / batch_size),
