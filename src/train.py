@@ -8,7 +8,8 @@ from keras.callbacks import CSVLogger
 from datasets import DataManager
 from models import MultiboxLoss
 from models import SSD300
-from keras.optimizers import Adam
+# from keras.optimizers import Adam
+from keras.optimizers import SGD
 from utils.generator import ImageGenerator
 from utils.boxes import create_prior_boxes
 from utils.boxes import to_point_form
@@ -37,10 +38,14 @@ frozen_layers = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
                  'conv3_1', 'conv3_2', 'conv3_3', 'pool3']
 
 model = SSD300(image_shape, num_classes, weights_path, frozen_layers, True)
+
+base_lr = 3e-3
+sgd = SGD(base_lr, momentum=.9, decay=5e-4)
+
 multibox_loss = MultiboxLoss(
         num_classes, neg_pos_ratio=negative_positive_ratio).compute_loss
-base_lr = 3e-4
-model.compile(Adam(lr=3e-4), loss=multibox_loss)
+
+model.compile(sgd, loss=multibox_loss)
 
 
 # callbacks
