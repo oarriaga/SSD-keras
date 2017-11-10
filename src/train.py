@@ -1,4 +1,5 @@
 import os
+from keras.callbacks import LearningRateScheduler
 from keras.callbacks import ReduceLROnPlateau
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import EarlyStopping
@@ -11,9 +12,10 @@ from keras.optimizers import Adam
 from utils.generator import ImageGenerator
 from utils.boxes import create_prior_boxes
 from utils.boxes import to_point_form
+from utils.training_utils import scheduler
 
 batch_size = 5
-num_epochs = 2
+num_epochs = 10000
 image_shape = (300, 300, 3)
 box_scale_factors = [.1, .1, .2, .2]
 negative_positive_ratio = 3
@@ -37,6 +39,7 @@ frozen_layers = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
 model = SSD300(image_shape, num_classes, weights_path, frozen_layers, True)
 multibox_loss = MultiboxLoss(
         num_classes, neg_pos_ratio=negative_positive_ratio).compute_loss
+base_lr = 3e-4
 model.compile(Adam(lr=3e-4), loss=multibox_loss)
 
 
@@ -51,11 +54,15 @@ checkpoint = ModelCheckpoint(save_path, verbose=1, save_best_only=True)
 plateau = ReduceLROnPlateau(factor=0.5, patience=10, verbose=1)
 early_stop = EarlyStopping(min_delta=1e-3, patience=25, verbose=1)
 log = CSVLogger(model_path + 'SSD_scratch.log')
-callbacks = [checkpoint, plateau, early_stop, log]
+learning_rate_schedule = LearningRateScheduler(scheduler)
+
+# callbacks = [checkpoint, plateau, early_stop, log]
+callbacks = [checkpoint, learning_rate_schedule]
 
 model.fit_generator(generator.flow(mode='train'),
                     steps_per_epoch=int(len(train_data) / batch_size),
-                    epochs=num_epochs, verbose=1,
+                    epochs=num_epochs,
+                    verbose=1,
                     callbacks=callbacks,
                     validation_data=generator.flow(mode='val'),
                     validation_steps=int(len(val_data) / batch_size),
