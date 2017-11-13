@@ -327,13 +327,24 @@ class Expand(object):
         return image, boxes, labels
 
 
-class RandomMirror(object):
+class HorizontalFlip(object):
     def __call__(self, image, boxes, classes):
         _, width, _ = image.shape
         if random.randint(2):
             image = image[:, ::-1]
             boxes = boxes.copy()
             boxes[:, 0::2] = width - boxes[:, 2::-2]
+        return image, boxes, classes
+
+
+class VerticalFlip(object):
+    def __call__(self, image, boxes, classes):
+        height = image.shape[0]
+        if random.randint(2):
+            image = image[::-1, :]
+            boxes = boxes.copy()
+            # boxes[:, 0::2] = width - boxes[:, 2::-2]
+            boxes[:, [1, 3]] = height - boxes[:, [3, 1]]
         return image, boxes, classes
 
 
@@ -400,7 +411,8 @@ class SSDAugmentation(object):
                 PhotometricDistort(),
                 Expand(self.mean),
                 RandomSampleCrop(),
-                RandomMirror(),
+                HorizontalFlip(),
+                VerticalFlip(),
                 ToPercentCoords(),
                 Resize(self.size),
                 SubtractMeans(self.mean)
