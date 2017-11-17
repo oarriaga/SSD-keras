@@ -7,6 +7,7 @@
 from __future__ import print_function
 from utils.pytorch_parameters import VOC_CLASSES as labelmap
 from utils.boxes import create_prior_boxes
+from utils.boxes import to_point_form
 from utils.inference import detect
 from utils.pytorch_datasets import VOCDetection
 from utils.pytorch_datasets import AnnotationTransform
@@ -32,7 +33,7 @@ def str2bool(v):
 
 
 voc_root = '../datasets/VOCdevkit'
-prior_boxes = create_prior_boxes()
+prior_boxes = to_point_form(create_prior_boxes())
 
 
 parser = argparse.ArgumentParser(description='Single Shot MultiBox Detection')
@@ -395,8 +396,8 @@ def evaluate_detections(box_list, output_dir, dataset):
 
 
 if __name__ == '__main__':
-    weights_path = '../trained_models/SSD300_weights.hdf5'
-    # weights_path = '../trained_models/weights.143-1.74.hdf5'
+    # weights_path = '../trained_models/SSD300_weights.hdf5'
+    weights_path = '../trained_models/weights.07-3.59.hdf5'
     net = SSD300(weights_path=weights_path)
     print('Finished loading model!')
 
