@@ -6,16 +6,16 @@ from keras.callbacks import EarlyStopping
 from keras.callbacks import CSVLogger
 
 from datasets import DataManager
-from models import MultiboxLoss
+# from models import MultiboxLoss
+from models.experimental_loss import MultiboxLoss
 from models import SSD300
 from keras.optimizers import Adam
-from keras.optimizers import SGD
 from utils.generator import ImageGenerator
 from utils.boxes import create_prior_boxes
 from utils.boxes import to_point_form
 from utils.training_utils import scheduler
 
-batch_size = 32
+batch_size = 5
 num_epochs = 10000
 image_shape = (300, 300, 3)
 box_scale_factors = [.1, .1, .2, .2]
@@ -41,13 +41,11 @@ frozen_layers = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
                  'conv5_1', 'conv5_2', 'conv5_3', 'pool5',
                  'fc6', 'fc7']
 
-# weights_path = '../trained_models/SSD300_weights.hdf5'
-weights_path = '../trained_models/SSD_scratch_fine-tuning2/weights.02-1.63.hdf5'
-model = SSD300(image_shape, num_classes, weights_path, frozen_layers, False)
+weights_path = '../trained_models/SSD300_weights.hdf5'
+model = SSD300(image_shape, num_classes, weights_path, frozen_layers, True)
 adam = Adam(base_lr, decay=5e-4)
-# sgd = SGD(base_lr, momentum=.9, decay=5e-4)
 multibox_loss = MultiboxLoss(
-        num_classes, neg_pos_ratio=negative_positive_ratio).compute_loss
+        num_classes, negative_positive_ratio, batch_size).compute_loss
 model.compile(adam, loss=multibox_loss)
 
 
