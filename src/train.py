@@ -9,18 +9,35 @@ from datasets import DataManager
 # from models import MultiboxLoss
 from models.experimental_loss import MultiboxLoss
 from models import SSD300
-from keras.optimizers import Adam
+# from keras.optimizers import Adam
+from keras.optimizers import SGD
 from utils.generator import ImageGenerator
 from utils.boxes import create_prior_boxes
 from utils.boxes import to_point_form
-from utils.training_utils import scheduler
+from utils.training_utils import Scheduler
 
+# hyper-parameters
 batch_size = 5
 num_epochs = 10000
 image_shape = (300, 300, 3)
 box_scale_factors = [.1, .1, .2, .2]
 negative_positive_ratio = 3
-base_lr = 3e-4
+learning_rate = 3e-3
+momentum = .9
+weight_decay = 5e-4
+scheduled_epochs = [80, 100, 120]
+gamma_decay = 0.1
+randomize_top = True
+weights_path = '../trained_models/SSD300_weights.hdf5'
+model_path = '../trained_models/SSD_scratch_all/'
+save_path = model_path + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5'
+frozen_layers = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
+                 'conv2_1', 'conv2_2', 'pool2',
+                 'conv3_1', 'conv3_2', 'conv3_3', 'pool3',
+                 'conv4_1', 'conv4_2', 'conv4_3', 'pool4',
+                 'conv5_1', 'conv5_2', 'conv5_3', 'pool5',
+                 'fc6', 'fc7']
+
 
 dataset_manager = DataManager(['VOC2007', 'VOC2012'], ['trainval', 'trainval'])
 train_data = dataset_manager.load_data()
@@ -34,35 +51,26 @@ generator = ImageGenerator(train_data, val_data, prior_boxes, batch_size,
                            box_scale_factors, num_classes)
 
 # model
-frozen_layers = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
-                 'conv2_1', 'conv2_2', 'pool2',
-                 'conv3_1', 'conv3_2', 'conv3_3', 'pool3',
-                 'conv4_1', 'conv4_2', 'conv4_3', 'pool4',
-                 'conv5_1', 'conv5_2', 'conv5_3', 'pool5',
-                 'fc6', 'fc7']
-
-weights_path = '../trained_models/SSD300_weights.hdf5'
-model = SSD300(image_shape, num_classes, weights_path, frozen_layers, True)
-adam = Adam(base_lr, decay=5e-4)
-multibox_loss = MultiboxLoss(
-        num_classes, negative_positive_ratio, batch_size).compute_loss
-model.compile(adam, loss=multibox_loss)
+sgd = SGD(learning_rate, momentum, decay=weight_decay)
+multibox_loss = MultiboxLoss(num_classes, negative_positive_ratio, batch_size)
+model = SSD300(image_shape, num_classes, weights_path,
+               frozen_layers, randomize_top)
+model.compile(sgd, loss=multibox_loss.compute_loss)
 
 
 # callbacks
-model_path = '../trained_models/SSD_scratch_all/'
 if not os.path.exists(model_path):
     os.makedirs(model_path)
 
-save_path = model_path + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5'
-checkpoint = ModelCheckpoint(save_path, verbose=1, save_best_only=True, period=1)
+checkpoint = ModelCheckpoint(save_path, verbose=1, period=1)
 log = CSVLogger(model_path + 'SSD_scratch.log')
-learning_rate_schedule = LearningRateScheduler(scheduler)
+scheduler = Scheduler(scheduled_epochs, gamma_decay, learning_rate)
+learning_rate_schedule = LearningRateScheduler(scheduler.schedule)
 plateau = ReduceLROnPlateau('val_loss', factor=0.9, patience=1, verbose=1)
 early_stop = EarlyStopping('val_loss', min_delta=1e-4, patience=14, verbose=1)
-# callbacks = [checkpoint, plateau, early_stop, log, learning_rate_schedule]
-callbacks = [checkpoint, plateau, early_stop, log]
+callbacks = [checkpoint, log, learning_rate_schedule]
 
+# model fit
 model.fit_generator(generator.flow(mode='train'),
                     steps_per_epoch=int(len(train_data) / batch_size),
                     epochs=num_epochs,
