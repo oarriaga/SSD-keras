@@ -5,7 +5,7 @@ from .data_utils import merge_two_dictionaries
 
 class DataManager(object):
     def __init__(self, dataset_name='VOC2007', split='train',
-                 class_names='all', with_difficult_objects=False,
+                 class_names='all', with_difficult_objects=True,
                  dataset_path='../datasets/VOCdevkit/'):
 
         self.dataset_name = dataset_name
