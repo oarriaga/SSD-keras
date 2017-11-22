@@ -6,7 +6,6 @@ from keras.callbacks import EarlyStopping
 from keras.callbacks import CSVLogger
 
 from datasets import DataManager
-# from models import MultiboxLoss
 from models.experimental_loss import MultiboxLoss
 from models import SSD300
 # from keras.optimizers import Adam
@@ -18,7 +17,7 @@ from utils.training_utils import Scheduler
 
 # hyper-parameters
 batch_size = 5
-num_epochs = 10000
+num_epochs = 150
 image_shape = (300, 300, 3)
 box_scale_factors = [.1, .1, .2, .2]
 negative_positive_ratio = 3
@@ -29,6 +28,10 @@ scheduled_epochs = [80, 100, 120]
 gamma_decay = 0.1
 randomize_top = True
 weights_path = '../trained_models/SSD300_weights.hdf5'
+datasets = ['VOC2007', 'VOC2012']
+splits = ['trainval', 'trainval']
+class_names = 'all'
+difficult = True
 model_path = '../trained_models/SSD_scratch_all/'
 save_path = model_path + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5'
 frozen_layers = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
@@ -39,7 +42,7 @@ frozen_layers = ['input_1', 'conv1_1', 'conv1_2', 'pool1',
                  'fc6', 'fc7']
 
 
-dataset_manager = DataManager(['VOC2007', 'VOC2012'], ['trainval', 'trainval'])
+dataset_manager = DataManager(datasets, splits, class_names, difficult)
 train_data = dataset_manager.load_data()
 val_data = test_data = DataManager('VOC2007', 'test').load_data()
 class_names = dataset_manager.class_names
