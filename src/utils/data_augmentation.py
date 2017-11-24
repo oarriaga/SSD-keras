@@ -412,7 +412,7 @@ class SSDAugmentation(object):
                 Expand(self.mean),
                 RandomSampleCrop(),
                 HorizontalFlip(),
-                VerticalFlip(),
+                # VerticalFlip(),
                 ToPercentCoords(),
                 Resize(self.size),
                 SubtractMeans(self.mean)
