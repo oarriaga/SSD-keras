@@ -125,6 +125,22 @@ def to_point_form(boxes):
                            x_max[:, None], y_max[:, None]], axis=1)
 
 
+def to_center_form(boxes):
+
+    x_min = boxes[:, 0]
+    y_min = boxes[:, 1]
+    x_max = boxes[:, 2]
+    y_max = boxes[:, 3]
+
+    width = x_max - x_min
+    height = y_max - y_min
+    center_x = x_min + (width/2.)
+    center_y = y_max - (height/2.)
+
+    return np.concatenate([center_x[:, None], center_y[:, None],
+                           width[:, None], height[:, None]], axis=1)
+
+
 def assign_prior_boxes_to_ground_truth(ground_truth_box, prior_boxes,
                                        box_scale_factors=[.1, .1, .2, .2],
                                        regress=True, overlap_threshold=.5,
@@ -166,6 +182,7 @@ def assign_prior_boxes_to_ground_truth(ground_truth_box, prior_boxes,
         return regressed_boxes.ravel()
 
 
+# TODO change this name for match
 def assign_prior_boxes(prior_boxes, ground_truth_data, num_classes,
                        box_scale_factors=[.1, .1, .2, .2], regress=True,
                        overlap_threshold=.5, background_id=0):
