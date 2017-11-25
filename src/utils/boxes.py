@@ -50,30 +50,31 @@ def regress_boxes(assigned_prior_boxes, ground_truth_box, box_scale_factors):
 
     x_min_scale, y_min_scale, x_max_scale, y_max_scale = box_scale_factors
 
-    x_min_priors = assigned_prior_boxes[:, 0]
-    y_min_priors = assigned_prior_boxes[:, 1]
-    x_max_priors = assigned_prior_boxes[:, 2]
-    y_max_priors = assigned_prior_boxes[:, 3]
+    assigned_prior_boxes = to_center_form(assigned_prior_boxes)
+    center_x_prior = assigned_prior_boxes[:, 0]
+    center_y_prior = assigned_prior_boxes[:, 1]
+    w_prior = assigned_prior_boxes[:, 2]
+    h_prior = assigned_prior_boxes[:, 3]
 
     x_min = ground_truth_box[0]
     y_min = ground_truth_box[1]
     x_max = ground_truth_box[2]
     y_max = ground_truth_box[3]
 
-    encoded_center_x = ((x_min + x_max) / 2.) - x_min_priors
-    encoded_center_x = encoded_center_x / (x_min_scale * x_max_priors)
-    encoded_center_y = ((y_min + y_max) / 2.) - y_min_priors
-    encoded_center_y = encoded_center_y / (y_min_scale * y_max_priors)
+    encoded_center_x = ((x_min + x_max) / 2.) - center_x_prior
+    encoded_center_x = encoded_center_x / (x_min_scale * w_prior)
+    encoded_center_y = ((y_min + y_max) / 2.) - center_y_prior
+    encoded_center_y = encoded_center_y / (y_min_scale * h_prior)
 
-    encoded_width = (x_max - x_min) / x_max_priors
-    encoded_width = np.log(encoded_width) / x_max_scale
-    encoded_height = (y_max - y_min) / y_max_priors
-    encoded_height = np.log(encoded_height) / y_max_scale
+    encoded_w = (x_max - x_min) / w_prior
+    encoded_w = np.log(encoded_w) / x_max_scale
+    encoded_h = (y_max - y_min) / h_prior
+    encoded_h = np.log(encoded_h) / y_max_scale
 
     regressed_boxes = np.concatenate([encoded_center_x[:, None],
                                       encoded_center_y[:, None],
-                                      encoded_width[:, None],
-                                      encoded_height[:, None]], axis=1)
+                                      encoded_w[:, None],
+                                      encoded_h[:, None]], axis=1)
 
     return regressed_boxes
 
@@ -82,19 +83,25 @@ def unregress_boxes(predicted_box_data, prior_boxes,
                     box_scale_factors=[.1, .1, .2, .2]):
 
     x_min_scale, y_min_scale, x_max_scale, y_max_scale = box_scale_factors
-    x_min_predicted = predicted_box_data[:, 0]
-    y_min_predicted = predicted_box_data[:, 1]
-    x_max_predicted = predicted_box_data[:, 2]
-    y_max_predicted = predicted_box_data[:, 3]
+    encoded_center_x = predicted_box_data[:, 0]
+    encoded_center_y = predicted_box_data[:, 1]
+    encoded_w = predicted_box_data[:, 2]
+    encoded_h = predicted_box_data[:, 3]
 
-    x_min = x_min_predicted * x_min_scale * prior_boxes[:, 2]
-    x_min = x_min + prior_boxes[:, 0]
+    prior_boxes = to_center_form(prior_boxes)
+    center_x_prior = prior_boxes[:, 0]
+    center_y_prior = prior_boxes[:, 1]
+    w_prior = prior_boxes[:, 2]
+    h_prior = prior_boxes[:, 3]
 
-    y_min = y_min_predicted * y_min_scale * prior_boxes[:, 3]
-    y_min = y_min + prior_boxes[:, 1]
+    x_min = encoded_center_x * x_min_scale * w_prior
+    x_min = x_min + center_x_prior
 
-    x_max = prior_boxes[:, 2] * np.exp(x_max_predicted * x_max_scale)
-    y_max = prior_boxes[:, 3] * np.exp(y_max_predicted * y_max_scale)
+    y_min = encoded_center_y * y_min_scale * h_prior
+    y_min = y_min + center_y_prior
+
+    x_max = w_prior * np.exp(encoded_w * x_max_scale)
+    y_max = h_prior * np.exp(encoded_h * y_max_scale)
 
     unregressed_boxes = np.concatenate([x_min[:, None], y_min[:, None],
                                         x_max[:, None], y_max[:, None]],
