@@ -4,3 +4,4 @@ src/new
 trained_models
 *.pyc
 *.hdf5
+*.pkl
