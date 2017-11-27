@@ -1,3 +1,9 @@
+Refactor create_prior_boxes
+4*38*38 + 19*19*6 + 10*10*6 + 5*5*6 + 3*3*4 + 1*1*4
+
+In every coordinate of the input feature map, we predict 4 bounding boxes (possibly with different aspect ratios)
+for each class and then for each coordinate.
+
 Add visualization script for the data augmentation pipeline
 Fix API with dataset manager to take a dictionary with dataset_name:split
 Fix API to return validation data with its corresponding split as well
