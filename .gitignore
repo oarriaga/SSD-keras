@@ -5,3 +5,4 @@ trained_models
 *.pyc
 *.hdf5
 *.pkl
+*.pth
