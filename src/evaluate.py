@@ -396,8 +396,27 @@ def evaluate_detections(box_list, output_dir, dataset):
 
 
 if __name__ == '__main__':
-    # weights_path = '../trained_models/SSD300_weights.hdf5'
-    weights_path = '../trained_models/weights.07-3.59.hdf5'
+    weights_path = '../trained_models/SSD300_weights.hdf5'
+    # weights_path = '../trained_models/weights.07-3.59.hdf5'
+    # weights_path = '../trained_models/weights.03-3.37.hdf5'
+    # weights_path = '../trained_models/weights.150-3.57.hdf5'
+    # weights_path = '../trained_models/weights.02-3.29.hdf5'
+    # weights_path = '../trained_models/weights.12-4.20.hdf5'
+    # weights_path = '../trained_models/weights.26-5.21.hdf5'
+    # weights_path = '../trained_models/weights.02-3.44.hdf5'
+    # weights_path = '../trained_models/weights.22-5.01.hdf5'
+    # weights_path = '../trained_models/weights.79-6.66.hdf5'
+    # weights_path = '../trained_models/weights.02-1.63.hdf5'
+    # weights_path = '../trained_models/weights.22-3.85.hdf5' #  69
+    # weights_path = '../trained_models/weights.50-3.92.hdf5' #  69 ?
+    # weights_path = '../trained_models/weights.97-3.98.hdf5' #  70
+    # weights_path = '../trained_models/weights.52-7.71.hdf5'
+    # weights_path = '../trained_models/weights.04-3.79.hdf5'  # 71
+    # weights_path = '../trained_models/weights.17-4.40.hdf5'  # 71
+    # weights_path = '../trained_models/weights.64-5.21.hdf5'
+    # weights_path = '../trained_models/weights.116-5.49.hdf5'
+    # weights_path = '../trained_models/weights.28-3.42.hdf5'
+    # weights_path = '../trained_models/weights.19-3.37.hdf5' # 74
     net = SSD300(weights_path=weights_path)
     print('Finished loading model!')
 
