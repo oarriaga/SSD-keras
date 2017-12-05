@@ -34,6 +34,7 @@ print('Class names: \n', class_names)
 # ------------------------------------------------------------------
 # model = SSD300()
 prior_boxes = create_prior_boxes()
+prior_boxes = to_point_form(prior_boxes)
 print('Prior boxes shape:', prior_boxes.shape)
 print('Prior box example:', prior_boxes[777])
 
@@ -42,7 +43,6 @@ image_path = '../images/fish-bike.jpg'
 # input_shape = model.input_shape[1:3]
 input_shape = (300, 300)
 image_array = load_image(image_path, input_shape)
-prior_boxes = to_point_form(prior_boxes)
 box_coordinates = prior_boxes[7010:7015, :]
 plot_box_data(box_coordinates, image_array)
 plt.imshow(image_array)
