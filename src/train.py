@@ -28,7 +28,7 @@ optimizer = SGD(learning_rate, momentum, decay=weight_decay)
 decay = 0.1
 step_epochs = [154, 193, 232]
 randomize_top = True
-weights_path = '../trained_models/SSD300_weights.hdf5'
+weights_path = '../trained_models/VGG16_weights.hdf5'
 train_datasets = ['VOC2007', 'VOC2012', 'VOC2012']
 train_splits = ['trainval', 'trainval']
 val_dataset = ['VOC2007']
