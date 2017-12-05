@@ -1,7 +1,9 @@
 import os
 from keras.callbacks import LearningRateScheduler
 from keras.callbacks import ModelCheckpoint
+from keras.utils import multi_gpu_model
 from keras.callbacks import CSVLogger
+import tensorflow as tf
 
 from datasets import DataManager
 from models.experimental_loss import MultiboxLoss
@@ -14,6 +16,7 @@ from utils.training_utils import LearningRateManager
 
 # hyper-parameters
 batch_size = 5
+num_gpus = 2
 num_epochs = 233
 image_shape = (300, 300, 3)
 box_scale_factors = [.1, .1, .2, .2]
@@ -50,7 +53,9 @@ generator = ImageGenerator(train_data, val_data, prior_boxes, batch_size,
 
 # model
 multibox_loss = MultiboxLoss(num_classes, negative_positive_ratio, batch_size)
-model = SSD300(image_shape, num_classes, weights_path)
+with tf.device('/cpu:0'):
+    cpu_model = SSD300(image_shape, num_classes, weights_path)
+model = multi_gpu_model(cpu_model, num_gpus)
 model.compile(optimizer, loss=multibox_loss.compute_loss)
 
 # callbacks
