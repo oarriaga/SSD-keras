@@ -22,7 +22,7 @@ num_epochs = 233
 image_shape = (300, 300, 3)
 box_scale_factors = [.1, .1, .2, .2]
 negative_positive_ratio = 3
-learning_rate = 3e-3
+learning_rate = 1e-3
 weight_decay = 5e-4
 momentum = .9
 optimizer = SGD(learning_rate, momentum, decay=weight_decay)
@@ -32,11 +32,11 @@ randomize_top = True
 weights_path = '../trained_models/VGG16_weights.hdf5'
 train_datasets = ['VOC2007', 'VOC2012', 'VOC2012']
 train_splits = ['trainval', 'trainval']
-val_dataset = ['VOC2007']
-val_split = ['test']
+val_dataset = 'VOC2007'
+val_split = 'test'
 class_names = 'all'
 difficult_boxes = True
-model_path = '../trained_models/SSD_scratch_all/'
+model_path = '../trained_models/SSD_SGD_scratch_all/'
 save_path = model_path + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5'
 
 train_data_manager = DataManager(train_datasets, train_splits,
