@@ -1,7 +1,9 @@
 import os
 from keras.callbacks import LearningRateScheduler
-from keras.callbacks import ModelCheckpoint
+# from keras.callbacks import ModelCheckpoint
+from keras.utils import multi_gpu_model
 from keras.callbacks import CSVLogger
+import tensorflow as tf
 
 from datasets import DataManager
 from models.experimental_loss import MultiboxLoss
@@ -11,6 +13,7 @@ from utils.generator import ImageGenerator
 from utils.boxes import create_prior_boxes
 from utils.boxes import to_point_form
 from utils.training_utils import LearningRateManager
+from utils.training_utils import MultiGPUModelCheckpoint
 
 # hyper-parameters
 batch_size = 5
@@ -51,14 +54,17 @@ generator = ImageGenerator(train_data, val_data, prior_boxes, batch_size,
 
 # model
 multibox_loss = MultiboxLoss(num_classes, negative_positive_ratio, batch_size)
-model = SSD300(image_shape, num_classes, weights_path)
+with tf.device('/cpu:0'):
+    cpu_model = SSD300(image_shape, num_classes, weights_path)
+model = multi_gpu_model(cpu_model, num_gpus)
 model.compile(optimizer, loss=multibox_loss.compute_loss)
 
 # callbacks
 if not os.path.exists(model_path):
     os.makedirs(model_path)
 
-checkpoint = ModelCheckpoint(save_path, verbose=1, period=1)
+# checkpoint = ModelCheckpoint(save_path, verbose=1, period=1)
+checkpoint = MultiGPUModelCheckpoint(save_path, cpu_model)
 log = CSVLogger(model_path + 'SSD_scratch.log')
 learning_rate_manager = LearningRateManager(learning_rate, decay, step_epochs)
 learning_rate_schedule = LearningRateScheduler(learning_rate_manager.schedule)
