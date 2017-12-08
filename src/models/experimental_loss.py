@@ -40,33 +40,33 @@ class MultiboxLoss(object):
         # obtaining the number of negatives in the batch
         num_positives_per_sample = K.cast(K.sum(positive_mask, -1), 'int32')
         num_negatives_per_sample = K.cast(K.sum(negative_mask, -1), 'int32')
-        num_negatives = K.sum(num_negatives_per_sample)
+        num_negatives_in_batch = K.sum(num_negatives_per_sample)
         num_hard_negatives = self.neg_pos_ratio * num_positives_per_sample
-        num_negatives = K.minimum(num_hard_negatives, num_negatives)
-
+        num_negatives = K.minimum(num_hard_negatives, num_negatives_in_batch)
         all_negative_class_losses = class_loss * negative_mask
+
         negative_class_loss = []
         for batch_arg in range(self.batch_size):
             sample_num_negatives = num_negatives[batch_arg]
             all_negative_sample_loss = all_negative_class_losses[batch_arg]
             negative_sample_losses = tf.nn.top_k(all_negative_sample_loss,
-                                                 k=sample_num_negatives)[0]
+                                                 k=sample_num_negatives,
+                                                 sorted=True)[0]
             negative_sample_loss = K.sum(negative_sample_losses)
             negative_sample_loss = K.expand_dims(negative_sample_loss, -1)
             negative_class_loss.append(negative_sample_loss)
         negative_class_loss = K.concatenate(negative_class_loss)
 
         class_loss = positive_class_loss + negative_class_loss
-        local_loss = self.alpha * positive_local_loss
-        num_positives_per_sample = K.cast(num_positives_per_sample, 'float32')
-        total_loss = class_loss + local_loss
+        total_loss = class_loss + (self.alpha * positive_local_loss)
 
-        batch_mask = K.not_equal(num_negatives_per_sample, 0)
+        batch_mask = K.not_equal(num_positives_per_sample, 0)
         total_loss = tf.where(batch_mask, total_loss, K.zeros_like(total_loss))
 
         num_positives_per_sample = tf.where(
                 batch_mask, num_positives_per_sample,
                 K.ones_like(num_positives_per_sample))
 
+        num_positives_per_sample = K.cast(num_positives_per_sample, 'float32')
         total_loss = total_loss / num_positives_per_sample
         return total_loss
