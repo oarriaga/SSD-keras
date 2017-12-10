@@ -26,7 +26,9 @@ class MultiboxLoss(object):
 
     def compute_loss(self, y_true, y_pred):
 
-        class_loss = self.cross_entropy(y_true[:, :, 4:], y_pred[:, :, 4:])
+        # class_loss = self.cross_entropy(y_true[:, :, 4:], y_pred[:, :, 4:])
+        class_loss = K.categorical_crossentropy(y_true[:, :, 4:],
+                                                y_pred[:, :, 4:])
         local_loss = self.smooth_l1(y_true[:, :, :4], y_pred[:, :, :4])
         negative_mask = y_true[:, :, 4 + self.background_id]
         positive_mask = 1 - negative_mask
@@ -56,6 +58,7 @@ class MultiboxLoss(object):
             negative_sample_loss = K.expand_dims(negative_sample_loss, -1)
             negative_class_loss.append(negative_sample_loss)
         negative_class_loss = K.concatenate(negative_class_loss)
+        return negative_class_loss
 
         class_loss = positive_class_loss + negative_class_loss
         total_loss = class_loss + (self.alpha * positive_local_loss)
