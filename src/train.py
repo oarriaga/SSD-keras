@@ -13,8 +13,7 @@ from utils.boxes import to_point_form
 from utils.training_utils import LearningRateManager
 
 # hyper-parameters
-batch_size = 5
-num_gpus = 2
+batch_size = 32
 num_epochs = 233
 image_shape = (300, 300, 3)
 box_scale_factors = [.1, .1, .2, .2]
@@ -33,8 +32,8 @@ val_dataset = 'VOC2007'
 val_split = 'test'
 class_names = 'all'
 difficult_boxes = True
-model_path = '../trained_models/SSD_SGD_scratch_all/'
-save_path = model_path + 'weights.{:02d}-{:.2f}.hdf5'
+model_path = '../trained_models/SSD_SGD_scratch_all2/'
+save_path = model_path + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5'
 
 train_data_manager = DataManager(train_datasets, train_splits,
                                  class_names, difficult_boxes)
