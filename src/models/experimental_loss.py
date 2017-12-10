@@ -20,15 +20,19 @@ class MultiboxLoss(object):
         return K.sum(l1_smooth_loss, axis=-1)
 
     def cross_entropy(self, y_true, y_pred):
+        y_pred /= tf.reduce_sum(y_pred, axis=-1, keep_dims=True)
         y_pred = K.maximum(K.minimum(y_pred, 1 - 1e-15), 1e-15)
         cross_entropy_loss = - K.sum(y_true * K.log(y_pred), axis=-1)
         return cross_entropy_loss
 
     def compute_loss(self, y_true, y_pred):
 
-        # class_loss = self.cross_entropy(y_true[:, :, 4:], y_pred[:, :, 4:])
+        class_loss = self.cross_entropy(y_true[:, :, 4:], y_pred[:, :, 4:])
+        """
         class_loss = K.categorical_crossentropy(y_true[:, :, 4:],
                                                 y_pred[:, :, 4:])
+        """
+        # return K.concatenate([class_loss, class_loss_old], axis=0)
         local_loss = self.smooth_l1(y_true[:, :, :4], y_pred[:, :, :4])
         negative_mask = y_true[:, :, 4 + self.background_id]
         positive_mask = 1 - negative_mask
