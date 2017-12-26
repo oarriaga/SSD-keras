@@ -1,4 +1,6 @@
 import glob
+import os
+import cv2
 
 
 def get_class_names(dataset_name='VOC2007'):
@@ -46,3 +48,25 @@ def merge_two_dictionaries(dict_1, dict_2):
     merged_dict = dict_1.copy()
     merged_dict.update(dict_2)
     return merged_dict
+
+
+def crop_boxes(data, dump_path='cropped_images/'):
+    if not os.path.exists(dump_path):
+        os.makedirs(dump_path)
+    for image_path, image_data in data.items():
+        image_name = os.path.basename(image_path)
+        print(image_path)
+        image_array = cv2.imread(image_path)
+        # image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
+        h, w = image_array.shape[:2]
+        for image_arg, image_box_data in enumerate(image_data):
+            x_min, y_min, x_max, y_max = image_box_data[:4]
+            x_min = int(x_min * w)
+            y_min = int(y_min * h)
+            x_max = int(x_max * w)
+            y_max = int(y_max * h)
+            print(image_array.shape)
+            cropped_image = image_array[y_min:y_max, x_min:x_max, :]
+            image_dump_path = (dump_path + image_name[:-4] + '_' +
+                               str(image_arg) + '.jpg')
+            cv2.imwrite(image_dump_path, cropped_image)
