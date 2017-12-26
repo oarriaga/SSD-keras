@@ -5,8 +5,9 @@ import numpy as np
 
 class COCODataManager(object):
 
-    def __init__(self, annotations_path, class_names='all'):
+    def __init__(self, annotations_path, images_path, class_names='all'):
         self.coco = COCO(annotations_path)
+        self.images_path = images_path
         self.class_names = self._load_classes(class_names)
         self.num_classes = len(self.class_names)
         self._coco_id_to_class_arg = self._get_coco_id_to_class_arg()
@@ -73,5 +74,6 @@ class COCODataManager(object):
             image_ground_truth = np.asarray(image_ground_truth)
             if len(image_ground_truth.shape) == 1:
                 image_ground_truth = np.expand_dims(image_ground_truth, 0)
-            self.data[image_file_name] = image_ground_truth
+            image_full_path = self.images_path + image_file_name
+            self.data[image_full_path] = image_ground_truth
         return self.data
