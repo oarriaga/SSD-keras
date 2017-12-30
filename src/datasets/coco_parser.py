@@ -12,6 +12,8 @@ class COCODataManager(object):
         self.num_classes = len(self.class_names)
         self._coco_id_to_class_arg = self._get_coco_id_to_class_arg()
         self._coco_ids = list(self._coco_id_to_class_arg.keys())
+        self.arg_to_class = self._get_arg_to_class()
+
         self.data = dict()
         if class_names == 'all':
             self.image_ids = self.coco.getImgIds()
@@ -21,9 +23,21 @@ class COCODataManager(object):
     def _load_classes(self, class_names):
         if class_names == 'all':
             class_names = get_class_names('COCO')
+        elif 'background' not in class_names:
+            class_names = ['background'] + class_names
         return class_names
 
     def _get_coco_id_to_class_arg(self):
+        # check that all classes are valid for COCO API
+        class_names_without_background = self.class_names.copy()
+        if 'background' in class_names_without_background:
+            class_names_without_background.remove('background')
+
+        for class_name in class_names_without_background:
+            coco_id = self.coco.getCatIds(class_name)
+            if len(coco_id) == 0:
+                raise Exception('Invalid class name:', class_name)
+
         coco_ids = self.coco.getCatIds(self.class_names)
         # the + 1 is to add the background class
         one_hot_ids = list(range(1, len(coco_ids) + 1))
@@ -32,12 +46,25 @@ class COCODataManager(object):
 
     def _get_per_class_image_ids(self):
         image_ids = []
-        class_names_without_background = self.class_names
-        class_names_without_background.remove('background')
+        class_names_without_background = self.class_names.copy()
+        if 'background' in class_names_without_background:
+            class_names_without_background.remove('background')
         for class_name in class_names_without_background:
             catIds = self.coco.getCatIds(catNms=[class_name])
             image_ids = image_ids + self.coco.getImgIds(catIds=catIds)
         return image_ids
+
+    def _get_arg_to_class(self):
+        class_names_without_background = self.class_names.copy()
+        arg_to_class = dict()
+        arg_to_class[0] = 'background'
+        if 'background' in class_names_without_background:
+            class_names_without_background.remove('background')
+        for class_name in class_names_without_background:
+            coco_id = self.coco.getCatIds(class_name)[0]
+            class_arg = self._coco_id_to_class_arg[coco_id]
+            arg_to_class[class_arg] = class_name
+        return arg_to_class
 
     def _to_one_hot(self, class_arg):
         one_hot_vector = [0] * self.num_classes
