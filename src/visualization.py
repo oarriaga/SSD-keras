@@ -8,6 +8,7 @@ from utils.boxes import assign_prior_boxes
 from utils.boxes import to_point_form
 from utils.boxes import unregress_boxes
 from utils.generator import ImageGenerator
+from utils.sequencer_manager import SequenceManager
 import matplotlib.pyplot as plt
 
 
@@ -99,13 +100,19 @@ plt.show()
 # data augmentations
 # ------------------------------------------------------------------
 data_manager = DataManager(dataset_name, 'train')
+class_names = data_manager.class_names
 train_data = data_manager.load_data()
 arg_to_class = data_manager.arg_to_class
 colors = get_colors(25)
 val_data = DataManager(dataset_name, 'val').load_data()
+"""
 generator = ImageGenerator(train_data, val_data, prior_boxes,
                            batch_size=21)
 generated_data = next(generator.flow('train'))
+"""
+generator = SequenceManager(train_data, 'train', prior_boxes)
+generated_data = generator.__getitem__(10)
+
 transformed_image_batch = generated_data[0]['input_1']
 generated_output = generated_data[1]['predictions']
 for batch_arg, transformed_image in enumerate(transformed_image_batch):
@@ -113,7 +120,19 @@ for batch_arg, transformed_image in enumerate(transformed_image_batch):
     regressed_boxes = generated_output[batch_arg]
     unregressed_boxes = unregress_boxes(regressed_boxes, prior_boxes)
     unregressed_positive_boxes = unregressed_boxes[positive_mask]
+    print('Regressed boxes shape:', regressed_boxes[positive_mask].shape)
+    print('Unregressed boxes shape:', unregressed_boxes[positive_mask].shape)
     plot_box_data(unregressed_positive_boxes, transformed_image,
                   arg_to_class, colors=colors)
     plt.imshow(transformed_image.astype('uint8'))
     plt.show()
+    """
+    unregressed_assigned_boxes = assign_prior_boxes(
+            prior_boxes, box_data, len(class_names),
+            regress=False, overlap_threshold=.5)
+
+    plot_box_data(unregressed_assigned_boxes, transformed_image,
+                  arg_to_class, colors=colors)
+    plt.imshow(transformed_image.astype('uint8'))
+    plt.show()
+    """
