@@ -1,5 +1,5 @@
 # this files is taken from https://github.com/amdegroot/ssd.pytorch
-
+import random
 import cv2
 import numpy as np
 import types
@@ -396,6 +396,57 @@ class PhotometricDistort(object):
             distort = Compose(self.pd[1:])
         im, boxes, labels = distort(im, boxes, labels)
         return self.rand_light_noise(im, boxes, labels)
+
+
+class PhotometricDistort2(object):
+    def __init__(self, brightness_var=0.5, saturation_var=.5, contrast_var=.5,
+                 lighting_std=.5):
+
+        self.brightness_var = brightness_var
+        self.saturation_var = saturation_var
+        self.contrast_var = contrast_var
+        self.lighting_std = lighting_std
+        self.color_jitter = [self.saturation, self.brightness, self.contrast,
+                             self.contrast, self.lighting]
+
+    def _gray_scale(self, image_array):
+        return image_array.dot([0.299, 0.587, 0.114])
+
+    def saturation(self, image_array):
+        gray_scale = self._gray_scale(image_array)
+        alpha = 2.0 * np.random.random() * self.brightness_var
+        alpha = alpha + 1 - self.saturation_var
+        image_array = alpha * image_array + (1 - alpha) * gray_scale[:, :, None]
+        return np.clip(image_array, 0, 255)
+
+    def brightness(self, image_array):
+        alpha = 2 * np.random.random() * self.brightness_var
+        alpha = alpha + 1 - self.saturation_var
+        image_array = alpha * image_array
+        return np.clip(image_array, 0, 255)
+
+    def contrast(self, image_array):
+        gray_scale = (self._gray_scale(image_array).mean() *
+                      np.ones_like(image_array))
+        alpha = 2 * np.random.random() * self.contrast_var
+        alpha = alpha + 1 - self.contrast_var
+        image_array = image_array * alpha + (1 - alpha) * gray_scale
+        return np.clip(image_array, 0, 255)
+
+    def lighting(self, image_array):
+        covariance_matrix = np.cov(image_array.reshape(-1, 3) /
+                                   255.0, rowvar=False)
+        eigen_values, eigen_vectors = np.linalg.eigh(covariance_matrix)
+        noise = np.random.randn(3) * self.lighting_std
+        noise = eigen_vectors.dot(eigen_values * noise) * 255
+        image_array = image_array + noise
+        return np.clip(image_array, 0, 255)
+
+    def __call__(self, img, boxes, labels):
+        random.shuffle(self.color_jitter)
+        for jitter in self.color_jitter:
+            img = jitter(img)
+        return (img, boxes, labels)
 
 
 class SSDAugmentation(object):
