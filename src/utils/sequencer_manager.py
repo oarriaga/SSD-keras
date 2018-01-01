@@ -16,7 +16,7 @@ class SequenceManager(Sequence):
                  num_classes=21, seed=777):
 
         if mode not in ['train', 'val']:
-            raise Exception('Invalide mode:', mode)
+            raise Exception('Invalid mode:', mode)
 
         random.seed(seed)
         self.data = list(data.items())
