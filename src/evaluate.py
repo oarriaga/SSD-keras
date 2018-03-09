@@ -396,7 +396,7 @@ def evaluate_detections(box_list, output_dir, dataset):
 
 
 if __name__ == '__main__':
-    weights_path = '../trained_models/SSD300_weights.hdf5'
+    weights_path = '../trained_models/SSD300_weights_new.hdf5'
     # weights_path = '../trained_models/weights.07-3.59.hdf5'
     # weights_path = '../trained_models/weights.03-3.37.hdf5'
     # weights_path = '../trained_models/weights.150-3.57.hdf5'
