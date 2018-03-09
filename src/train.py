@@ -16,19 +16,19 @@ model_name = 'SSD300_VOC2007'
 weights_path = '../trained_models/SSD300_weights.hdf5'
 
 # hyper-parameters
-batch_size = 7
+batch_size = 5
 num_epochs = 250
-base_learning_rate = 3e-3
+base_learning_rate = 1e-3
 negative_positive_ratio = 2
 
 # data
+class_names = 'all'
 val_dataset, val_split = 'VOC2007', 'test'
 train_datasets, train_splits = ['VOC2007', 'VOC2012'], ['trainval', 'trainval']
 model_path = '../trained_models/' + model_name + '/'
 save_path = model_path + 'weights.{epoch:02d}-{val_loss:.2f}.hdf5'
-train_data_manager = DataManager(train_datasets, train_splits)
+train_data_manager = DataManager(train_datasets, train_splits, class_names)
 train_data = train_data_manager.load_data()
-class_names = train_data_manager.class_names
 num_classes = len(class_names)
 val_data_manager = DataManager(val_dataset, val_split, class_names, False)
 val_data = val_data_manager.load_data()
@@ -36,7 +36,7 @@ val_data = val_data_manager.load_data()
 # model
 model = SSD300(num_classes=num_classes, weights_path=weights_path)
 prior_boxes = to_point_form(create_prior_boxes())
-multibox_loss = MultiboxLoss(num_classes, negative_positive_ratio, batch_size)
+multibox_loss = MultiboxLoss(num_classes, negative_positive_ratio)
 optimizer = Adam(base_learning_rate)
 model.compile(optimizer, loss=multibox_loss.compute_loss)
 data_generator = DataGenerator(train_data, prior_boxes, batch_size,
