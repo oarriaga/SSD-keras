@@ -3,13 +3,12 @@ import tensorflow as tf
 
 
 class MultiboxLoss(object):
-    def __init__(self, num_classes, neg_pos_ratio=3, batch_size=32,
+    def __init__(self, num_classes, neg_pos_ratio=3,
                  alpha=1.0, background_id=0, max_num_negatives=300):
         self.num_classes = num_classes
         self.alpha = alpha
         self.neg_pos_ratio = neg_pos_ratio
         self.background_id = background_id
-        self.batch_size = batch_size
         self.max_num_negatives = max_num_negatives
 
     def smooth_l1(self, y_true, y_pred):
@@ -26,39 +25,28 @@ class MultiboxLoss(object):
         return cross_entropy_loss
 
     def compute_loss(self, y_true, y_pred):
-
         class_loss = self.cross_entropy(y_true[:, :, 4:], y_pred[:, :, 4:])
-
-        # return K.concatenate([class_loss, class_loss_old], axis=0)
         local_loss = self.smooth_l1(y_true[:, :, :4], y_pred[:, :, :4])
         negative_mask = y_true[:, :, 4 + self.background_id]
         positive_mask = 1 - negative_mask
 
-        # calculating the positive loss
+        # calculating the positive loss per sample
         positive_local_losses = local_loss * positive_mask
         positive_class_losses = class_loss * positive_mask
         positive_class_loss = K.sum(positive_class_losses, axis=-1)
         positive_local_loss = K.sum(positive_local_losses, axis=-1)
 
-        # obtaining the number of negatives in the batch
+        # obtaining the number of negatives in the batch per sample
         num_positives_per_sample = K.cast(K.sum(positive_mask, -1), 'int32')
         num_hard_negatives = self.neg_pos_ratio * num_positives_per_sample
         num_negatives_per_sample = K.minimum(num_hard_negatives,
                                              self.max_num_negatives)
         negative_class_losses = class_loss * negative_mask
 
-        negative_class_loss = []
-        for sample_arg in range(self.batch_size):
-            num_negatives_in_sample = num_negatives_per_sample[sample_arg]
-            negative_sample_loss = negative_class_losses[sample_arg]
-            selected_negative_sample_losses = tf.nn.top_k(
-                                    negative_sample_loss,
-                                    k=num_negatives_in_sample,
-                                    sorted=True)[0]
-            negative_sample_loss = K.sum(selected_negative_sample_losses)
-            negative_sample_loss = K.expand_dims(negative_sample_loss, -1)
-            negative_class_loss.append(negative_sample_loss)
-        negative_class_loss = K.concatenate(negative_class_loss)
+        elements = (negative_class_losses, num_negatives_per_sample)
+        negative_class_loss = tf.map_fn(
+                lambda x: K.sum(tf.nn.top_k(x[0], x[1])[0]),
+                elements, dtype=tf.float32)
 
         class_loss = positive_class_loss + negative_class_loss
         total_loss = class_loss + (self.alpha * positive_local_loss)
