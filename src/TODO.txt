@@ -1,3 +1,7 @@
+[X] Clean SSD300 model to use proper naming conventions.
+[X] Evaluate refactored model.
+[ ] Check if the sequence_manager can be used with the experimental_loss.
+
 BUG:
 Evaluation script might be incorrect when loading their RGB values differently
 
