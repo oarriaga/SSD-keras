@@ -129,15 +129,23 @@ def construct_SSD(base_model, num_classes=21,
 
 
 def make_prior_boxes(
-            model, feature_map_prefix='prediction_feature_map_',
+            model, feature_map_prefix='branch_',
             layer_aspect_ratios=[[2], [2, 3], [2, 3], [2, 3], [2], [2]],
             min_sizes=[30, 60, 111, 162, 213, 264],
             max_sizes=[60, 111, 162, 213, 264, 315]):
+
     image_size = model.input_shape[1]
-    feature_map_sizes = []
+    branch_layer_names = []
     for layer in model.layers:
         if feature_map_prefix in layer.name:
-            feature_map_sizes.append(layer.output_shape[1])
+            branch_layer_names.append(layer.name)
+            # feature_map_sizes.append(layer.output_shape[1])
+
+    # this sort will not work when the layers are bigger than 9
+    feature_map_sizes = []
+    for layer_name in sorted(branch_layer_names):
+        layer = model.get_layer(layer_name)
+        feature_map_sizes.append(layer.output_shape[1])
 
     prior_boxes = []
     for feature_map_arg, feature_map_size in enumerate(feature_map_sizes):

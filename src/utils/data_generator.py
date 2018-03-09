@@ -8,11 +8,10 @@ from .data_augmentation import SSDAugmentation
 from .multiprocessing import threadsafe_generator
 
 
-class ImageGenerator(object):
+class DataGenerator(object):
 
-    def __init__(self, train_data, val_data, prior_boxes,
-                 batch_size=32, box_scale_factors=[.1, .1, .2, .2],
-                 num_classes=21):
+    def __init__(self, train_data, prior_boxes, batch_size=32, num_classes=21,
+                 val_data=None, box_scale_factors=[.1, .1, .2, .2]):
 
         self.train_data = train_data
         self.val_data = val_data
@@ -28,6 +27,8 @@ class ImageGenerator(object):
             shuffle(keys)
             ground_truth_data = self.train_data
         elif mode == 'val':
+            if self.val_data is None:
+                raise Exception('Validation data not given in constructor.')
             keys = list(self.val_data.keys())
             ground_truth_data = self.val_data
         else:

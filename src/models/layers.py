@@ -4,7 +4,7 @@ from keras.engine.topology import Layer
 import numpy as np
 
 
-class Normalize(Layer):
+class Conv2DNormalization(Layer):
     """Normalization layer as described in ParseNet paper.
     # Arguments
         scale: Default feature scale.
@@ -26,7 +26,7 @@ class Normalize(Layer):
         else:
             self.axis = 1
         self.scale = scale
-        super(Normalize, self).__init__(**kwargs)
+        super(Conv2DNormalization, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.input_spec = [InputSpec(shape=input_shape)]

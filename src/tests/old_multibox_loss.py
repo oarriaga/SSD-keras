@@ -26,7 +26,10 @@ class MultiboxLoss(object):
         return cross_entropy_loss
 
     def compute_loss(self, y_true, y_pred):
+
         class_loss = self.cross_entropy(y_true[:, :, 4:], y_pred[:, :, 4:])
+
+        # return K.concatenate([class_loss, class_loss_old], axis=0)
         local_loss = self.smooth_l1(y_true[:, :, :4], y_pred[:, :, :4])
         negative_mask = y_true[:, :, 4 + self.background_id]
         positive_mask = 1 - negative_mask
@@ -44,10 +47,18 @@ class MultiboxLoss(object):
                                              self.max_num_negatives)
         negative_class_losses = class_loss * negative_mask
 
-        elements = (negative_class_losses, num_negatives_per_sample)
-        negative_class_loss = tf.map_fn(
-                lambda x: K.sum(tf.nn.top_k(x[0], x[1])[0]),
-                elements, dtype=tf.float32)
+        negative_class_loss = []
+        for sample_arg in range(self.batch_size):
+            num_negatives_in_sample = num_negatives_per_sample[sample_arg]
+            negative_sample_loss = negative_class_losses[sample_arg]
+            selected_negative_sample_losses = tf.nn.top_k(
+                                    negative_sample_loss,
+                                    k=num_negatives_in_sample,
+                                    sorted=True)[0]
+            negative_sample_loss = K.sum(selected_negative_sample_losses)
+            negative_sample_loss = K.expand_dims(negative_sample_loss, -1)
+            negative_class_loss.append(negative_sample_loss)
+        negative_class_loss = K.concatenate(negative_class_loss)
 
         class_loss = positive_class_loss + negative_class_loss
         total_loss = class_loss + (self.alpha * positive_local_loss)
