@@ -6,7 +6,7 @@ from keras.layers import GlobalAveragePooling2D
 from keras.layers import Activation
 from keras.models import Model
 
-from .layers import Normalize
+from .layers import Conv2DNormalization
 from .ssd_utils import add_ssd_modules
 
 
@@ -39,7 +39,7 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
     conv4_1 = Conv2D(512, (3, 3), padding='same', activation='relu')(pool3)
     conv4_2 = Conv2D(512, (3, 3), padding='same', activation='relu')(conv4_1)
     conv4_3 = Conv2D(512, (3, 3), padding='same', activation='relu')(conv4_2)
-    conv4_3_norm = Normalize(20, name='branch_1')(conv4_3)
+    conv4_3_norm = Conv2DNormalization(20, name='branch_1')(conv4_3)
     pool4 = MaxPooling2D(pool_size=(2, 2), strides=(2, 2),
                          padding='same')(conv4_3)
 
