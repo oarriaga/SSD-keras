@@ -4,6 +4,7 @@ from utils.boxes import to_point_form
 from utils.generator import ImageGenerator
 from models.experimental_loss import MultiboxLoss
 import keras.backend as K
+import numpy as np
 
 # parameters
 dataset_name = 'VOC2012'
