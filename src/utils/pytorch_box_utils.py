@@ -132,7 +132,11 @@ def encode(matched, priors, variances):
     g_cxcy /= (variances[0] * priors[:, 2:])
     # match wh / prior wh
     g_wh = (matched[:, 2:] - matched[:, :2]) / priors[:, 2:]
-    g_wh = torch.log(g_wh) / variances[1]
+    print('g_wh:', g_wh)
+    print('g_wh.shape:', g_wh.shape)
+    # g_wh = g_wh[g_wh < 0.] = 0.
+    g_wh = torch.clamp(g_wh, min=0)
+    g_wh = torch.log(g_wh + 1e-10) / variances[1]
     # return target for smooth_l1_loss
     return torch.cat([g_cxcy, g_wh], 1)  # [num_priors,4]
 
