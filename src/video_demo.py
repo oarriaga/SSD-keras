@@ -58,19 +58,7 @@ if __name__ == "__main__":
 
     dataset_name = 'VOC2007'
     weights_path = '../trained_models/SSD300_weights.hdf5'
-    # weights_path = '../trained_models/weights.07-3.59.hdf5'
-    # weights_path = '../trained_models/weights.03-3.37.hdf5'
-    # weights_path = '../trained_models/weights.150-3.57.hdf5'
-    # weights_path = '../trained_models/weights.12-4.20.hdf5'
-    # weights_path = '../trained_models/weights.02-3.44.hdf5'
-    # weights_path = '../trained_models/weights.22-5.01.hdf5'
-    # weights_path = '../trained_models/weights.79-6.66.hdf5'
-    # weights_path = '../trained_models/weights.64-6.52.hdf5'
-    # weights_path = '../trained_models/weights.22-3.85.hdf5'
-    # weights_path = '../trained_models/weights.50-3.92.hdf5'
-    # weights_path = '../trained_models/weights.04-3.79.hdf5'
     model = SSD300(weights_path=weights_path)
     prior_boxes = to_point_form(create_prior_boxes())
-    # prior_boxes = to_point_form(prior_boxes)
     video = VideoDemo(prior_boxes, dataset_name)
     video.start_video(model)
