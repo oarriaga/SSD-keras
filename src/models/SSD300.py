@@ -81,10 +81,7 @@ def SSD300(input_shape=(300, 300, 3), num_classes=21,
                      activation='relu', name='branch_6')(conv9_1)
 
     if return_base:
-        conv10_1 = Conv2D(num_classes, (3, 3), padding='same',
-                          activation='relu')(conv9_2)
-        globAvgPool = GlobalAveragePooling2D()(conv10_1)
-        output_tensor = Activation('softmax')(globAvgPool)
+        output_tensor = fc7
 
     else:
         ssd_tenors = [conv4_3_norm, fc7, conv6_2, conv7_2, conv8_2, conv9_2]
