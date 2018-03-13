@@ -55,6 +55,7 @@ class MultiboxLoss(object):
         batch_mask = K.not_equal(num_positives_per_sample, 0)
         total_loss = tf.where(batch_mask, total_loss, K.zeros_like(total_loss))
 
+        # check for the case in which there are no positive boxes in a sample
         num_positives_per_sample = tf.where(
                 batch_mask, num_positives_per_sample,
                 K.ones_like(num_positives_per_sample))
