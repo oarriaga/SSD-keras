@@ -124,6 +124,7 @@ def construct_SSD(base_model, num_classes=21,
     for layer in base_model.layers:
         if branch_name_prefix in layer.name:
             branch_tensors.append(layer.output)
+    print(branch_tensors)
     boxes_output = add_ssd_modules(branch_tensors, num_classes, num_priors)
     return Model(base_model.input, boxes_output)
 
