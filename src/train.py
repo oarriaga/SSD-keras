@@ -1,20 +1,16 @@
 import os
 
-from keras.callbacks import CSVLogger
-from keras.callbacks import ModelCheckpoint
-from keras.callbacks import LearningRateScheduler
+from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler
 from keras.optimizers import SGD
 
 from models import SSD300
-from datasets import DataManager
-from datasets import get_class_names
-from models.multibox_loss import MultiboxLoss
-from utils.data_generator import DataGenerator
-from utils.training_utils import LearningRateManager
 from utils.boxes import create_prior_boxes, to_point_form
+from utils.data_management import DataManager, get_class_names
+from utils.data_generator import DataGenerator
+from utils.training import MultiboxLoss, LearningRateManager
+
 
 model_name = 'SSD300_VOC2007'
-
 # hyper-parameters
 batch_size = 5
 num_epochs = 250
@@ -27,7 +23,7 @@ scheduled_epochs = [155, 195, 235]
 negative_positive_ratio = 3
 base_weights_path = '../trained_models/VGG16_weights.hdf5'
 
-# data management
+# data
 class_names = get_class_names('VOC2007')
 val_dataset, val_split = 'VOC2007', 'test'
 train_datasets, train_splits = ['VOC2007', 'VOC2012'], ['trainval', 'trainval']
@@ -44,8 +40,8 @@ prior_boxes = to_point_form(create_prior_boxes())
 multibox_loss = MultiboxLoss(num_classes, negative_positive_ratio, alpha_loss)
 optimizer = SGD(learning_rate, momentum, weight_decay)
 model.compile(optimizer, loss=multibox_loss.compute_loss)
-data_generator = DataGenerator(train_data, prior_boxes, batch_size,
-                               num_classes, val_data)
+data_generator = DataGenerator(
+        train_data, prior_boxes, batch_size, num_classes, val_data)
 
 # callbacks
 model_path = '../trained_models/' + model_name + '/'
@@ -56,8 +52,10 @@ log = CSVLogger(model_path + model_name + '.log')
 checkpoint = ModelCheckpoint(save_path, verbose=1, period=1)
 scheduler = LearningRateManager(learning_rate, gamma_decay, scheduled_epochs)
 schedule_learning_rate = LearningRateScheduler(scheduler.schedule, verbose=1)
-callbacks = [checkpoint, log, schedule_learning_rate]
+# callbacks = [checkpoint, log, schedule_learning_rate]
+callbacks = [checkpoint, log]
 
+# training
 model.summary()
 model.fit_generator(data_generator.flow(mode='train'),
                     steps_per_epoch=int(len(train_data) / batch_size),
