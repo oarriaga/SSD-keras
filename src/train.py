@@ -52,8 +52,8 @@ log = CSVLogger(model_path + model_name + '.log')
 checkpoint = ModelCheckpoint(save_path, verbose=1, period=1)
 scheduler = LearningRateManager(learning_rate, gamma_decay, scheduled_epochs)
 schedule_learning_rate = LearningRateScheduler(scheduler.schedule, verbose=1)
-# callbacks = [checkpoint, log, schedule_learning_rate]
-callbacks = [checkpoint, log]
+callbacks = [checkpoint, log, schedule_learning_rate]
+# callbacks = [checkpoint, log]
 
 # training
 model.summary()
