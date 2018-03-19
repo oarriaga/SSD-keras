@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
-from datasets import get_class_names
+from utils.data_management import get_class_names
 from utils.preprocessing import substract_mean
 from utils.inference import detect
 from utils.inference import plot_detections
@@ -30,10 +30,14 @@ class VideoDemo(object):
         self.font = cv2.FONT_HERSHEY_SIMPLEX
 
     def start_video(self, model):
+        print('Hello1')
         camera = cv2.VideoCapture(0)
+        print('Hello2')
         while True:
             frame = camera.read()[1]
+            print('Hello3')
             if frame is None:
+                print('Frame: None')
                 continue
             image_array = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image_array = cv2.resize(image_array, (300, 300))
