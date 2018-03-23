@@ -30,12 +30,9 @@ class VideoDemo(object):
         self.font = cv2.FONT_HERSHEY_SIMPLEX
 
     def start_video(self, model):
-        print('Hello1')
         camera = cv2.VideoCapture(0)
-        print('Hello2')
         while True:
             frame = camera.read()[1]
-            print('Hello3')
             if frame is None:
                 print('Frame: None')
                 continue
