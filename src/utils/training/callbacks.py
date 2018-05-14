@@ -21,3 +21,12 @@ class LearningRateManager():
         if epoch in self.scheduled_epochs:
             self.learning_rate = self.learning_rate * self.gamma_decay
         return self.learning_rate
+
+
+def scheduler(epoch):
+    if epoch < 80:
+        return 0.001
+    elif epoch < 100:
+        return 0.0001
+    else:
+        return 0.00001

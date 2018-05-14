@@ -1,26 +1,25 @@
 import os
 
-from keras.callbacks import CSVLogger, ModelCheckpoint, ReduceLROnPlateau
+from keras.callbacks import CSVLogger, ModelCheckpoint, LearningRateScheduler
 from keras.optimizers import SGD
 
 from models import SSD300
 from utils.boxes import create_prior_boxes, to_point_form
 from utils.data_management import DataManager, get_class_names
 from utils.data_generator import DataGenerator
-from utils.training import MultiboxLoss
-# from utils.training import LearningRateManager
+from utils.training import MultiboxLoss, scheduler
 
 
 model_name = 'SSD300_VOC2007'
 # hyper-parameters
-batch_size = 32
+batch_size = 2
 num_epochs = 250
 alpha_loss = 1.0
 learning_rate = 1e-3
 momentum = .9
 weight_decay = 5e-4
 gamma_decay = 0.1
-scheduled_epochs = [155, 195, 235]
+# scheduled_epochs = [155, 195, 235]
 negative_positive_ratio = 3
 base_weights_path = '../trained_models/VGG16_weights.hdf5'
 
@@ -51,11 +50,11 @@ if not os.path.exists(model_path):
     os.makedirs(model_path)
 log = CSVLogger(model_path + model_name + '.log')
 checkpoint = ModelCheckpoint(save_path, verbose=1, save_weights_only=True)
-reduce_on_plateau = ReduceLROnPlateau(factor=gamma_decay, verbose=1)
+# reduce_on_plateau = ReduceLROnPlateau(factor=gamma_decay, verbose=1)
 # scheduler = LearningRateManager(learning_rate, gamma_decay, scheduled_epochs)
-# learning_rate_schedule = LearningRateScheduler(scheduler.schedule, verbose=1)
-# callbacks = [checkpoint, log, learning_rate_schedule]
-callbacks = [checkpoint, log, reduce_on_plateau]
+learning_rate_schedule = LearningRateScheduler(scheduler, verbose=1)
+callbacks = [checkpoint, log, learning_rate_schedule]
+# callbacks = [checkpoint, log, reduce_on_plateau]
 
 # training
 model.summary()
